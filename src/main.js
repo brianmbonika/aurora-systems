@@ -823,87 +823,132 @@ function renderDashboardStatsGrid() {
     });
     const totalOpsExpenses = state.expenses.reduce((sum, e) => sum + e.amount, 0);
     const totalExpenses = totalRestockCost + totalOpsExpenses;
-    const balance = kpis.totalRevenue - totalExpenses;
-    const balanceClass = balance >= 0 ? 'positive' : 'negative';
 
-    // Calculate profitability weekly trends
+    // Calculate weekly trends
+    // 1. Total Sales (Cash In) weekly trend
+    let salesThisWeek = 0;
+    let salesPrevWeek = 0;
+    state.transactions.forEach(tx => {
+      const txTime = new Date(tx.timestamp).getTime();
+      if (txTime >= now - 7 * oneDay && txTime < now) {
+        if (tx.type === 'OUT' && tx.reason.toLowerCase().includes('sale')) {
+          salesThisWeek += tx.quantity * tx.unitPrice;
+        }
+      } else if (txTime >= now - 14 * oneDay && txTime < now - 7 * oneDay) {
+        if (tx.type === 'OUT' && tx.reason.toLowerCase().includes('sale')) {
+          salesPrevWeek += tx.quantity * tx.unitPrice;
+        }
+      }
+    });
+    let salesTrend = '0%';
+    let salesTrendClass = '';
+    if (salesPrevWeek > 0) {
+      const pct = ((salesThisWeek - salesPrevWeek) / salesPrevWeek) * 100;
+      salesTrend = `${pct >= 0 ? '▲' : '▼'} ${pct >= 0 ? '+' : ''}${pct.toFixed(0)}%`;
+      salesTrendClass = pct >= 0 ? '' : 'down';
+    } else {
+      salesTrend = salesThisWeek > 0 ? '▲ +100%' : '0%';
+      salesTrendClass = '';
+    }
+
+    // 2. Total Expenses (Cash Out) weekly trend
+    let expensesThisWeek = 0;
+    let expensesPrevWeek = 0;
+    state.transactions.forEach(tx => {
+      const txTime = new Date(tx.timestamp).getTime();
+      if (txTime >= now - 7 * oneDay && txTime < now) {
+        if (tx.type === 'IN') {
+          expensesThisWeek += tx.quantity * tx.unitPrice;
+        }
+      } else if (txTime >= now - 14 * oneDay && txTime < now - 7 * oneDay) {
+        if (tx.type === 'IN') {
+          expensesPrevWeek += tx.quantity * tx.unitPrice;
+        }
+      }
+    });
+    state.expenses.forEach(e => {
+      const expTime = new Date(e.date).getTime();
+      if (expTime >= now - 7 * oneDay && expTime < now) {
+        expensesThisWeek += e.amount;
+      } else if (expTime >= now - 14 * oneDay && expTime < now - 7 * oneDay) {
+        expensesPrevWeek += e.amount;
+      }
+    });
+    let expensesTrend = '0%';
+    let expensesTrendClass = '';
+    if (expensesPrevWeek > 0) {
+      const pct = ((expensesThisWeek - expensesPrevWeek) / expensesPrevWeek) * 100;
+      expensesTrend = `${pct >= 0 ? '▲' : '▼'} ${pct >= 0 ? '+' : ''}${pct.toFixed(0)}%`;
+      expensesTrendClass = pct >= 0 ? 'down' : ''; // Expense going up is danger/down
+    } else {
+      expensesTrend = expensesThisWeek > 0 ? '▲ +100%' : '0%';
+      expensesTrendClass = expensesThisWeek > 0 ? 'down' : '';
+    }
+
+    // 3. Gross Profit weekly trend
     const grossThisWeek = getProfitForPeriod(7, 0, 'Manager'); // Manager profit calculation returns Gross Profit
     const grossPrevWeek = getProfitForPeriod(14, 7, 'Manager');
     let grossTrend = '0%';
+    let grossTrendClass = '';
     if (grossPrevWeek > 0) {
       const pct = ((grossThisWeek - grossPrevWeek) / grossPrevWeek) * 100;
       grossTrend = `${pct >= 0 ? '▲' : '▼'} ${pct >= 0 ? '+' : ''}${pct.toFixed(0)}%`;
+      grossTrendClass = pct >= 0 ? '' : 'down';
     } else {
       grossTrend = grossThisWeek > 0 ? '▲ +100%' : '0%';
+      grossTrendClass = '';
     }
 
+    // 4. Net Profit weekly trend
     const netThisWeek = getProfitForPeriod(7, 0, 'CEO');
     const netPrevWeek = getProfitForPeriod(14, 7, 'CEO');
     let netTrend = '0%';
+    let netTrendClass = '';
     if (netPrevWeek === 0) {
       netTrend = netThisWeek > 0 ? '▲ +100%' : (netThisWeek < 0 ? '▼ -100%' : '0%');
+      netTrendClass = netThisWeek >= 0 ? '' : 'down';
     } else {
       const pct = ((netThisWeek - netPrevWeek) / Math.abs(netPrevWeek)) * 100;
       netTrend = `${pct >= 0 ? '▲' : '▼'} ${pct >= 0 ? '+' : ''}${pct.toFixed(0)}%`;
+      netTrendClass = pct >= 0 ? '' : 'down';
     }
 
     grid.innerHTML = `
-      <!-- Row 1: Cash Flow Positions -->
-      <div class="cf-kpi-card purple">
-        <div class="cf-icon">${iconWrap(ICONS.tag)}</div>
-        <div class="cf-info">
-          <span class="cf-label">Total Sales (Cash In)</span>
-          <h3 class="cf-value">${formatCurrency(kpis.totalRevenue)}</h3>
-          <span class="cf-subtext text-success">${ICONS.trendUp.replace('<svg ', '<svg width="12" height="12" ')} Sales Inflow</span>
-        </div>
-      </div>
-      
-      <div class="cf-kpi-card blue">
-        <div class="cf-icon">${iconWrap(ICONS.receipt)}</div>
-        <div class="cf-info">
-          <span class="cf-label">Total Expenses (Cash Out)</span>
-          <h3 class="cf-value">${formatCurrency(totalExpenses)}</h3>
-          <span class="cf-subtext text-danger">${ICONS.trendDown.replace('<svg ', '<svg width="12" height="12" ')} Cash Outflow</span>
-        </div>
-      </div>
-
-      <div class="cf-kpi-card ${balanceClass}">
-        <div class="cf-icon">${iconWrap(ICONS.wallet)}</div>
-        <div class="cf-info">
-          <span class="cf-label">Cumulative Balance</span>
-          <h3 class="cf-value">${formatCurrency(balance)}</h3>
-          <span class="cf-subtext ${balance >= 0 ? 'text-success' : 'text-danger'}">
-            ${balance >= 0 ? 'Net Positive Cash' : 'Net Negative Cash'}
-          </span>
-        </div>
-      </div>
-
-      <!-- Row 2: Profitability Breakdown -->
       <div class="kpi-subcard">
         <div class="kpi-subcard-header">
-          ${iconWrap(ICONS.dollarCircle, 'orange')}
-          <span class="subcard-title">Gross Profit</span>
-          <span class="subcard-trend">${grossTrend}</span>
+          ${iconWrap(ICONS.tag, 'purple')}
+          <span class="subcard-title">Total Sales (Cash In)</span>
+          <span class="subcard-trend ${salesTrendClass}">${salesTrend}</span>
         </div>
-        <h3 class="subcard-value">${formatCurrency(kpis.grossProfit)}</h3>
-        <span class="subcard-date">Revenue - COGS</span>
+        <h3 class="subcard-value">${formatCurrency(kpis.totalRevenue)}</h3>
+        <span class="subcard-date">Sales Inflow</span>
       </div>
       
       <div class="kpi-subcard">
         <div class="kpi-subcard-header">
           ${iconWrap(ICONS.receipt, 'blue')}
-          <span class="subcard-title">Ops Expenses</span>
-          <span class="subcard-trend">Active</span>
+          <span class="subcard-title">Total Expenses (Cash Out)</span>
+          <span class="subcard-trend ${expensesTrendClass}">${expensesTrend}</span>
         </div>
-        <h3 class="subcard-value">${formatCurrency(kpis.totalOpsExpenses)}</h3>
-        <span class="subcard-date">Logged overheads</span>
+        <h3 class="subcard-value">${formatCurrency(totalExpenses)}</h3>
+        <span class="subcard-date">Cash Outflow</span>
+      </div>
+
+      <div class="kpi-subcard">
+        <div class="kpi-subcard-header">
+          ${iconWrap(ICONS.dollarCircle, 'orange')}
+          <span class="subcard-title">Gross Profit</span>
+          <span class="subcard-trend ${grossTrendClass}">${grossTrend}</span>
+        </div>
+        <h3 class="subcard-value">${formatCurrency(kpis.grossProfit)}</h3>
+        <span class="subcard-date">Revenue - COGS</span>
       </div>
 
       <div class="kpi-subcard">
         <div class="kpi-subcard-header">
           ${iconWrap(ICONS.wallet, 'orange')}
           <span class="subcard-title">Net Profit</span>
-          <span class="subcard-trend">${netTrend}</span>
+          <span class="subcard-trend ${netTrendClass}">${netTrend}</span>
         </div>
         <h3 class="subcard-value">${formatCurrency(kpis.netProfit)}</h3>
         <span class="subcard-date">Gross Profit - Ops Expenses</span>
