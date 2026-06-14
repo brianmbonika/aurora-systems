@@ -1,4 +1,25 @@
 import './style.css';
+import { 
+  db, 
+  auth, 
+  isFirebaseInitialized, 
+  activeConfig,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  updateEmail,
+  updatePassword,
+  collection,
+  doc,
+  setDoc,
+  getDoc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  onSnapshot,
+  getDocs,
+  writeBatch
+} from './firebase';
 
 // ==========================================
 // 1. INITIAL SEED DATA
@@ -93,10 +114,6 @@ let dismissedAlerts = JSON.parse(localStorage.getItem('aurora_dismissed_alerts')
 
 // Initialize State from LocalStorage or seed defaults
 function initStorage() {
-  const storedProducts = localStorage.getItem('aurora_products');
-  const storedTransactions = localStorage.getItem('aurora_transactions');
-  const storedCustomers = localStorage.getItem('aurora_customers');
-  const storedExpenses = localStorage.getItem('aurora_expenses');
   const storedRole = localStorage.getItem('aurora_current_role');
   const storedTarget = localStorage.getItem('aurora_target_amount');
   const storedAuth = localStorage.getItem('aurora_authenticated');
@@ -113,90 +130,309 @@ function initStorage() {
     state.targetAmount = 30000000;
   }
 
-  if (storedProducts) {
-    state.products = JSON.parse(storedProducts);
+  if (isFirebaseInitialized) {
+    // Seeding check and start real-time listener syncing
+    checkAndSeedFirestore();
+    initFirestoreSync();
   } else {
-    state.products = INITIAL_PRODUCTS.map(p => ({
-      id: `prod-${uuid()}`,
-      sku: generateSKU(p.name, p.category),
-      name: p.name,
-      category: p.category,
-      costPrice: p.costPrice,
-      sellingPrice: p.sellingPrice,
-      minStockThreshold: 10
-    }));
-    saveProducts();
-  }
+    // Fallback to local storage database mode
+    const storedProducts = localStorage.getItem('aurora_products');
+    const storedTransactions = localStorage.getItem('aurora_transactions');
+    const storedCustomers = localStorage.getItem('aurora_customers');
+    const storedExpenses = localStorage.getItem('aurora_expenses');
 
-  if (storedCustomers) {
-    state.customers = JSON.parse(storedCustomers);
-  } else {
-    state.customers = [...INITIAL_CUSTOMERS];
-    saveCustomers();
-  }
+    if (storedProducts) {
+      state.products = JSON.parse(storedProducts);
+    } else {
+      state.products = INITIAL_PRODUCTS.map(p => ({
+        id: `prod-${uuid()}`,
+        sku: generateSKU(p.name, p.category),
+        name: p.name,
+        category: p.category,
+        costPrice: p.costPrice,
+        sellingPrice: p.sellingPrice,
+        minStockThreshold: 10
+      }));
+      saveProducts();
+    }
 
-  if (storedExpenses) {
-    state.expenses = JSON.parse(storedExpenses);
-  } else {
-    state.expenses = [...INITIAL_EXPENSES];
-    saveExpenses();
-  }
+    if (storedCustomers) {
+      state.customers = JSON.parse(storedCustomers);
+    } else {
+      state.customers = [...INITIAL_CUSTOMERS];
+      saveCustomers();
+    }
 
-  if (storedTransactions) {
-    state.transactions = JSON.parse(storedTransactions);
-  } else {
-    state.transactions = [];
-    const now = Date.now();
-    const oneDay = 24 * 60 * 60 * 1000;
-    
-    // Seed initial stock-in transactions to have stock on hand
-    state.products.forEach((p, idx) => {
-      // Stock In
-      const qtyIn = 40 + (idx % 15);
-      state.transactions.push({
-        id: `tx-seed-in-${idx}`,
-        productId: p.id,
-        type: 'IN',
-        quantity: qtyIn,
-        unitPrice: p.costPrice,
-        reason: 'Initial Wholesale Stock In',
-        timestamp: new Date(now - 45 * oneDay).toISOString()
-      });
+    if (storedExpenses) {
+      state.expenses = JSON.parse(storedExpenses);
+    } else {
+      state.expenses = [...INITIAL_EXPENSES];
+      saveExpenses();
+    }
 
-      // Stock Out (some sales) over the last 35 days
-      const salesCount = 2 + (idx % 3);
-      for (let s = 0; s < salesCount; s++) {
-        const qtyOut = 1 + (idx % 3) + s;
-        const dayOffset = (idx % 30) + 1; // spread across 30 days
-        const customer = state.customers[idx % 2];
+    if (storedTransactions) {
+      state.transactions = JSON.parse(storedTransactions);
+    } else {
+      state.transactions = [];
+      const now = Date.now();
+      const oneDay = 24 * 60 * 60 * 1000;
+      
+      state.products.forEach((p, idx) => {
+        const qtyIn = 40 + (idx % 15);
         state.transactions.push({
-          id: `tx-seed-out-${idx}-${s}`,
+          id: `tx-seed-in-${idx}`,
           productId: p.id,
-          type: 'OUT',
-          quantity: qtyOut,
-          unitPrice: p.sellingPrice,
-          reason: 'Retail Sale',
-          customerId: customer.id,
-          timestamp: new Date(now - dayOffset * oneDay).toISOString()
+          type: 'IN',
+          quantity: qtyIn,
+          unitPrice: p.costPrice,
+          reason: 'Initial Wholesale Stock In',
+          timestamp: new Date(now - 45 * oneDay).toISOString()
         });
-      }
-    });
-    saveTransactions();
+
+        const salesCount = 2 + (idx % 3);
+        for (let s = 0; s < salesCount; s++) {
+          const qtyOut = 1 + (idx % 3) + s;
+          const dayOffset = (idx % 30) + 1;
+          const customer = state.customers[idx % 2];
+          state.transactions.push({
+            id: `tx-seed-out-${idx}-${s}`,
+            productId: p.id,
+            type: 'OUT',
+            quantity: qtyOut,
+            unitPrice: p.sellingPrice,
+            reason: 'Retail Sale',
+            customerId: customer ? customer.id : null,
+            timestamp: new Date(now - dayOffset * oneDay).toISOString()
+          });
+        }
+      });
+      saveTransactions();
+    }
   }
 }
 
 // Persistence helpers
+async function syncCollectionToFirestore(collectionName, localArray) {
+  if (!isFirebaseInitialized) return;
+  try {
+    const batch = writeBatch(db);
+    
+    // 1. Upload/update all current local items
+    localArray.forEach(item => {
+      const docRef = doc(db, collectionName, item.id);
+      batch.set(docRef, item);
+    });
+    
+    // 2. Fetch remote documents to clean up deleted ones
+    const querySnapshot = await getDocs(collection(db, collectionName));
+    const localIds = new Set(localArray.map(item => item.id));
+    
+    querySnapshot.forEach(docSnap => {
+      if (!localIds.has(docSnap.id)) {
+        batch.delete(docSnap.ref);
+      }
+    });
+    
+    await batch.commit();
+    console.log(`Synced ${collectionName} to Firestore.`);
+  } catch (e) {
+    console.error(`Error syncing ${collectionName}:`, e);
+  }
+}
+
 function saveProducts() {
-  localStorage.setItem('aurora_products', JSON.stringify(state.products));
+  if (isFirebaseInitialized) {
+    syncCollectionToFirestore('products', state.products);
+  } else {
+    localStorage.setItem('aurora_products', JSON.stringify(state.products));
+  }
 }
 function saveTransactions() {
-  localStorage.setItem('aurora_transactions', JSON.stringify(state.transactions));
+  if (isFirebaseInitialized) {
+    syncCollectionToFirestore('transactions', state.transactions);
+  } else {
+    localStorage.setItem('aurora_transactions', JSON.stringify(state.transactions));
+  }
 }
 function saveCustomers() {
-  localStorage.setItem('aurora_customers', JSON.stringify(state.customers));
+  if (isFirebaseInitialized) {
+    syncCollectionToFirestore('customers', state.customers);
+  } else {
+    localStorage.setItem('aurora_customers', JSON.stringify(state.customers));
+  }
 }
 function saveExpenses() {
-  localStorage.setItem('aurora_expenses', JSON.stringify(state.expenses));
+  if (isFirebaseInitialized) {
+    syncCollectionToFirestore('expenses', state.expenses);
+  } else {
+    localStorage.setItem('aurora_expenses', JSON.stringify(state.expenses));
+  }
+}
+
+// Default Credentials for Local Storage fallback
+const defaultCredentials = {
+  CEO: { email: 'ceo@aurorascents.co', password: 'Kudra@aurora' },
+  Manager: { email: 'manager@aurorascents.co', password: 'Zainab@aurora' },
+  Admin: { email: 'admin@aurorascents.co', password: 'Brian@aurora' }
+};
+
+function getLocalCredentials() {
+  const stored = localStorage.getItem('aurora_credentials');
+  if (stored) {
+    try {
+      return JSON.parse(stored);
+    } catch (e) {
+      console.error("Error parsing local credentials:", e);
+    }
+  }
+  return { ...defaultCredentials };
+}
+
+// Populate Security Settings Form in Panel
+function populateSecuritySettings() {
+  const emailInput = document.getElementById('settings-email-input');
+  const passInput = document.getElementById('settings-password-input');
+  const label = document.getElementById('settings-security-profile-label');
+  
+  if (label) {
+    label.innerText = state.currentRole;
+  }
+  
+  if (isFirebaseInitialized) {
+    const user = auth.currentUser;
+    if (user && emailInput) {
+      emailInput.value = user.email || '';
+    }
+    if (passInput) {
+      passInput.value = ''; // Leave password blank for security, let them type a new one
+    }
+  } else {
+    const creds = getLocalCredentials();
+    const activeCred = creds[state.currentRole];
+    if (activeCred) {
+      if (emailInput) emailInput.value = activeCred.email;
+      if (passInput) passInput.value = activeCred.password;
+    }
+  }
+}
+
+// Firestore Database Real-time Sync
+function initFirestoreSync() {
+  if (!isFirebaseInitialized) return;
+
+  // Sync Products
+  onSnapshot(collection(db, 'products'), (snapshot) => {
+    const items = [];
+    snapshot.forEach(docSnap => items.push(docSnap.data()));
+    if (items.length > 0) {
+      state.products = items;
+      renderProducts();
+    }
+  });
+
+  // Sync Transactions
+  onSnapshot(collection(db, 'transactions'), (snapshot) => {
+    const items = [];
+    snapshot.forEach(docSnap => items.push(docSnap.data()));
+    state.transactions = items;
+    
+    // Refresh whatever view is currently active
+    const activeNav = document.querySelector('.nav-item.active');
+    const viewName = activeNav ? activeNav.getAttribute('data-view') : 'dashboard';
+    showView(viewName);
+  });
+
+  // Sync Customers
+  onSnapshot(collection(db, 'customers'), (snapshot) => {
+    const items = [];
+    snapshot.forEach(docSnap => items.push(docSnap.data()));
+    state.customers = items;
+    renderCRM();
+  });
+
+  // Sync Expenses
+  onSnapshot(collection(db, 'expenses'), (snapshot) => {
+    const items = [];
+    snapshot.forEach(docSnap => items.push(docSnap.data()));
+    state.expenses = items;
+    renderCashFlow();
+  });
+}
+
+// Seed Database automatically in Firestore if empty
+async function checkAndSeedFirestore() {
+  if (!isFirebaseInitialized) return;
+  try {
+    const prodSnap = await getDocs(collection(db, 'products'));
+    if (prodSnap.empty) {
+      console.log("Firestore database is empty. Automatically seeding default catalog...");
+      const batch = writeBatch(db);
+      
+      // Seed Products
+      const seedProducts = INITIAL_PRODUCTS.map(p => ({
+        id: `prod-${uuid()}`,
+        sku: generateSKU(p.name, p.category),
+        name: p.name,
+        category: p.category,
+        costPrice: p.costPrice,
+        sellingPrice: p.sellingPrice,
+        minStockThreshold: 10
+      }));
+      seedProducts.forEach(p => {
+        batch.set(doc(db, 'products', p.id), p);
+      });
+
+      // Seed Customers
+      INITIAL_CUSTOMERS.forEach(c => {
+        batch.set(doc(db, 'customers', c.id), c);
+      });
+
+      // Seed Expenses
+      INITIAL_EXPENSES.forEach(e => {
+        batch.set(doc(db, 'expenses', e.id), e);
+      });
+
+      // Seed Transactions
+      const now = Date.now();
+      const oneDay = 24 * 60 * 60 * 1000;
+      seedProducts.forEach((p, idx) => {
+        const qtyIn = 40 + (idx % 15);
+        const txIn = {
+          id: `tx-seed-in-${idx}`,
+          productId: p.id,
+          type: 'IN',
+          quantity: qtyIn,
+          unitPrice: p.costPrice,
+          reason: 'Initial Wholesale Stock In',
+          timestamp: new Date(now - 45 * oneDay).toISOString()
+        };
+        batch.set(doc(db, 'transactions', txIn.id), txIn);
+
+        const salesCount = 2 + (idx % 3);
+        for (let s = 0; s < salesCount; s++) {
+          const qtyOut = 1 + (idx % 3) + s;
+          const dayOffset = (idx % 30) + 1;
+          const customer = INITIAL_CUSTOMERS[idx % 2];
+          const txOut = {
+            id: `tx-seed-out-${idx}-${s}`,
+            productId: p.id,
+            type: 'OUT',
+            quantity: qtyOut,
+            unitPrice: p.sellingPrice,
+            reason: 'Retail Sale',
+            customerId: customer ? customer.id : null,
+            timestamp: new Date(now - dayOffset * oneDay).toISOString()
+          };
+          batch.set(doc(db, 'transactions', txOut.id), txOut);
+        }
+      });
+
+      await batch.commit();
+      console.log("Firestore database seeded successfully.");
+    }
+  } catch (e) {
+    console.error("Error checking or seeding Firestore database:", e);
+  }
 }
 
 // ==========================================
@@ -1773,6 +2009,30 @@ function renderSettings() {
       settingsTargetGroup.style.display = 'none';
     }
   }
+
+  // Populate Security Settings inputs
+  populateSecuritySettings();
+
+  // Populate Cloud Database Status
+  const projectDisplay = document.getElementById('settings-project-id');
+  if (projectDisplay) {
+    if (isFirebaseInitialized) {
+      projectDisplay.innerText = `Project ID: ${activeConfig.projectId}`;
+    } else {
+      projectDisplay.innerText = "Project ID: Local Storage Mode";
+    }
+  }
+  
+  const cloudBadge = document.getElementById('settings-cloud-badge');
+  if (cloudBadge) {
+    if (isFirebaseInitialized) {
+      cloudBadge.innerText = "Active";
+      cloudBadge.className = "badge-pill instock";
+    } else {
+      cloudBadge.innerText = "Offline";
+      cloudBadge.className = "badge-pill outofstock";
+    }
+  }
 }
 
 // Calculate dynamic alerts
@@ -2616,51 +2876,95 @@ function setupEventListeners() {
   // Simulated Login Screen listener
   const loginForm = document.getElementById('login-form');
   if (loginForm) {
-    loginForm.addEventListener('submit', (e) => {
+    loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const emailInput = document.getElementById('login-email');
       const passInput = document.getElementById('login-password');
       const email = emailInput ? emailInput.value.trim().toLowerCase() : '';
       const pass = passInput ? passInput.value : '';
 
-      // Credentials mapping:
-      // CEO: ceo@aurorascents.co / Kudra@aurora
-      // Manager: manager@aurorascents.co / Zainab@aurora
-      // Admin: admin@aurorascents.co / Brian@aurora
-      let role = null;
-      if (email === 'ceo@aurorascents.co' && pass === 'Kudra@aurora') {
-        role = 'CEO';
-      } else if (email === 'manager@aurorascents.co' && pass === 'Zainab@aurora') {
-        role = 'Manager';
-      } else if (email === 'admin@aurorascents.co' && pass === 'Brian@aurora') {
-        role = 'Admin';
-      }
+      if (isFirebaseInitialized) {
+        try {
+          // Firebase sign-in
+          const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+          const user = userCredential.user;
+          
+          // Get user role from users collection
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          let role = 'Manager';
+          if (userDoc.exists()) {
+            role = userDoc.data().role;
+          } else {
+            // Map role by email if document doesn't exist
+            if (email.includes('ceo')) role = 'CEO';
+            else if (email.includes('admin')) role = 'Admin';
+            
+            // Seed the user role document
+            await setDoc(doc(db, 'users', user.uid), {
+              email: email,
+              role: role
+            });
+          }
+          
+          state.isAuthenticated = true;
+          state.currentRole = role;
+          
+          localStorage.setItem('aurora_authenticated', 'true');
+          localStorage.setItem('aurora_current_role', role);
 
-      if (role) {
-        state.isAuthenticated = true;
-        state.currentRole = role;
-        
-        localStorage.setItem('aurora_authenticated', 'true');
-        localStorage.setItem('aurora_current_role', role);
+          // Hide login overlay
+          const loginScreen = document.getElementById('login-screen');
+          if (loginScreen) {
+            loginScreen.classList.add('hidden');
+          }
 
-        // Hide login overlay
-        const loginScreen = document.getElementById('login-screen');
-        if (loginScreen) {
-          loginScreen.classList.add('hidden');
+          // Set starting role and update dashboard view
+          const roleSelect = document.getElementById('user-role-select');
+          if (roleSelect) {
+            roleSelect.value = role;
+          }
+          switchRole(role);
+          
+          // Reset inputs
+          if (emailInput) emailInput.value = '';
+          if (passInput) passInput.value = '';
+        } catch (error) {
+          console.error("Firebase Auth Error:", error);
+          alert("Authentication Failed: " + error.message);
         }
-
-        // Set role selectors and update dashboard view
-        const roleSelect = document.getElementById('user-role-select');
-        if (roleSelect) {
-          roleSelect.value = role;
-        }
-        switchRole(role);
-        
-        // Reset input fields
-        if (emailInput) emailInput.value = '';
-        if (passInput) passInput.value = '';
       } else {
-        alert('Incorrect Email or Password.');
+        // Fallback for LocalStorage
+        const creds = getLocalCredentials();
+        let role = null;
+        if (email === creds.CEO.email && pass === creds.CEO.password) {
+          role = 'CEO';
+        } else if (email === creds.Manager.email && pass === creds.Manager.password) {
+          role = 'Manager';
+        } else if (email === creds.Admin.email && pass === creds.Admin.password) {
+          role = 'Admin';
+        }
+
+        if (role) {
+          state.isAuthenticated = true;
+          state.currentRole = role;
+          
+          localStorage.setItem('aurora_authenticated', 'true');
+          localStorage.setItem('aurora_current_role', role);
+
+          // Hide login overlay
+          const loginScreen = document.getElementById('login-screen');
+          if (loginScreen) {
+            loginScreen.classList.add('hidden');
+          }
+
+          switchRole(role);
+          
+          // Reset inputs
+          if (emailInput) emailInput.value = '';
+          if (passInput) passInput.value = '';
+        } else {
+          alert('Incorrect Email or Password.');
+        }
       }
     });
   }
@@ -2668,20 +2972,144 @@ function setupEventListeners() {
   // Simulated Logout Button listener
   const btnLogout = document.getElementById('btn-logout');
   if (btnLogout) {
-    btnLogout.addEventListener('click', () => {
-      state.isAuthenticated = false;
-      localStorage.removeItem('aurora_authenticated');
-      
-      // Show login overlay
-      const loginScreen = document.getElementById('login-screen');
-      if (loginScreen) {
-        loginScreen.classList.remove('hidden');
+    btnLogout.addEventListener('click', async () => {
+      if (isFirebaseInitialized) {
+        try {
+          await signOut(auth);
+        } catch (e) {
+          console.error("Firebase Signout Error:", e);
+        }
+      } else {
+        state.isAuthenticated = false;
+        localStorage.removeItem('aurora_authenticated');
+        
+        // Show login overlay
+        const loginScreen = document.getElementById('login-screen');
+        if (loginScreen) {
+          loginScreen.classList.remove('hidden');
+        }
       }
 
       // Close mobile sidebar if open
       if (sidebar && sidebarBackdrop) {
         sidebar.classList.remove('open');
         sidebarBackdrop.classList.remove('active');
+      }
+    });
+  }
+
+  // Firebase Connection Wizard Submit Handler
+  const wizardForm = document.getElementById('firebase-wizard-form');
+  if (wizardForm) {
+    wizardForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const textarea = document.getElementById('firebase-config-input');
+      const val = textarea.value.trim();
+      
+      try {
+        const startIdx = val.indexOf('{');
+        const endIdx = val.lastIndexOf('}');
+        if (startIdx === -1 || endIdx === -1) {
+          throw new Error("Invalid format. Paste the entire config object including braces { }.");
+        }
+        
+        const objStr = val.substring(startIdx, endIdx + 1);
+        const parsedConfig = Function(`"use strict"; return (${objStr});`)();
+        
+        if (!parsedConfig.apiKey || !parsedConfig.projectId || !parsedConfig.appId) {
+          throw new Error("Missing required fields (apiKey, projectId, or appId).");
+        }
+        
+        localStorage.setItem('aurora_firebase_config', JSON.stringify(parsedConfig));
+        alert("Firebase Cloud Database Connected Successfully! The page will now reload.");
+        window.location.reload();
+      } catch (err) {
+        alert("Configuration Error: " + err.message);
+      }
+    });
+  }
+
+  // Close Wizard Button Click Handler
+  const btnCloseWizard = document.getElementById('btn-close-wizard');
+  if (btnCloseWizard) {
+    btnCloseWizard.addEventListener('click', () => {
+      const wizard = document.getElementById('firebase-wizard');
+      if (wizard) wizard.classList.add('hidden');
+      
+      // If the user was not authenticated, show the login screen
+      const loginScreen = document.getElementById('login-screen');
+      if (loginScreen && !state.isAuthenticated) {
+        loginScreen.classList.remove('hidden');
+      }
+    });
+  }
+
+  // Save Settings Credentials Submit Handler
+  const btnSaveCreds = document.getElementById('btn-save-credentials');
+  if (btnSaveCreds) {
+    btnSaveCreds.addEventListener('click', async () => {
+      const emailVal = document.getElementById('settings-email-input').value.trim();
+      const passVal = document.getElementById('settings-password-input').value;
+      
+      if (!emailVal || !passVal) {
+        alert("Please enter a valid email and password.");
+        return;
+      }
+      
+      if (passVal.length < 6) {
+        alert("Password must be at least 6 characters.");
+        return;
+      }
+      
+      if (isFirebaseInitialized) {
+        try {
+          const user = auth.currentUser;
+          if (user) {
+            await updateEmail(user, emailVal);
+            await updatePassword(user, passVal);
+            
+            // Sync user role metadata in Firestore
+            await setDoc(doc(db, 'users', user.uid), {
+              email: emailVal,
+              role: state.currentRole
+            }, { merge: true });
+            
+            alert("Security credentials updated successfully in Firebase Cloud!");
+          } else {
+            alert("No user is currently signed in to Firebase.");
+          }
+        } catch (e) {
+          console.error("Error updating credentials:", e);
+          alert("Failed to update credentials: " + e.message);
+        }
+      } else {
+        // Save locally
+        const creds = getLocalCredentials();
+        creds[state.currentRole] = { email: emailVal, password: passVal };
+        localStorage.setItem('aurora_credentials', JSON.stringify(creds));
+        alert("Security credentials updated successfully in local storage!");
+      }
+    });
+  }
+
+  // Cloud Database Disconnect / Connect Button Handler
+  const btnDisconnect = document.getElementById('btn-disconnect-cloud');
+  if (btnDisconnect) {
+    btnDisconnect.addEventListener('click', () => {
+      if (isFirebaseInitialized) {
+        if (confirm("Disconnect from Firebase Cloud Database? The system will revert back to Local Storage database mode.")) {
+          localStorage.removeItem('aurora_firebase_config');
+          alert("Disconnected from Firebase. Reloading to local storage mode...");
+          window.location.reload();
+        }
+      } else {
+        // Open Connection Wizard modal
+        const wizard = document.getElementById('firebase-wizard');
+        if (wizard) wizard.classList.remove('hidden');
+        
+        // Hide login overlay if showing so it doesn't overlap
+        const loginScreen = document.getElementById('login-screen');
+        if (loginScreen) loginScreen.classList.add('hidden');
       }
     });
   }
@@ -2694,22 +3122,61 @@ function setupEventListeners() {
 window.addEventListener('DOMContentLoaded', () => {
   initStorage();
 
-  // Toggle Login Screen depending on auth state
-  const loginScreen = document.getElementById('login-screen');
-  if (loginScreen) {
-    if (state.isAuthenticated) {
-      loginScreen.classList.add('hidden');
-    } else {
-      loginScreen.classList.remove('hidden');
+  if (isFirebaseInitialized) {
+    // Firebase Auth State listener
+    onAuthStateChanged(auth, async (user) => {
+      const loginScreen = document.getElementById('login-screen');
+      if (user) {
+        // Signed in
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        let role = 'Manager';
+        if (userDoc.exists()) {
+          role = userDoc.data().role;
+        } else {
+          const email = user.email || '';
+          if (email.includes('ceo')) role = 'CEO';
+          else if (email.includes('admin')) role = 'Admin';
+          
+          await setDoc(doc(db, 'users', user.uid), {
+            email: email,
+            role: role
+          });
+        }
+
+        state.isAuthenticated = true;
+        state.currentRole = role;
+        
+        localStorage.setItem('aurora_authenticated', 'true');
+        localStorage.setItem('aurora_current_role', role);
+
+        if (loginScreen) loginScreen.classList.add('hidden');
+        switchRole(role);
+      } else {
+        // Signed out
+        state.isAuthenticated = false;
+        localStorage.removeItem('aurora_authenticated');
+        
+        // Only show login overlay if wizard is closed
+        const wizard = document.getElementById('firebase-wizard');
+        if (wizard && wizard.classList.contains('hidden')) {
+          if (loginScreen) loginScreen.classList.remove('hidden');
+        }
+      }
+    });
+  } else {
+    // Local storage login overlay check
+    const loginScreen = document.getElementById('login-screen');
+    if (loginScreen) {
+      if (state.isAuthenticated) {
+        loginScreen.classList.add('hidden');
+      } else {
+        loginScreen.classList.remove('hidden');
+      }
     }
   }
 
   setupEventListeners();
   
-  // Set starting role and update dashboard view
-  const roleSelect = document.getElementById('user-role-select');
-  if (roleSelect) {
-    roleSelect.value = state.currentRole;
-  }
+  // Update starting views
   switchRole(state.currentRole);
 });

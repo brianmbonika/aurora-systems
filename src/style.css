@@ -2618,6 +2618,26 @@ input:focus, select.large-select:focus {
   box-shadow: 0 0 0 3px var(--primary-glow);
 }
 
+.login-card textarea {
+  width: 100% !important;
+  box-sizing: border-box;
+  padding: 0.75rem 1rem;
+  background-color: var(--bg-base);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-family: monospace;
+  font-size: 0.8rem;
+  outline: none;
+  transition: var(--transition-fast);
+  resize: none;
+}
+
+.login-card textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
 .login-card .btn-block {
   width: 100% !important;
   margin-top: 1.25rem;
