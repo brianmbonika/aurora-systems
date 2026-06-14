@@ -673,8 +673,11 @@ function renderDashboard() {
   const trendBadge = document.querySelector('.card-trend-badge');
   if (trendBadge) {
     trendBadge.className = `card-trend-badge ${isPositive ? 'positive' : 'negative'}`;
+    const trendIcon = isPositive 
+      ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;display:inline-block;vertical-align:middle;margin-right:2px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`
+      : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;display:inline-block;vertical-align:middle;margin-right:2px;"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>`;
     trendBadge.innerHTML = `
-      <span class="badge-icon">${isPositive ? '📈' : '📉'}</span>
+      <span class="badge-icon" style="display:inline-flex;align-items:center;justify-content:center;">${trendIcon}</span>
       <span class="badge-text" id="val-profit-margin">${trendText} from last week • ${marginVal.toFixed(1)}% margin</span>
     `;
   }
@@ -729,10 +732,117 @@ const ICONS = {
   wallet: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/><circle cx="17" cy="15" r="1.5" fill="currentColor" stroke="none"/></svg>`,
   trendUp: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`,
   trendDown: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>`,
+  bottle: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;color:rgba(255,255,255,0.85);"><path d="M9 3h6v3H9z"/><path d="M12 6v4"/><path d="M6 10a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v9a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3v-9z"/></svg>`,
+  alert: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px; color: #ef4444;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+  target: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px; color: #3b82f6;"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`,
+  checkCircle: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px; color: #10b981;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`
 };
 
 function iconWrap(svgStr, colorClass = 'orange') {
   return `<div class="subcard-icon-wrapper ${colorClass}">${svgStr}</div>`;
+}
+
+function updateConnectionStatusUI() {
+  const dot = document.getElementById('conn-status-dot');
+  const text = document.getElementById('conn-status-text');
+  if (!dot || !text) return;
+
+  if (isFirebaseInitialized) {
+    dot.className = 'status-indicator online';
+    text.innerText = 'Cloud Database Active';
+  } else {
+    dot.className = 'status-indicator offline';
+    text.innerText = 'Local Database Mode';
+  }
+}
+
+// ==========================================
+// CUSTOM TOAST & CONFIRM DIALOG SYSTEM
+// ==========================================
+
+function showToast(message, type = 'info', duration = 3500) {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+
+  const toast = document.createElement('div');
+  toast.className = `custom-toast toast-${type}`;
+
+  const iconMap = {
+    success: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
+    error: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`,
+    warning: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+    info: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`
+  };
+
+  toast.innerHTML = `
+    <span class="toast-icon">${iconMap[type] || iconMap.info}</span>
+    <span class="toast-msg">${message}</span>
+    <button class="toast-close" onclick="this.parentElement.remove()">&times;</button>
+  `;
+  toast.style.pointerEvents = 'auto';
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.animation = 'slideOutToast 0.3s ease forwards';
+    setTimeout(() => toast.remove(), 300);
+  }, duration);
+}
+
+const nativeAlert = window.alert;
+const nativeConfirm = window.confirm;
+
+// Global alert override
+window.alert = function(message) {
+  let type = 'info';
+  const msgLower = String(message).toLowerCase();
+  if (msgLower.includes('success') || msgLower.includes('save') || msgLower.includes('connect')) {
+    type = 'success';
+  } else if (msgLower.includes('fail') || msgLower.includes('error') || msgLower.includes('insufficient')) {
+    type = 'error';
+  } else if (msgLower.includes('warning') || msgLower.includes('invalid') || msgLower.includes('please')) {
+    type = 'warning';
+  }
+  showToast(message, type);
+};
+
+// Global confirm override
+window.confirm = function(message) {
+  return showConfirmDialog(message);
+};
+
+function showConfirmDialog(message, title = 'Confirm Action') {
+  return new Promise((resolve) => {
+    const overlay = document.getElementById('confirm-dialog-overlay');
+    const titleEl = document.getElementById('confirm-dialog-title');
+    const msgEl = document.getElementById('confirm-dialog-message');
+    const okBtn = document.getElementById('confirm-dialog-ok');
+    const cancelBtn = document.getElementById('confirm-dialog-cancel');
+
+    if (!overlay) { resolve(nativeConfirm(message)); return; }
+
+    titleEl.textContent = title;
+    msgEl.textContent = message;
+    overlay.style.display = 'flex';
+
+    setTimeout(() => cancelBtn.focus(), 50);
+
+    function cleanup() {
+      overlay.style.display = 'none';
+      okBtn.removeEventListener('click', onOk);
+      cancelBtn.removeEventListener('click', onCancel);
+      overlay.removeEventListener('click', onOverlayClick);
+      document.removeEventListener('keydown', onKey);
+    }
+    function onOk() { cleanup(); resolve(true); }
+    function onCancel() { cleanup(); resolve(false); }
+    function onOverlayClick(e) { if (e.target === overlay) { cleanup(); resolve(false); } }
+    function onKey(e) { if (e.key === 'Escape') { cleanup(); resolve(false); } }
+
+    okBtn.addEventListener('click', onOk);
+    cancelBtn.addEventListener('click', onCancel);
+    overlay.addEventListener('click', onOverlayClick);
+    document.addEventListener('keydown', onKey);
+  });
 }
 
 // Render 2x2 or 3x1 Subcards Grid based on active User Role
@@ -1147,7 +1257,7 @@ function renderBestsellers() {
   container.innerHTML = topProducts.map(p => `
     <div class="bestseller-item">
       <div class="bestseller-product-info">
-        <div class="bestseller-avatar">🧴</div>
+        <div class="bestseller-avatar">${ICONS.bottle}</div>
         <div class="bestseller-meta">
           <h4>${p.name}</h4>
           <span>${p.category} Collection</span>
@@ -1219,7 +1329,9 @@ function updateSalesSummaryStats() {
   if (weeklyEl) weeklyEl.innerText = `${weeklyTotal} units`;
   if (avgEl) avgEl.innerText = `${dailyAvg} units`;
   if (velEl) {
-    velEl.innerText = velocityText + (weeklyTotal >= prevWeeklyTotal ? ' 📈' : ' 📉');
+    velEl.innerHTML = velocityText + (weeklyTotal >= prevWeeklyTotal 
+      ? ' <span style="color:#2ecc71;">▲</span>' 
+      : ' <span style="color:#ef4444;">▼</span>');
     velEl.className = `metric-value ${velocityClass}`;
   }
 }
@@ -1252,12 +1364,12 @@ function renderCashFlow() {
     balanceCard.className = 'cf-kpi-card positive';
     balanceStatus.innerText = 'Net Positive Cash';
     balanceStatus.className = 'cf-subtext text-success';
-    balanceIcon.innerText = '📈';
+    balanceIcon.innerHTML = ICONS.trendUp;
   } else {
     balanceCard.className = 'cf-kpi-card negative';
     balanceStatus.innerText = 'Net Negative Cash';
     balanceStatus.className = 'cf-subtext text-danger';
-    balanceIcon.innerText = '📉';
+    balanceIcon.innerHTML = ICONS.trendDown;
   }
 
   // 2. Render operational expenses log table
@@ -1275,8 +1387,12 @@ function renderCashFlow() {
         <td data-label="Paid Amount" class="text-right font-bold text-danger">-${formatCurrency(exp.amount)}</td>
         <td data-label="Actions" class="text-right">
           <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
-            <button class="btn-edit-pencil" onclick="editExpense('${exp.id}')" title="Edit Expense" style="background: none; border: none; cursor: pointer; font-size: 0.95rem;">✏️</button>
-            <button class="btn-delete-row" onclick="deleteExpense('${exp.id}')" title="Delete Expense" style="background: none; border: none; cursor: pointer; font-size: 0.95rem;">🗑️</button>
+            <button class="btn-edit-pencil" onclick="editExpense('${exp.id}')" title="Edit Expense" style="background: none; border: none; cursor: pointer; font-size: 0.95rem; display: inline-flex; align-items: center; justify-content: center;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;color:var(--text-secondary);"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <button class="btn-delete-row" onclick="deleteExpense('${exp.id}')" title="Delete Expense" style="background: none; border: none; cursor: pointer; font-size: 0.95rem; display: inline-flex; align-items: center; justify-content: center;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;color:#ef4444;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            </button>
           </div>
         </td>
       </tr>
@@ -1405,7 +1521,9 @@ function renderProducts() {
       <tr>
         <td data-label="Product Details">
           <div class="product-cell">
-            <div class="product-avatar">🧴</div>
+            <div class="product-avatar" style="display:flex;align-items:center;justify-content:center;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;color:rgba(255,255,255,0.85);"><path d="M9 3h6v3H9z"/><path d="M12 6v4"/><path d="M6 10a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v9a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3v-9z"/></svg>
+            </div>
             <div class="product-meta">
               <h4>${p.name}</h4>
               <span>Collection: ${p.category}</span>
@@ -1422,8 +1540,14 @@ function renderProducts() {
         </td>
         <td data-label="Actions" class="text-right">
           <div class="table-actions">
-            <button class="btn btn-secondary btn-sm-action btn-restock-action" data-id="${p.id}">📥 In</button>
-            <button class="btn btn-secondary btn-sm-action btn-sell-action" data-id="${p.id}" ${p.stock === 0 ? 'disabled' : ''}>📤 Out</button>
+            <button class="btn btn-secondary btn-sm-action btn-restock-action" data-id="${p.id}" style="display: inline-flex; align-items: center; gap: 0.25rem;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;color:#2ecc71;"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+              In
+            </button>
+            <button class="btn btn-secondary btn-sm-action btn-sell-action" data-id="${p.id}" ${p.stock === 0 ? 'disabled' : ''} style="display: inline-flex; align-items: center; gap: 0.25rem;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;color:#ef4444;"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+              Out
+            </button>
             <button class="btn btn-outline btn-sm-action btn-edit-action" data-id="${p.id}">Edit</button>
           </div>
         </td>
@@ -1582,7 +1706,7 @@ function renderTransactions() {
         <td data-label="Total Value" class="text-right font-bold ${labelClass}">${labelSign}${formatCurrency(totalVal)}</td>
         <td data-label="Notes">
           <div>${tx.reason}</div>
-          ${custName ? `<span class="badge-pill instock" style="font-size:0.65rem; margin-top:0.25rem;">👤 ${custName}</span>` : ''}
+          ${custName ? `<span class="badge-pill instock" style="font-size:0.65rem; margin-top:0.25rem; display:inline-flex; align-items:center; gap:0.2rem;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${custName}</span>` : ''}
         </td>
       </tr>
     `;
@@ -1694,7 +1818,7 @@ function selectCustomer(id) {
         `<span style="display:inline-block;background:var(--accent-glow,rgba(167,139,250,0.15));color:var(--accent,#a78bfa);border:1px solid var(--accent,#a78bfa);border-radius:12px;padding:0.1rem 0.55rem;font-size:0.8rem;margin:0.1rem 0.15rem 0.1rem 0;">${p}</span>`
       ).join('');
     } else {
-      favElem.innerHTML = `<span style="color:var(--text-muted,#888);font-size:0.85rem;font-style:italic;">${stats.favoritePerfume === '-' ? 'None recorded yet' : '📊 ' + stats.favoritePerfume + ' (auto)'}</span>`;
+      favElem.innerHTML = `<span style="color:var(--text-muted,#888);font-size:0.85rem;font-style:italic;">${stats.favoritePerfume === '-' ? 'None recorded yet' : '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;display:inline-block;vertical-align:middle;margin-right:2px;margin-bottom:2px;"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>' + stats.favoritePerfume + ' (auto)'}</span>`;
     }
   }
 
@@ -1761,7 +1885,7 @@ function selectCustomer(id) {
         const newVal = inputEl.value.trim();
         if (!newVal) { restore(); return; }
         if (field === 'phone' && !isValidPhone(newVal)) {
-          alert('Please enter a valid phone number (at least 7 digits, containing only numbers, spaces, plus, dashes, and parentheses).');
+          showToast('Please enter a valid phone number (at least 7 digits).', 'warning');
           return;
         }
         const idx = state.customers.findIndex(c => c.id === id);
@@ -1881,14 +2005,14 @@ function selectCustomer(id) {
   if (btnClearHistory) {
     const freshClear = btnClearHistory.cloneNode(true);
     btnClearHistory.parentNode.replaceChild(freshClear, btnClearHistory);
-    freshClear.addEventListener('click', () => {
+    freshClear.addEventListener('click', async () => {
       const custName = customer.name;
       const count = state.transactions.filter(tx => tx.customerId === id && tx.type === 'OUT').length;
       if (count === 0) {
-        alert('This customer has no purchase history to clear.');
+        showToast('This customer has no purchase history to clear.', 'info');
         return;
       }
-      if (!confirm(`Clear all ${count} purchase record(s) for ${custName}?\n\nThis only removes their history from the CRM view. It does NOT affect inventory or financial totals.`)) return;
+      if (!await showConfirmDialog(`Clear all ${count} purchase record(s) for ${custName}? This only removes their history from the CRM view. It does NOT affect inventory or financial totals.`, 'Clear Purchase History')) return;
       // Unlink customer from their OUT transactions (preserves financials & stock!)
       state.transactions = state.transactions.map(tx =>
         (tx.customerId === id && tx.type === 'OUT') ? { ...tx, customerId: null, reason: tx.reason + ' [cleared customer history]' } : tx
@@ -1904,9 +2028,9 @@ function selectCustomer(id) {
   if (btnDeleteCustomer) {
     const freshDelete = btnDeleteCustomer.cloneNode(true);
     btnDeleteCustomer.parentNode.replaceChild(freshDelete, btnDeleteCustomer);
-    freshDelete.addEventListener('click', () => {
+    freshDelete.addEventListener('click', async () => {
       const custName = customer.name;
-      if (!confirm(`Permanently delete "${custName}"?\n\nThis will also remove all their purchase history links. This cannot be undone.`)) return;
+      if (!await showConfirmDialog(`Permanently delete "${custName}"? This will also remove all their purchase history links. This cannot be undone.`, 'Delete Customer')) return;
       // Remove customer
       state.customers = state.customers.filter(c => c.id !== id);
       // Unlink their transactions (don't delete, just remove customer reference)
@@ -2098,7 +2222,7 @@ function getSystemAlerts() {
       alerts.push({
         id: `low-stock-${p.id}`,
         type: 'warning',
-        icon: '⚠️',
+        icon: ICONS.alert,
         title: 'Low Stock Alert',
         desc: `${p.name} has only ${stock} units left (threshold: ${p.minStockThreshold}).`,
         actionView: 'inventory'
@@ -2121,7 +2245,7 @@ function getSystemAlerts() {
       alerts.push({
         id: 'cash-flow-negative',
         type: 'danger',
-        icon: '🚨',
+        icon: ICONS.alert,
         title: 'Negative Cash Flow',
         desc: `Expenses exceed revenue by ${formatCurrency(Math.abs(balance))}.`,
         actionView: 'cashflow'
@@ -2134,7 +2258,7 @@ function getSystemAlerts() {
       alerts.push({
         id: 'target-progress-info',
         type: 'info',
-        icon: '🎯',
+        icon: ICONS.target,
         title: 'Target Status',
         desc: `Net profit is at ${progressPercent.toFixed(1)}% of the ${formatCurrency(state.targetAmount)} target.`,
         actionView: 'dashboard'
@@ -2143,7 +2267,7 @@ function getSystemAlerts() {
       alerts.push({
         id: 'target-achieved-success',
         type: 'success',
-        icon: '🎉',
+        icon: ICONS.checkCircle,
         title: 'Target Achieved!',
         desc: `Congratulations! Net profit has exceeded the annual target of ${formatCurrency(state.targetAmount)}.`,
         actionView: 'dashboard'
@@ -2501,8 +2625,8 @@ function cancelExpenseEdit() {
   }
 }
 
-function deleteExpense(id) {
-  if (confirm('Are you sure you want to delete this expense?')) {
+async function deleteExpense(id) {
+  if (await showConfirmDialog('Are you sure you want to delete this expense?', 'Delete Expense')) {
     state.expenses = state.expenses.filter(e => e.id !== id);
     saveExpenses();
     renderCashFlow();
@@ -2619,7 +2743,7 @@ function setupEventListeners() {
         const id = selected.getAttribute('data-id');
         openCustomerModal(id);
       } else {
-        alert('Please select a customer first.');
+        showToast('Please select a customer first.', 'warning');
       }
     });
   }
@@ -2657,10 +2781,10 @@ function setupEventListeners() {
       if (inputVal > 0) {
         state.targetAmount = inputVal;
         localStorage.setItem('aurora_target_amount', inputVal.toString());
-        alert('Target amount successfully updated and saved!');
+        showToast('Target amount successfully updated and saved!', 'success');
         renderDashboard();
       } else {
-        alert('Please enter a valid target amount.');
+        showToast('Please enter a valid target amount.', 'warning');
       }
     });
   }
@@ -2700,8 +2824,8 @@ function setupEventListeners() {
   // Settings Database Reset button
   const btnResetDbSettings = document.getElementById('btn-reset-db-settings');
   if (btnResetDbSettings) {
-    btnResetDbSettings.addEventListener('click', () => {
-      if (confirm('Are you sure you want to reset the database to seed defaults? This clears all sales, custom products, CRM customers, and logged expenses.')) {
+    btnResetDbSettings.addEventListener('click', async () => {
+      if (await showConfirmDialog('Reset the database to seed defaults? This clears all sales, custom products, CRM customers, and logged expenses.', 'Reset Database')) {
         localStorage.removeItem('aurora_products');
         localStorage.removeItem('aurora_transactions');
         localStorage.removeItem('aurora_customers');
@@ -2715,8 +2839,8 @@ function setupEventListeners() {
   }
 
   // Clear History
-  document.getElementById('btn-clear-tx-history').addEventListener('click', () => {
-    if (confirm('Are you sure you want to clear all transaction history? Stock counts will reset to zero.')) {
+  document.getElementById('btn-clear-tx-history').addEventListener('click', async () => {
+    if (await showConfirmDialog('Clear all transaction history? Stock counts will reset to zero.', 'Clear History')) {
       state.transactions = [];
       saveTransactions();
       showView('transactions');
@@ -2822,7 +2946,7 @@ function setupEventListeners() {
     if (type === 'OUT') {
       const currentStock = getProductStock(prodId);
       if (qty > currentStock) {
-        alert(`Insufficient Stock! Only ${currentStock} units are on hand. Cannot record sale of ${qty} units.`);
+        showToast(`Insufficient Stock! Only ${currentStock} units on hand. Cannot sell ${qty} units.`, 'error');
         return;
       }
     }
@@ -2859,7 +2983,7 @@ function setupEventListeners() {
     const email = document.getElementById('form-cust-email').value.trim();
 
     if (!isValidPhone(phone)) {
-      alert('Please enter a valid phone number (at least 7 digits, containing only numbers, spaces, plus, dashes, and parentheses).');
+      showToast('Please enter a valid phone number (at least 7 digits).', 'warning');
       return;
     }
     // Collect all favourite perfume selects
@@ -3076,7 +3200,7 @@ function setupEventListeners() {
           if (passInput) passInput.value = '';
         } catch (error) {
           console.error("Firebase Auth Error:", error);
-          alert("Authentication Failed: " + error.message);
+          showToast('Authentication Failed: ' + error.message, 'error');
         }
       } else {
         // Fallback for LocalStorage
@@ -3109,7 +3233,7 @@ function setupEventListeners() {
           if (emailInput) emailInput.value = '';
           if (passInput) passInput.value = '';
         } else {
-          alert('Incorrect Email or Password.');
+          showToast('Incorrect Email or Password.', 'error');
         }
       }
     });
@@ -3167,10 +3291,10 @@ function setupEventListeners() {
         }
         
         localStorage.setItem('aurora_firebase_config', JSON.stringify(parsedConfig));
-        alert("Firebase Cloud Database Connected Successfully! The page will now reload.");
+        showToast('Firebase Cloud Database Connected! Reloading...', 'success');
         window.location.reload();
       } catch (err) {
-        alert("Configuration Error: " + err.message);
+        showToast('Configuration Error: ' + err.message, 'error');
       }
     });
   }
@@ -3198,12 +3322,12 @@ function setupEventListeners() {
       const passVal = document.getElementById('settings-password-input').value;
       
       if (!emailVal || !passVal) {
-        alert("Please enter a valid email and password.");
+        showToast('Please enter a valid email and password.', 'warning');
         return;
       }
       
       if (passVal.length < 6) {
-        alert("Password must be at least 6 characters.");
+        showToast('Password must be at least 6 characters.', 'warning');
         return;
       }
       
@@ -3220,20 +3344,20 @@ function setupEventListeners() {
               role: state.currentRole
             }, { merge: true });
             
-            alert("Security credentials updated successfully in Firebase Cloud!");
+            showToast('Security credentials updated in Firebase Cloud!', 'success');
           } else {
-            alert("No user is currently signed in to Firebase.");
+            showToast('No user is currently signed in to Firebase.', 'warning');
           }
         } catch (e) {
           console.error("Error updating credentials:", e);
-          alert("Failed to update credentials: " + e.message);
+          showToast('Failed to update credentials: ' + e.message, 'error');
         }
       } else {
         // Save locally
         const creds = getLocalCredentials();
         creds[state.currentRole] = { email: emailVal, password: passVal };
         localStorage.setItem('aurora_credentials', JSON.stringify(creds));
-        alert("Security credentials updated successfully in local storage!");
+        showToast('Security credentials updated in local storage!', 'success');
       }
     });
   }
@@ -3241,11 +3365,11 @@ function setupEventListeners() {
   // Cloud Database Disconnect / Connect Button Handler
   const btnDisconnect = document.getElementById('btn-disconnect-cloud');
   if (btnDisconnect) {
-    btnDisconnect.addEventListener('click', () => {
+    btnDisconnect.addEventListener('click', async () => {
       if (isFirebaseInitialized) {
-        if (confirm("Disconnect from Firebase Cloud Database? The system will revert back to Local Storage database mode.")) {
+        if (await showConfirmDialog('Disconnect from Firebase Cloud Database? The system will revert to local storage mode.', 'Disconnect Cloud')) {
           localStorage.removeItem('aurora_firebase_config');
-          alert("Disconnected from Firebase. Reloading to local storage mode...");
+          showToast('Disconnected from Firebase. Reloading...', 'success');
           window.location.reload();
         }
       } else {
@@ -3267,6 +3391,7 @@ function setupEventListeners() {
 
 window.addEventListener('DOMContentLoaded', () => {
   initStorage();
+  updateConnectionStatusUI();
 
   if (isFirebaseInitialized) {
     // Firebase Auth State listener
