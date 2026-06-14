@@ -1265,7 +1265,7 @@ function renderCashFlow() {
   const sortedExpenses = [...state.expenses].sort((a, b) => new Date(b.date) - new Date(a.date));
 
   if (sortedExpenses.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">No operational expenses logged.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No operational expenses logged.</td></tr>`;
   } else {
     tbody.innerHTML = sortedExpenses.map(exp => `
       <tr>
@@ -1273,6 +1273,12 @@ function renderCashFlow() {
         <td data-label="Category"><span class="badge-pill lowstock" style="font-size: 0.7rem;">${exp.category}</span></td>
         <td data-label="Description">${exp.description}</td>
         <td data-label="Paid Amount" class="text-right font-bold text-danger">-${formatCurrency(exp.amount)}</td>
+        <td data-label="Actions" class="text-right">
+          <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+            <button class="btn-edit-pencil" onclick="editExpense('${exp.id}')" title="Edit Expense" style="background: none; border: none; cursor: pointer; font-size: 0.95rem;">✏️</button>
+            <button class="btn-delete-row" onclick="deleteExpense('${exp.id}')" title="Delete Expense" style="background: none; border: none; cursor: pointer; font-size: 0.95rem;">🗑️</button>
+          </div>
+        </td>
       </tr>
     `).join('');
   }
@@ -2446,6 +2452,68 @@ function openTargetDetailsModal() {
 // 6. EVENT BINDING & HANDLERS
 // ==========================================
 
+let editingExpenseId = null;
+
+function editExpense(id) {
+  const exp = state.expenses.find(e => e.id === id);
+  if (!exp) return;
+
+  editingExpenseId = id;
+  
+  // Populate the form fields
+  document.getElementById('form-exp-category').value = exp.category;
+  document.getElementById('form-exp-amount').value = exp.amount;
+  document.getElementById('form-exp-desc').value = exp.description;
+  
+  // Format the date to YYYY-MM-DD for the date input
+  const expDate = new Date(exp.date);
+  const formattedDate = expDate.toISOString().split('T')[0];
+  document.getElementById('form-exp-date').value = formattedDate;
+
+  // Change submit button text
+  const submitBtn = document.getElementById('btn-expense-submit');
+  if (submitBtn) {
+    submitBtn.innerText = 'Save Changes';
+    submitBtn.className = 'btn btn-primary btn-block';
+  }
+
+  // Show cancel button
+  const cancelBtn = document.getElementById('btn-expense-cancel');
+  if (cancelBtn) {
+    cancelBtn.style.display = 'block';
+  }
+}
+
+function cancelExpenseEdit() {
+  editingExpenseId = null;
+  document.getElementById('expense-log-form').reset();
+  
+  // Reset submit button text
+  const submitBtn = document.getElementById('btn-expense-submit');
+  if (submitBtn) {
+    submitBtn.innerText = '+ Log Operational Expense';
+  }
+
+  // Hide cancel button
+  const cancelBtn = document.getElementById('btn-expense-cancel');
+  if (cancelBtn) {
+    cancelBtn.style.display = 'none';
+  }
+}
+
+function deleteExpense(id) {
+  if (confirm('Are you sure you want to delete this expense?')) {
+    state.expenses = state.expenses.filter(e => e.id !== id);
+    saveExpenses();
+    renderCashFlow();
+  }
+}
+
+// Expose to window so onclick handlers can call them
+window.editExpense = editExpense;
+window.deleteExpense = deleteExpense;
+window.cancelExpenseEdit = cancelExpenseEdit;
+
 function setupEventListeners() {
   // Sidebar Navigation Click handlers
   document.querySelectorAll('.nav-item').forEach(btn => {
@@ -2850,19 +2918,52 @@ function setupEventListeners() {
 
     const date = dateInput ? new Date(dateInput).toISOString() : new Date().toISOString();
 
-    state.expenses.push({
-      id: `exp-${uuid()}`,
-      category,
-      amount,
-      description: desc,
-      date
-    });
+    if (editingExpenseId) {
+      // Find and update the existing expense
+      const idx = state.expenses.findIndex(exp => exp.id === editingExpenseId);
+      if (idx !== -1) {
+        state.expenses[idx] = {
+          ...state.expenses[idx],
+          category,
+          amount,
+          description: desc,
+          date
+        };
+      }
+      editingExpenseId = null;
+      
+      // Reset submit button text
+      const submitBtn = document.getElementById('btn-expense-submit');
+      if (submitBtn) {
+        submitBtn.innerText = '+ Log Operational Expense';
+      }
+
+      // Hide cancel button
+      const cancelBtn = document.getElementById('btn-expense-cancel');
+      if (cancelBtn) {
+        cancelBtn.style.display = 'none';
+      }
+    } else {
+      // Add new expense
+      state.expenses.push({
+        id: `exp-${uuid()}`,
+        category,
+        amount,
+        description: desc,
+        date
+      });
+    }
 
     saveExpenses();
     document.getElementById('expense-log-form').reset();
     
     renderCashFlow();
   });
+
+  const cancelExpenseBtn = document.getElementById('btn-expense-cancel');
+  if (cancelExpenseBtn) {
+    cancelExpenseBtn.addEventListener('click', cancelExpenseEdit);
+  }
 
   // 5. Log Operational Expenses (From Modal popup)
   document.getElementById('expense-modal-form').addEventListener('submit', (e) => {

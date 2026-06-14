@@ -358,7 +358,6 @@
             <!-- Catalog Toolbar -->
             <div class="toolbar">
               <div class="search-box">
-                <span class="search-icon">🔍</span>
                 <input type="text" id="inventory-search" placeholder="Search perfume name, SKU or category..." />
               </div>
               <div class="filter-group">
@@ -409,7 +408,6 @@
             <!-- Transactions Toolbar -->
             <div class="toolbar">
               <div class="search-box">
-                <span class="search-icon">🔍</span>
                 <input type="text" id="tx-search" placeholder="Search by SKU, product, reason..." />
               </div>
               <div class="filter-group">
@@ -518,7 +516,10 @@
                     <input type="text" id="form-exp-desc" required placeholder="e.g. Dar es Salaam store electricity bill" />
                   </div>
 
-                  <button type="submit" class="btn btn-primary btn-block">+ Log Operational Expense</button>
+                  <div class="form-actions-group" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <button type="submit" id="btn-expense-submit" class="btn btn-primary btn-block">+ Log Operational Expense</button>
+                    <button type="button" id="btn-expense-cancel" class="btn btn-secondary btn-block" style="display: none;">Cancel Edit</button>
+                  </div>
                 </form>
               </div>
 
@@ -566,6 +567,7 @@
                           <th>Category</th>
                           <th>Description</th>
                           <th class="text-right">Paid Amount</th>
+                          <th class="text-right" style="width: 100px;">Actions</th>
                         </tr>
                       </thead>
                       <tbody id="cf-expenses-table-body">
@@ -587,7 +589,6 @@
               <div class="crm-list-panel">
                 <div class="toolbar">
                   <div class="search-box">
-                    <span class="search-icon">🔍</span>
                     <input type="text" id="crm-search" placeholder="Search customers name, phone..." />
                   </div>
                   <button id="btn-add-customer" class="btn btn-secondary">+ Add Customer</button>
@@ -616,7 +617,7 @@
                       <h2 id="cust-profile-name">John Doe</h2>
                       <span id="cust-profile-joined" class="subtext">Joined: 12 Jan 2026</span>
                     </div>
-                    <button id="btn-delete-customer" title="Delete Customer" style="margin-left:auto;background:none;border:1px solid #e74c3c;color:#e74c3c;border-radius:8px;padding:0.3rem 0.65rem;cursor:pointer;font-size:0.8rem;transition:background 0.2s,color 0.2s;">🗑 Delete</button>
+                    <button id="btn-delete-customer" title="Delete Customer" style="margin-left:auto;background:none;border:1px solid #e74c3c;color:#e74c3c;border-radius:8px;padding:0.3rem 0.65rem;cursor:pointer;font-size:0.8rem;transition:background 0.2s,color 0.2s;white-space:nowrap;">🗑 Delete</button>
                   </div>
                   
                   <div class="customer-stats-row">

@@ -536,6 +536,7 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .panel-header-row {
@@ -762,6 +763,8 @@ h1, h2, h3, h4, h5, h6 {
   cursor: pointer;
   border-radius: 6px;
   transition: var(--transition-fast);
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .tab-btn:hover {
@@ -936,7 +939,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .search-box input {
   width: 100%;
-  padding: 0.75rem 1rem 0.75rem 2.85rem;
+  padding: 0.75rem 1rem;
   background-color: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: 12px;
@@ -2329,6 +2332,11 @@ input:focus, select.large-select:focus {
     padding: 1rem;
   }
 
+  .dashboard-panel {
+    padding: 1rem !important;
+    border-radius: 20px !important;
+  }
+
   /* Table styling responsiveness (transform to cards) */
   .table-container {
     background: transparent !important;
@@ -2557,6 +2565,16 @@ input:focus, select.large-select:focus {
   }
   .subcard-date {
     font-size: 0.6rem !important;
+  }
+
+  .notification-popover {
+    position: fixed !important;
+    top: 64px !important;
+    left: 1rem !important;
+    right: 1rem !important;
+    width: calc(100vw - 2rem) !important;
+    max-width: none !important;
+    border-radius: 12px !important;
   }
 }
 
