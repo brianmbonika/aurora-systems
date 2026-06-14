@@ -2158,10 +2158,7 @@ function setupEventListeners() {
     });
   });
 
-  // Role selector handler
-  document.getElementById('user-role-select').addEventListener('change', (e) => {
-    switchRole(e.target.value);
-  });
+
 
   // Bestsellers category tabs clicks
   const tabsContainer = document.getElementById('bestseller-tabs-container');
@@ -2709,7 +2706,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
   setupEventListeners();
   
-  // Set starting role dropdown value in header
-  document.getElementById('user-role-select').value = state.currentRole;
+  // Set starting role and update dashboard view
+  const roleSelect = document.getElementById('user-role-select');
+  if (roleSelect) {
+    roleSelect.value = state.currentRole;
+  }
   switchRole(state.currentRole);
 });
