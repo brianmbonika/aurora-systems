@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/webp" href="/logo.webp" />
   </head>
   <body>
     <!-- Premium Login Screen Overlay -->
@@ -22,18 +22,13 @@
         
         <form id="login-form">
           <div class="form-group">
-            <label for="login-role">Select Access Role</label>
-            <select id="login-role" required class="large-select">
-              <option value="Admin">Administrator</option>
-              <option value="CEO" selected>CEO</option>
-              <option value="Manager">Manager</option>
-            </select>
+            <label for="login-email">Email Address</label>
+            <input type="email" id="login-email" required placeholder="email@aurorascents.co" />
           </div>
           
           <div class="form-group">
-            <label for="login-password">PIN / Access Password</label>
+            <label for="login-password">Access Password</label>
             <input type="password" id="login-password" required placeholder="••••••••" />
-            <span class="input-helper" id="login-helper" style="margin-top: 0.35rem; display: block;">Demo passwords: admin123, ceo123, manager123</span>
           </div>
           
           <button type="submit" class="btn btn-primary btn-block">Sign In to Dashboard</button>

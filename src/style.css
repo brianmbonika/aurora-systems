@@ -2596,6 +2596,7 @@ input:focus, select.large-select:focus {
 }
 
 .login-card select.large-select, 
+.login-card input[type="email"],
 .login-card input[type="password"] {
   width: 100% !important;
   box-sizing: border-box;
@@ -2611,6 +2612,7 @@ input:focus, select.large-select:focus {
 }
 
 .login-card select.large-select:focus,
+.login-card input[type="email"]:focus,
 .login-card input[type="password"]:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px var(--primary-glow);

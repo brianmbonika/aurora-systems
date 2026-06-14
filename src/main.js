@@ -2621,17 +2621,25 @@ function setupEventListeners() {
   if (loginForm) {
     loginForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      const role = document.getElementById('login-role').value;
-      const pass = document.getElementById('login-password').value;
+      const emailInput = document.getElementById('login-email');
+      const passInput = document.getElementById('login-password');
+      const email = emailInput ? emailInput.value.trim().toLowerCase() : '';
+      const pass = passInput ? passInput.value : '';
 
-      // Demo passwords map
-      const creds = {
-        Admin: 'admin123',
-        CEO: 'ceo123',
-        Manager: 'manager123'
-      };
+      // Credentials mapping:
+      // CEO: ceo@aurorascents.co / Kudra@aurora
+      // Manager: manager@aurorascents.co / Zainab@aurora
+      // Admin: admin@aurorascents.co / Brian@aurora
+      let role = null;
+      if (email === 'ceo@aurorascents.co' && pass === 'Kudra@aurora') {
+        role = 'CEO';
+      } else if (email === 'manager@aurorascents.co' && pass === 'Zainab@aurora') {
+        role = 'Manager';
+      } else if (email === 'admin@aurorascents.co' && pass === 'Brian@aurora') {
+        role = 'Admin';
+      }
 
-      if (creds[role] && pass === creds[role]) {
+      if (role) {
         state.isAuthenticated = true;
         state.currentRole = role;
         
@@ -2645,13 +2653,17 @@ function setupEventListeners() {
         }
 
         // Set role selectors and update dashboard view
-        document.getElementById('user-role-select').value = role;
+        const roleSelect = document.getElementById('user-role-select');
+        if (roleSelect) {
+          roleSelect.value = role;
+        }
         switchRole(role);
         
-        // Reset password input
-        document.getElementById('login-password').value = '';
+        // Reset input fields
+        if (emailInput) emailInput.value = '';
+        if (passInput) passInput.value = '';
       } else {
-        alert('Incorrect PIN/Access Password for this role.');
+        alert('Incorrect Email or Password.');
       }
     });
   }
