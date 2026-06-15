@@ -2,6 +2,7 @@ import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
   signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword,
   signOut, 
   onAuthStateChanged, 
   updateEmail, 
@@ -70,6 +71,7 @@ export {
   activeConfig,
   // Auth exports
   signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
   updateEmail,

@@ -5,6 +5,7 @@ import {
   isFirebaseInitialized, 
   activeConfig,
   signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
   updateEmail,
@@ -3188,7 +3189,32 @@ function setupEventListeners() {
       if (isFirebaseInitialized) {
         try {
           // Firebase sign-in
-          const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+          let userCredential;
+          try {
+            userCredential = await signInWithEmailAndPassword(auth, email, pass);
+          } catch (signInError) {
+            // Check if credentials match default credentials
+            const creds = getLocalCredentials();
+            let role = null;
+            if (email === creds.CEO.email && pass === creds.CEO.password) role = 'CEO';
+            else if (email === creds.Manager.email && pass === creds.Manager.password) role = 'Manager';
+            else if (email === creds.Admin.email && pass === creds.Admin.password) role = 'Admin';
+
+            const isUserNotFoundErr = 
+              signInError.code === 'auth/user-not-found' || 
+              signInError.code === 'auth/invalid-credential' || 
+              signInError.code === 'auth/invalid-login-credentials' ||
+              String(signInError.message).toLowerCase().includes('user-not-found') ||
+              String(signInError.message).toLowerCase().includes('invalid-credential') ||
+              String(signInError.message).toLowerCase().includes('invalid-login-credentials');
+
+            if (role && isUserNotFoundErr) {
+              console.log(`Default seed user ${email} not found in Firebase Auth. Auto-registering...`);
+              userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+            } else {
+              throw signInError;
+            }
+          }
           const user = userCredential.user;
           
           // Get user role from users collection
@@ -3213,6 +3239,10 @@ function setupEventListeners() {
           
           localStorage.setItem('aurora_authenticated', 'true');
           localStorage.setItem('aurora_current_role', role);
+
+          // Run sync and seed only after successful authentication
+          await checkAndSeedFirestore();
+          initFirestoreSync();
 
           // Hide login overlay
           const loginScreen = document.getElementById('login-screen');
