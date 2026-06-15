@@ -218,7 +218,16 @@ async function syncCollectionToFirestore(collectionName, localArray) {
     // 1. Upload/update all current local items
     localArray.forEach(item => {
       const docRef = doc(db, collectionName, item.id);
-      batch.set(docRef, item);
+      
+      // Clean undefined fields to avoid Firestore setDoc errors
+      const cleanItem = {};
+      Object.keys(item).forEach(key => {
+        if (item[key] !== undefined) {
+          cleanItem[key] = item[key];
+        }
+      });
+      
+      batch.set(docRef, cleanItem);
     });
     
     // 2. Fetch remote documents to clean up deleted ones
