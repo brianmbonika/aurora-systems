@@ -131,9 +131,7 @@ function initStorage() {
   }
 
   if (isFirebaseInitialized) {
-    // Seeding check and start real-time listener syncing
-    checkAndSeedFirestore();
-    initFirestoreSync();
+    // Firebase mode active: syncing will start after successful user login
   } else {
     // Fallback to local storage database mode
     const storedProducts = localStorage.getItem('aurora_products');
@@ -237,6 +235,7 @@ async function syncCollectionToFirestore(collectionName, localArray) {
     console.log(`Synced ${collectionName} to Firestore.`);
   } catch (e) {
     console.error(`Error syncing ${collectionName}:`, e);
+    showToast(`Failed to sync changes to cloud database: ${e.message}`, 'error');
   }
 }
 
@@ -316,22 +315,44 @@ function populateSecuritySettings() {
   }
 }
 
+let firestoreUnsubscribes = [];
+
+function cleanupFirestoreSync() {
+  firestoreUnsubscribes.forEach(unsub => {
+    try {
+      unsub();
+    } catch (e) {
+      console.error("Error unsubscribing:", e);
+    }
+  });
+  firestoreUnsubscribes = [];
+}
+
 // Firestore Database Real-time Sync
 function initFirestoreSync() {
   if (!isFirebaseInitialized) return;
+  
+  cleanupFirestoreSync();
+
+  const handleSyncError = (collectionName, error) => {
+    console.error(`Firestore Sync Error for ${collectionName}:`, error);
+    if (state.isAuthenticated) {
+      showToast(`Cloud database sync error for ${collectionName}: ${error.message}`, 'error');
+    }
+  };
 
   // Sync Products
-  onSnapshot(collection(db, 'products'), (snapshot) => {
+  const unsubProducts = onSnapshot(collection(db, 'products'), (snapshot) => {
     const items = [];
     snapshot.forEach(docSnap => items.push(docSnap.data()));
     if (items.length > 0) {
       state.products = items;
       renderProducts();
     }
-  });
+  }, (err) => handleSyncError('products', err));
 
   // Sync Transactions
-  onSnapshot(collection(db, 'transactions'), (snapshot) => {
+  const unsubTransactions = onSnapshot(collection(db, 'transactions'), (snapshot) => {
     const items = [];
     snapshot.forEach(docSnap => items.push(docSnap.data()));
     state.transactions = items;
@@ -340,23 +361,25 @@ function initFirestoreSync() {
     const activeNav = document.querySelector('.nav-item.active');
     const viewName = activeNav ? activeNav.getAttribute('data-view') : 'dashboard';
     showView(viewName);
-  });
+  }, (err) => handleSyncError('transactions', err));
 
   // Sync Customers
-  onSnapshot(collection(db, 'customers'), (snapshot) => {
+  const unsubCustomers = onSnapshot(collection(db, 'customers'), (snapshot) => {
     const items = [];
     snapshot.forEach(docSnap => items.push(docSnap.data()));
     state.customers = items;
     renderCRM();
-  });
+  }, (err) => handleSyncError('customers', err));
 
   // Sync Expenses
-  onSnapshot(collection(db, 'expenses'), (snapshot) => {
+  const unsubExpenses = onSnapshot(collection(db, 'expenses'), (snapshot) => {
     const items = [];
     snapshot.forEach(docSnap => items.push(docSnap.data()));
     state.expenses = items;
     renderCashFlow();
-  });
+  }, (err) => handleSyncError('expenses', err));
+
+  firestoreUnsubscribes.push(unsubProducts, unsubTransactions, unsubCustomers, unsubExpenses);
 }
 
 // Seed Database automatically in Firestore if empty
@@ -3420,12 +3443,19 @@ window.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('aurora_authenticated', 'true');
         localStorage.setItem('aurora_current_role', role);
 
+        // Run sync and seed only after successful authentication
+        await checkAndSeedFirestore();
+        initFirestoreSync();
+
         if (loginScreen) loginScreen.classList.add('hidden');
         switchRole(role);
       } else {
         // Signed out
         state.isAuthenticated = false;
         localStorage.removeItem('aurora_authenticated');
+        
+        // Clean up listeners on sign out
+        cleanupFirestoreSync();
         
         // Only show login overlay if wizard is closed
         const wizard = document.getElementById('firebase-wizard');
