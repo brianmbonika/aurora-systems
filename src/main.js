@@ -3316,21 +3316,26 @@ function setupEventListeners() {
           }
           const user = userCredential.user;
           
-          // Get user role from users collection
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          // Derive role from email as safe fallback
           let role = 'Manager';
-          if (userDoc.exists()) {
-            role = userDoc.data().role;
-          } else {
-            // Map role by email if document doesn't exist
-            if (email.includes('ceo')) role = 'CEO';
-            else if (email.includes('admin')) role = 'Admin';
-            
-            // Seed the user role document
-            await setDoc(doc(db, 'users', user.uid), {
-              email: email,
-              role: role
-            });
+          if (email.includes('ceo')) role = 'CEO';
+          else if (email.includes('admin')) role = 'Admin';
+
+          // Try to read/write the user role from Firestore (best-effort; won't block login)
+          try {
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if (userDoc.exists()) {
+              role = userDoc.data().role;
+            } else {
+              // Seed the user role document
+              await setDoc(doc(db, 'users', user.uid), {
+                email: email,
+                role: role
+              });
+            }
+          } catch (dbError) {
+            console.warn('Firestore user profile read failed (permissions?). Using email-derived role:', dbError.message);
+            showToast('⚠️ Firestore rules need updating — logged in with default role. Fix rules in Firebase Console.', 'warning', 6000);
           }
           
           state.isAuthenticated = true;
@@ -3339,9 +3344,13 @@ function setupEventListeners() {
           localStorage.setItem('aurora_authenticated', 'true');
           localStorage.setItem('aurora_current_role', role);
 
-          // Run sync and seed only after successful authentication
-          await checkAndSeedFirestore();
-          initFirestoreSync();
+          // Try to run sync and seed (best-effort; won't block login)
+          try {
+            await checkAndSeedFirestore();
+            initFirestoreSync();
+          } catch (syncErr) {
+            console.warn('Firestore sync skipped due to permissions:', syncErr.message);
+          }
 
           // Hide login overlay
           const loginScreen = document.getElementById('login-screen');
