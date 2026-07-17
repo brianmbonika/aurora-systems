@@ -3560,33 +3560,48 @@ window.addEventListener('DOMContentLoaded', () => {
       const loginScreen = document.getElementById('login-screen');
       if (user) {
         // Signed in
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        let role = 'Manager';
-        if (userDoc.exists()) {
-          role = userDoc.data().role;
-        } else {
-          const email = user.email || '';
-          if (email.includes('ceo')) role = 'CEO';
-          else if (email.includes('admin')) role = 'Admin';
+        try {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          let role = 'Manager';
+          if (userDoc.exists()) {
+            role = userDoc.data().role;
+          } else {
+            const email = user.email || '';
+            if (email.includes('ceo')) role = 'CEO';
+            else if (email.includes('admin')) role = 'Admin';
+            
+            await setDoc(doc(db, 'users', user.uid), {
+              email: email,
+              role: role
+            });
+          }
+
+          state.isAuthenticated = true;
+          state.currentRole = role;
           
-          await setDoc(doc(db, 'users', user.uid), {
-            email: email,
-            role: role
-          });
+          localStorage.setItem('aurora_authenticated', 'true');
+          localStorage.setItem('aurora_current_role', role);
+
+          // Run sync and seed only after successful authentication
+          await checkAndSeedFirestore();
+          initFirestoreSync();
+
+          if (loginScreen) loginScreen.classList.add('hidden');
+          switchRole(role);
+        } catch (dbError) {
+          console.error("Firestore initialization read error:", dbError);
+          showToast('Firestore Connection Blocked: Missing or insufficient permissions. Verify your Firestore security rules.', 'error', 8000);
+          
+          state.isAuthenticated = false;
+          localStorage.removeItem('aurora_authenticated');
+          if (loginScreen) loginScreen.classList.remove('hidden');
+          
+          try {
+            await signOut(auth);
+          } catch (soErr) {
+            console.error("Autosignout failure:", soErr);
+          }
         }
-
-        state.isAuthenticated = true;
-        state.currentRole = role;
-        
-        localStorage.setItem('aurora_authenticated', 'true');
-        localStorage.setItem('aurora_current_role', role);
-
-        // Run sync and seed only after successful authentication
-        await checkAndSeedFirestore();
-        initFirestoreSync();
-
-        if (loginScreen) loginScreen.classList.add('hidden');
-        switchRole(role);
       } else {
         // Signed out
         state.isAuthenticated = false;
