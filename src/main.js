@@ -3278,6 +3278,22 @@ function setupEventListeners() {
   // Simulated Login Screen listener
   const loginForm = document.getElementById('login-form');
   if (loginForm) {
+    // Inject a debug log area below the form so errors show on-page
+    const debugBox = document.createElement('div');
+    debugBox.id = 'login-debug-log';
+    debugBox.style.cssText = 'margin-top:1rem;padding:0.75rem;background:#1a1a2e;color:#7fff7f;font-family:monospace;font-size:0.7rem;border-radius:8px;max-height:140px;overflow-y:auto;text-align:left;display:none;';
+    loginForm.parentNode.appendChild(debugBox);
+
+    function loginLog(msg, color) {
+      debugBox.style.display = 'block';
+      const line = document.createElement('div');
+      line.style.color = color || '#7fff7f';
+      line.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg;
+      debugBox.appendChild(line);
+      debugBox.scrollTop = debugBox.scrollHeight;
+      console.log('[LOGIN DEBUG]', msg);
+    }
+
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const emailInput = document.getElementById('login-email');
@@ -3285,13 +3301,19 @@ function setupEventListeners() {
       const email = emailInput ? emailInput.value.trim().toLowerCase() : '';
       const pass = passInput ? passInput.value : '';
 
+      loginLog('Button clicked. Email: ' + email);
+      loginLog('Firebase initialized: ' + isFirebaseInitialized);
+
       if (isFirebaseInitialized) {
+        loginLog('Attempting Firebase sign-in...');
         try {
           // Firebase sign-in
           let userCredential;
           try {
             userCredential = await signInWithEmailAndPassword(auth, email, pass);
+            loginLog('Auth sign-in SUCCESS ✓');
           } catch (signInError) {
+            loginLog('Sign-in error: ' + signInError.code + ' — ' + signInError.message, '#ffaa00');
             // Check if credentials match default credentials
             const creds = getLocalCredentials();
             let role = null;
@@ -3308,9 +3330,11 @@ function setupEventListeners() {
               String(signInError.message).toLowerCase().includes('invalid-login-credentials');
 
             if (role && isUserNotFoundErr) {
-              console.log(`Default seed user ${email} not found in Firebase Auth. Auto-registering...`);
+              loginLog('Auto-registering seed user in Firebase Auth...');
               userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+              loginLog('Auto-register SUCCESS ✓');
             } else {
+              loginLog('Throwing sign-in error (not a recoverable user-not-found).', '#ff5555');
               throw signInError;
             }
           }
@@ -3321,21 +3345,23 @@ function setupEventListeners() {
           if (email.includes('ceo')) role = 'CEO';
           else if (email.includes('admin')) role = 'Admin';
 
+          loginLog('Auth OK. Reading role from Firestore...');
           // Try to read/write the user role from Firestore (best-effort; won't block login)
           try {
             const userDoc = await getDoc(doc(db, 'users', user.uid));
             if (userDoc.exists()) {
               role = userDoc.data().role;
+              loginLog('Role from Firestore: ' + role);
             } else {
-              // Seed the user role document
+              loginLog('No profile doc — seeding with email-derived role: ' + role);
               await setDoc(doc(db, 'users', user.uid), {
                 email: email,
                 role: role
               });
             }
           } catch (dbError) {
-            console.warn('Firestore user profile read failed (permissions?). Using email-derived role:', dbError.message);
-            showToast('⚠️ Firestore rules need updating — logged in with default role. Fix rules in Firebase Console.', 'warning', 6000);
+            loginLog('Firestore read BLOCKED: ' + dbError.message + ' — using fallback role: ' + role, '#ffaa00');
+            showToast('⚠️ Firestore rules need updating — logged in with default role.', 'warning', 6000);
           }
           
           state.isAuthenticated = true;
@@ -3344,12 +3370,13 @@ function setupEventListeners() {
           localStorage.setItem('aurora_authenticated', 'true');
           localStorage.setItem('aurora_current_role', role);
 
+          loginLog('Hiding login screen and switching role...');
           // Try to run sync and seed (best-effort; won't block login)
           try {
             await checkAndSeedFirestore();
             initFirestoreSync();
           } catch (syncErr) {
-            console.warn('Firestore sync skipped due to permissions:', syncErr.message);
+            loginLog('Sync skipped (permissions): ' + syncErr.message, '#ffaa00');
           }
 
           // Hide login overlay
@@ -3364,11 +3391,13 @@ function setupEventListeners() {
             roleSelect.value = role;
           }
           switchRole(role);
+          loginLog('Login complete! Role: ' + role);
           
           // Reset inputs
           if (emailInput) emailInput.value = '';
           if (passInput) passInput.value = '';
         } catch (error) {
+          loginLog('FATAL login error: ' + error.code + ' — ' + error.message, '#ff5555');
           console.error("Firebase Auth Error:", error);
           showToast('Authentication Failed: ' + error.message, 'error');
         }
