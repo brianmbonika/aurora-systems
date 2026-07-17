@@ -1040,11 +1040,11 @@ function renderDashboardStatsGrid() {
       <div class="kpi-subcard">
         <div class="kpi-subcard-header">
           ${iconWrap(ICONS.wallet, 'green')}
-          <span class="subcard-title">Stock Valuation</span>
+          <span class="subcard-title">Stock Worth (Cost)</span>
           <span class="subcard-trend">Asset</span>
         </div>
         <h3 class="subcard-value">${formatCurrency(kpis.totalValuation)}</h3>
-        <span class="subcard-date">Current inventory worth (cost)</span>
+        <span class="subcard-date">Total value at buying price</span>
       </div>
       
       <div class="kpi-subcard">
@@ -1181,11 +1181,11 @@ function renderDashboardStatsGrid() {
       <div class="kpi-subcard">
         <div class="kpi-subcard-header">
           ${iconWrap(ICONS.wallet, 'green')}
-          <span class="subcard-title">Stock Valuation</span>
+          <span class="subcard-title">Stock Worth (Cost)</span>
           <span class="subcard-trend">Asset</span>
         </div>
         <h3 class="subcard-value">${formatCurrency(kpis.totalValuation)}</h3>
-        <span class="subcard-date">Current inventory worth (cost)</span>
+        <span class="subcard-date">Total value at buying price</span>
       </div>
 
       <div class="kpi-subcard">
