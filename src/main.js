@@ -1036,6 +1036,16 @@ function renderDashboardStatsGrid() {
         <h3 class="subcard-value">${state.products.reduce((sum, p) => sum + getProductStock(p.id), 0).toLocaleString()}</h3>
         <span class="subcard-date">Bottles currently in stock</span>
       </div>
+
+      <div class="kpi-subcard">
+        <div class="kpi-subcard-header">
+          ${iconWrap(ICONS.wallet, 'green')}
+          <span class="subcard-title">Stock Valuation</span>
+          <span class="subcard-trend">Asset</span>
+        </div>
+        <h3 class="subcard-value">${formatCurrency(kpis.totalValuation)}</h3>
+        <span class="subcard-date">Current inventory worth (cost)</span>
+      </div>
       
       <div class="kpi-subcard">
         <div class="kpi-subcard-header">
@@ -1166,6 +1176,16 @@ function renderDashboardStatsGrid() {
         </div>
         <h3 class="subcard-value">${state.products.reduce((sum, p) => sum + getProductStock(p.id), 0).toLocaleString()}</h3>
         <span class="subcard-date">Bottles currently in stock</span>
+      </div>
+
+      <div class="kpi-subcard">
+        <div class="kpi-subcard-header">
+          ${iconWrap(ICONS.wallet, 'green')}
+          <span class="subcard-title">Stock Valuation</span>
+          <span class="subcard-trend">Asset</span>
+        </div>
+        <h3 class="subcard-value">${formatCurrency(kpis.totalValuation)}</h3>
+        <span class="subcard-date">Current inventory worth (cost)</span>
       </div>
 
       <div class="kpi-subcard">
