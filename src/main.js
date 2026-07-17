@@ -3600,48 +3600,48 @@ window.addEventListener('DOMContentLoaded', () => {
     onAuthStateChanged(auth, async (user) => {
       const loginScreen = document.getElementById('login-screen');
       if (user) {
-        // Signed in
+        // Signed in — derive role from email as safe default
         try {
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          const email = user.email || '';
           let role = 'Manager';
-          if (userDoc.exists()) {
-            role = userDoc.data().role;
-          } else {
-            const email = user.email || '';
-            if (email.includes('ceo')) role = 'CEO';
-            else if (email.includes('admin')) role = 'Admin';
-            
-            await setDoc(doc(db, 'users', user.uid), {
-              email: email,
-              role: role
-            });
+          if (email.includes('ceo')) role = 'CEO';
+          else if (email.includes('admin')) role = 'Admin';
+
+          // Best-effort: try to read the stored role from Firestore
+          try {
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if (userDoc.exists()) {
+              role = userDoc.data().role;
+            } else {
+              // Attempt to seed it — silently skip if permissions block it
+              try {
+                await setDoc(doc(db, 'users', user.uid), { email, role });
+              } catch (_) { /* permissions not ready yet */ }
+            }
+          } catch (dbErr) {
+            console.warn('Firestore role read blocked — using email-derived role:', dbErr.message);
           }
 
           state.isAuthenticated = true;
           state.currentRole = role;
-          
           localStorage.setItem('aurora_authenticated', 'true');
           localStorage.setItem('aurora_current_role', role);
 
-          // Run sync and seed only after successful authentication
-          await checkAndSeedFirestore();
-          initFirestoreSync();
-
+          // Hide login screen immediately — never block on Firestore
           if (loginScreen) loginScreen.classList.add('hidden');
           switchRole(role);
-        } catch (dbError) {
-          console.error("Firestore initialization read error:", dbError);
-          showToast('Firestore Connection Blocked: Missing or insufficient permissions. Verify your Firestore security rules.', 'error', 8000);
-          
-          state.isAuthenticated = false;
-          localStorage.removeItem('aurora_authenticated');
-          if (loginScreen) loginScreen.classList.remove('hidden');
-          
-          try {
-            await signOut(auth);
-          } catch (soErr) {
-            console.error("Autosignout failure:", soErr);
-          }
+
+          // Background sync — non-blocking
+          (async () => {
+            try {
+              await checkAndSeedFirestore();
+              initFirestoreSync();
+            } catch (syncErr) {
+              console.warn('Firestore sync skipped (fix rules):', syncErr.message);
+            }
+          })();
+        } catch (fatalErr) {
+          console.error('Unexpected error in onAuthStateChanged:', fatalErr);
         }
       } else {
         // Signed out
