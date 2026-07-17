@@ -465,13 +465,38 @@ function initFirestoreSync() {
     renderCashFlow();
   }, (err) => handleSyncError('expenses', err));
 
-  firestoreUnsubscribes.push(unsubProducts, unsubTransactions, unsubCustomers, unsubExpenses);
+  // Sync Target Amount
+  const unsubConfig = onSnapshot(doc(db, 'config', 'target'), (docSnap) => {
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      if (data && typeof data.amount === 'number') {
+        state.targetAmount = data.amount;
+        localStorage.setItem('aurora_target_amount', data.amount.toString());
+        
+        const targetInput = document.getElementById('settings-target-input');
+        if (targetInput) targetInput.value = data.amount;
+        const modalTargetInput = document.getElementById('form-target-value');
+        if (modalTargetInput) modalTargetInput.value = data.amount;
+
+        renderDashboard();
+      }
+    }
+  }, (err) => handleSyncError('config/target', err));
+
+  firestoreUnsubscribes.push(unsubProducts, unsubTransactions, unsubCustomers, unsubExpenses, unsubConfig);
 }
 
 // Seed Database automatically in Firestore if empty
 async function checkAndSeedFirestore() {
   if (!isFirebaseInitialized) return;
   try {
+    // Ensure default target exists in config/target
+    const targetDocRef = doc(db, 'config', 'target');
+    const targetSnap = await getDoc(targetDocRef);
+    if (!targetSnap.exists()) {
+      await setDoc(targetDocRef, { amount: state.targetAmount });
+    }
+
     const prodSnap = await getDocs(collection(db, 'products'));
     if (prodSnap.empty) {
       console.log("Firestore database is empty. Automatically seeding default catalog...");
@@ -1133,6 +1158,16 @@ function renderDashboardStatsGrid() {
     }
 
     grid.innerHTML = `
+      <div class="kpi-subcard">
+        <div class="kpi-subcard-header">
+          ${iconWrap(ICONS.box, 'purple')}
+          <span class="subcard-title">Total Stock Units</span>
+          <span class="subcard-trend">Live</span>
+        </div>
+        <h3 class="subcard-value">${state.products.reduce((sum, p) => sum + getProductStock(p.id), 0).toLocaleString()}</h3>
+        <span class="subcard-date">Bottles currently in stock</span>
+      </div>
+
       <div class="kpi-subcard">
         <div class="kpi-subcard-header">
           ${iconWrap(ICONS.tag, 'purple')}
@@ -2254,7 +2289,7 @@ function switchRole(role) {
   // Toggle target prediction edit pencil button
   const editTargetBtn = document.getElementById('btn-edit-target');
   if (editTargetBtn) {
-    if (role === 'Admin' || role === 'CEO') {
+    if (role === 'CEO') {
       editTargetBtn.style.display = 'inline-block';
     } else {
       editTargetBtn.style.display = 'none';
@@ -2283,7 +2318,7 @@ function renderSettings() {
 
   const settingsTargetGroup = document.getElementById('settings-target-group');
   if (settingsTargetGroup) {
-    if (state.currentRole === 'Admin' || state.currentRole === 'CEO') {
+    if (state.currentRole === 'CEO') {
       settingsTargetGroup.style.display = 'flex';
       const targetInput = document.getElementById('settings-target-input');
       if (targetInput) {
@@ -2932,13 +2967,28 @@ function setupEventListeners() {
   // Save target submit
   const editTargetForm = document.getElementById('edit-target-form');
   if (editTargetForm) {
-    editTargetForm.addEventListener('submit', (e) => {
+    editTargetForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      if (state.currentRole !== 'CEO') {
+        showToast('Access Denied: Only the CEO can update the profit target.', 'error');
+        closeModal('modal-edit-target');
+        return;
+      }
       const el = document.getElementById('form-target-value');
       const newTarget = el ? parseFloat(el.value) : 0;
       if (newTarget > 0) {
         state.targetAmount = newTarget;
         localStorage.setItem('aurora_target_amount', newTarget.toString());
+        
+        // Sync to Firebase
+        if (isFirebaseInitialized) {
+          try {
+            await setDoc(doc(db, 'config', 'target'), { amount: newTarget });
+          } catch (err) {
+            console.error("Error updating target in Firestore:", err);
+          }
+        }
+        
         closeModal('modal-edit-target');
         renderDashboard();
       }
@@ -2948,12 +2998,26 @@ function setupEventListeners() {
   // Save target settings click (on Settings Page)
   const btnSaveTargetSettings = document.getElementById('btn-save-target-settings');
   if (btnSaveTargetSettings) {
-    btnSaveTargetSettings.addEventListener('click', () => {
+    btnSaveTargetSettings.addEventListener('click', async () => {
+      if (state.currentRole !== 'CEO') {
+        showToast('Access Denied: Only the CEO can update the profit target.', 'error');
+        return;
+      }
       const el = document.getElementById('settings-target-input');
       const inputVal = el ? parseFloat(el.value) : 0;
       if (inputVal > 0) {
         state.targetAmount = inputVal;
         localStorage.setItem('aurora_target_amount', inputVal.toString());
+        
+        // Sync to Firebase
+        if (isFirebaseInitialized) {
+          try {
+            await setDoc(doc(db, 'config', 'target'), { amount: inputVal });
+          } catch (err) {
+            console.error("Error updating target in Firestore:", err);
+          }
+        }
+
         showToast('Target amount successfully updated and saved!', 'success');
         renderDashboard();
       } else {

@@ -420,10 +420,10 @@ h1, h2, h3, h4, h5, h6 {
   pointer-events: none;
 }
 
-/* 2x2 Subcards Grid */
+/* Responsive Subcards Grid */
 .kpi-subcards-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem;
 }
 
