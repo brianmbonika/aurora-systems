@@ -2578,8 +2578,10 @@ function openTransactionModal(type, preSelectedProdId = null) {
   const hiddenCustInput = document.getElementById('form-tx-customer');
   if (hiddenCustInput) hiddenCustInput.value = '';
 
-  // Wire up mode toggle buttons
-  const modeBtns = document.querySelectorAll('.cust-mode-btn');
+  const custGroup = document.getElementById('form-tx-customer-group');
+
+  // Wire up mode toggle buttons (scoped to this modal only)
+  const modeBtns = custGroup ? custGroup.querySelectorAll('.cust-mode-btn') : [];
   const panels = {
     guest: document.getElementById('cust-panel-guest'),
     existing: document.getElementById('cust-panel-existing'),
@@ -2587,25 +2589,33 @@ function openTransactionModal(type, preSelectedProdId = null) {
   };
 
   function activateMode(mode) {
+    // Store mode reliably on the container for the submit handler to read
+    if (custGroup) custGroup.dataset.currentMode = mode;
+
     modeBtns.forEach(b => {
       const isActive = b.dataset.mode === mode;
       b.style.background = isActive ? 'var(--primary)' : 'transparent';
       b.style.color = isActive ? '#fff' : 'var(--text-secondary)';
       b.style.borderColor = isActive ? 'var(--primary)' : 'var(--border-color)';
+      b.style.fontWeight = isActive ? '700' : '600';
     });
     Object.entries(panels).forEach(([key, el]) => {
       if (el) el.style.display = key === mode ? 'block' : 'none';
     });
-    // Sync hidden customer input when switching to guest/existing
+    // Sync hidden customer input
     if (mode === 'guest' && hiddenCustInput) hiddenCustInput.value = '';
     if (mode === 'existing' && custSelectEl && hiddenCustInput) {
       hiddenCustInput.value = custSelectEl.value;
       custSelectEl.onchange = () => { hiddenCustInput.value = custSelectEl.value; };
     }
+    if (mode === 'new' && hiddenCustInput) hiddenCustInput.value = '';
   }
 
   modeBtns.forEach(btn => {
-    btn.onclick = () => activateMode(btn.dataset.mode);
+    // Use cloneNode trick to avoid stacking duplicate onclick handlers on re-open
+    const fresh = btn.cloneNode(true);
+    btn.parentNode.replaceChild(fresh, btn);
+    fresh.addEventListener('click', () => activateMode(fresh.dataset.mode));
   });
 
   // Start on Guest
@@ -3108,12 +3118,9 @@ function setupEventListeners() {
       const prodId = document.getElementById('form-tx-product').value;
       const qty = parseInt(document.getElementById('form-tx-quantity').value);
       const price = parseFloat(document.getElementById('form-tx-price').value);
-      // Determine which customer mode is active
-      const activeMode = (() => {
-        const btn = document.querySelector('.cust-mode-btn.active') ||
-                    [...document.querySelectorAll('.cust-mode-btn')].find(b => b.style.background.includes('var(--primary)') || b.style.background === 'rgb(249, 115, 22)');
-        return btn ? btn.dataset.mode : 'guest';
-      })();
+      // Determine which customer mode is active via data attribute (reliable on all browsers)
+      const custGroup = document.getElementById('form-tx-customer-group');
+      const activeMode = custGroup?.dataset.currentMode || 'guest';
 
       let customerId = null;
 
