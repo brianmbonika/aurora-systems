@@ -1005,11 +1005,11 @@ function renderDashboardStatsGrid() {
       <div class="kpi-subcard">
         <div class="kpi-subcard-header">
           ${iconWrap(ICONS.box)}
-          <span class="subcard-title">Total Products</span>
-          <span class="subcard-trend">Active</span>
+          <span class="subcard-title">Total Stock Units</span>
+          <span class="subcard-trend">Live</span>
         </div>
-        <h3 class="subcard-value">${state.products.length}</h3>
-        <span class="subcard-date">Update: Today</span>
+        <h3 class="subcard-value">${state.products.reduce((sum, p) => sum + getProductStock(p.id), 0).toLocaleString()}</h3>
+        <span class="subcard-date">Bottles currently in stock</span>
       </div>
       
       <div class="kpi-subcard">
@@ -1146,11 +1146,11 @@ function renderDashboardStatsGrid() {
       <div class="kpi-subcard">
         <div class="kpi-subcard-header">
           ${iconWrap(ICONS.receipt, 'blue')}
-          <span class="subcard-title">Total Expenses (Cash Out)</span>
+          <span class="subcard-title">Total Cash Out</span>
           <span class="subcard-trend ${expensesTrendClass}">${expensesTrend}</span>
         </div>
         <h3 class="subcard-value">${formatCurrency(totalExpenses)}</h3>
-        <span class="subcard-date">Cash Outflow</span>
+        <span class="subcard-date">Restock cost + Ops expenses</span>
       </div>
 
       <div class="kpi-subcard">
@@ -1169,8 +1169,8 @@ function renderDashboardStatsGrid() {
           <span class="subcard-title">Net Profit</span>
           <span class="subcard-trend ${netTrendClass}">${netTrend}</span>
         </div>
-        <h3 class="subcard-value">${formatCurrency(kpis.netProfit)}</h3>
-        <span class="subcard-date">Gross Profit - Ops Expenses</span>
+        <h3 class="subcard-value" style="color:${kpis.netProfit >= 0 ? '' : '#ef4444'}">${formatCurrency(kpis.netProfit)}</h3>
+        <span class="subcard-date">Gross Profit − Ops Expenses${kpis.netProfit < 0 ? ' ⚠️ Loss' : ''}</span>
       </div>
     `;
   }
