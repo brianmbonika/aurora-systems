@@ -3370,32 +3370,35 @@ function setupEventListeners() {
           localStorage.setItem('aurora_authenticated', 'true');
           localStorage.setItem('aurora_current_role', role);
 
-          loginLog('Hiding login screen and switching role...');
-          // Try to run sync and seed (best-effort; won't block login)
-          try {
-            await checkAndSeedFirestore();
-            initFirestoreSync();
-          } catch (syncErr) {
-            loginLog('Sync skipped (permissions): ' + syncErr.message, '#ffaa00');
-          }
-
-          // Hide login overlay
+          // ── HIDE LOGIN SCREEN IMMEDIATELY ──────────────────────────────
+          // Do this BEFORE any async Firestore calls so a permission hang
+          // never blocks the user from reaching the dashboard.
+          loginLog('Hiding login screen now...');
           const loginScreen = document.getElementById('login-screen');
-          if (loginScreen) {
-            loginScreen.classList.add('hidden');
-          }
+          if (loginScreen) loginScreen.classList.add('hidden');
 
-          // Set starting role and update dashboard view
           const roleSelect = document.getElementById('user-role-select');
-          if (roleSelect) {
-            roleSelect.value = role;
-          }
+          if (roleSelect) roleSelect.value = role;
+
           switchRole(role);
           loginLog('Login complete! Role: ' + role);
-          
+
           // Reset inputs
           if (emailInput) emailInput.value = '';
           if (passInput) passInput.value = '';
+
+          // ── BACKGROUND SYNC (non-blocking) ─────────────────────────────
+          // Run after UI is already showing so any Firestore permission hang
+          // doesn't affect the user experience.
+          (async () => {
+            try {
+              await checkAndSeedFirestore();
+              initFirestoreSync();
+              loginLog('Background sync complete ✓');
+            } catch (syncErr) {
+              loginLog('Background sync skipped (fix Firestore rules): ' + syncErr.message, '#ffaa00');
+            }
+          })();
         } catch (error) {
           loginLog('FATAL login error: ' + error.code + ' — ' + error.message, '#ff5555');
           console.error("Firebase Auth Error:", error);
