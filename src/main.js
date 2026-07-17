@@ -2565,10 +2565,56 @@ function openTransactionModal(type, preSelectedProdId = null) {
     prodSelect.value = preSelectedProdId;
   }
 
-  custSelect.innerHTML = `
-    <option value="">-- Guest Customer / Anonymous --</option>
-    ${state.customers.map(c => `<option value="${c.id}">${c.name} (${c.phone})</option>`).join('')}
-  `;
+  // Populate existing customers dropdown
+  const custSelectEl = document.getElementById('form-tx-customer-select');
+  if (custSelectEl) {
+    custSelectEl.innerHTML = `
+      <option value="">-- Select a customer --</option>
+      ${state.customers.map(c => `<option value="${c.id}">${c.name} (${c.phone})</option>`).join('')}
+    `;
+  }
+
+  // Reset mode to Guest
+  const hiddenCustInput = document.getElementById('form-tx-customer');
+  if (hiddenCustInput) hiddenCustInput.value = '';
+
+  // Wire up mode toggle buttons
+  const modeBtns = document.querySelectorAll('.cust-mode-btn');
+  const panels = {
+    guest: document.getElementById('cust-panel-guest'),
+    existing: document.getElementById('cust-panel-existing'),
+    new: document.getElementById('cust-panel-new')
+  };
+
+  function activateMode(mode) {
+    modeBtns.forEach(b => {
+      const isActive = b.dataset.mode === mode;
+      b.style.background = isActive ? 'var(--primary)' : 'transparent';
+      b.style.color = isActive ? '#fff' : 'var(--text-secondary)';
+      b.style.borderColor = isActive ? 'var(--primary)' : 'var(--border-color)';
+    });
+    Object.entries(panels).forEach(([key, el]) => {
+      if (el) el.style.display = key === mode ? 'block' : 'none';
+    });
+    // Sync hidden customer input when switching to guest/existing
+    if (mode === 'guest' && hiddenCustInput) hiddenCustInput.value = '';
+    if (mode === 'existing' && custSelectEl && hiddenCustInput) {
+      hiddenCustInput.value = custSelectEl.value;
+      custSelectEl.onchange = () => { hiddenCustInput.value = custSelectEl.value; };
+    }
+  }
+
+  modeBtns.forEach(btn => {
+    btn.onclick = () => activateMode(btn.dataset.mode);
+  });
+
+  // Start on Guest
+  activateMode('guest');
+  // Clear new customer fields
+  ['form-tx-new-cust-name','form-tx-new-cust-phone','form-tx-new-cust-email'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
 
   if (type === 'IN') {
     modalTitle.innerText = 'Stock In (Restock)';
@@ -3062,7 +3108,47 @@ function setupEventListeners() {
       const prodId = document.getElementById('form-tx-product').value;
       const qty = parseInt(document.getElementById('form-tx-quantity').value);
       const price = parseFloat(document.getElementById('form-tx-price').value);
-      const customerId = document.getElementById('form-tx-customer').value;
+      // Determine which customer mode is active
+      const activeMode = (() => {
+        const btn = document.querySelector('.cust-mode-btn.active') ||
+                    [...document.querySelectorAll('.cust-mode-btn')].find(b => b.style.background.includes('var(--primary)') || b.style.background === 'rgb(249, 115, 22)');
+        return btn ? btn.dataset.mode : 'guest';
+      })();
+
+      let customerId = null;
+
+      if (activeMode === 'existing') {
+        customerId = document.getElementById('form-tx-customer').value || null;
+      } else if (activeMode === 'new') {
+        const newName = (document.getElementById('form-tx-new-cust-name')?.value || '').trim();
+        const newPhone = (document.getElementById('form-tx-new-cust-phone')?.value || '').trim();
+        const newEmail = (document.getElementById('form-tx-new-cust-email')?.value || '').trim();
+
+        if (!newName) {
+          showToast('Please enter the customer name.', 'warning');
+          return;
+        }
+        if (!isValidPhone(newPhone)) {
+          showToast('Please enter a valid phone number for the new customer.', 'warning');
+          return;
+        }
+
+        // Create and save the new customer immediately
+        const newId = `cust-${uuid()}`;
+        state.customers.push({
+          id: newId,
+          name: newName,
+          phone: newPhone,
+          email: newEmail || null,
+          favoritePerfumes: null,
+          favoritePerfume: null,
+          createdAt: new Date().toISOString()
+        });
+        saveCustomers();
+        customerId = newId;
+        showToast(`✓ New customer "${newName}" saved to CRM.`, 'success');
+      }
+      // guest mode → customerId stays null
       const notes = document.getElementById('form-tx-notes').value.trim();
 
       if (type === 'OUT') {

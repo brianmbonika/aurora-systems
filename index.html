@@ -981,11 +981,56 @@
 
           <!-- Sale specific customer picker -->
           <div class="form-group" id="form-tx-customer-group">
-            <label for="form-tx-customer">Customer (Optional)</label>
-            <select id="form-tx-customer">
-              <option value="">-- Guest Customer / Anonymous --</option>
-              <!-- Populated dynamically -->
-            </select>
+            <label>Customer (Optional)</label>
+
+            <!-- Mode toggle -->
+            <div id="cust-mode-tabs" style="display:flex;gap:0.5rem;margin-bottom:0.6rem;">
+              <button type="button" class="cust-mode-btn active" data-mode="guest"
+                style="flex:1;padding:0.4rem 0.5rem;border-radius:8px;border:1.5px solid var(--primary);background:var(--primary);color:#fff;font-size:0.75rem;font-weight:600;cursor:pointer;transition:all 0.2s;">
+                Guest
+              </button>
+              <button type="button" class="cust-mode-btn" data-mode="existing"
+                style="flex:1;padding:0.4rem 0.5rem;border-radius:8px;border:1.5px solid var(--border-color);background:transparent;color:var(--text-secondary);font-size:0.75rem;font-weight:600;cursor:pointer;transition:all 0.2s;">
+                Existing
+              </button>
+              <button type="button" class="cust-mode-btn" data-mode="new"
+                style="flex:1;padding:0.4rem 0.5rem;border-radius:8px;border:1.5px solid var(--border-color);background:transparent;color:var(--text-secondary);font-size:0.75rem;font-weight:600;cursor:pointer;transition:all 0.2s;">
+                + New
+              </button>
+            </div>
+
+            <!-- Guest mode (default) -->
+            <div id="cust-panel-guest">
+              <input type="hidden" id="form-tx-customer" value="" />
+              <p style="font-size:0.78rem;color:var(--text-secondary);margin:0;">Sale recorded as anonymous / walk-in customer.</p>
+            </div>
+
+            <!-- Existing customer select -->
+            <div id="cust-panel-existing" style="display:none;">
+              <select id="form-tx-customer-select" style="width:100%;">
+                <option value="">-- Select a customer --</option>
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+
+            <!-- New customer inline entry -->
+            <div id="cust-panel-new" style="display:none;display:none;">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;">
+                <div>
+                  <label style="font-size:0.75rem;color:var(--text-secondary);display:block;margin-bottom:0.25rem;">Full Name *</label>
+                  <input type="text" id="form-tx-new-cust-name" placeholder="e.g. Amina Hassan" style="width:100%;box-sizing:border-box;" />
+                </div>
+                <div>
+                  <label style="font-size:0.75rem;color:var(--text-secondary);display:block;margin-bottom:0.25rem;">Phone *</label>
+                  <input type="tel" id="form-tx-new-cust-phone" placeholder="e.g. 0712345678" style="width:100%;box-sizing:border-box;" />
+                </div>
+              </div>
+              <div style="margin-top:0.5rem;">
+                <label style="font-size:0.75rem;color:var(--text-secondary);display:block;margin-bottom:0.25rem;">Email (Optional)</label>
+                <input type="email" id="form-tx-new-cust-email" placeholder="e.g. amina@email.com" style="width:100%;box-sizing:border-box;" />
+              </div>
+              <p style="font-size:0.72rem;color:var(--text-secondary);margin:0.4rem 0 0;">Customer will be saved to CRM automatically.</p>
+            </div>
           </div>
 
           <div class="form-group">
