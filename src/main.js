@@ -3700,17 +3700,16 @@ function setupEventListeners() {
   }
 
   // Forgot Password Modal Handlers
-  const btnForgotPassword = document.getElementById('btn-forgot-password');
   const closeForgotPasswordBtn = document.getElementById('close-forgot-password');
   const btnCancelForgot = document.getElementById('btn-cancel-forgot');
   const btnSendReset = document.getElementById('btn-send-reset');
   const forgotPasswordForm = document.getElementById('forgot-password-form');
 
-  if (btnForgotPassword) {
-    btnForgotPassword.addEventListener('click', () => {
-      openModal('modal-forgot-password');
-    });
-  }
+  // Use safeAddListener for forgot password button
+  safeAddListener('btn-forgot-password', 'click', () => {
+    console.log('Forgot password clicked');
+    openModal('modal-forgot-password');
+  });
 
   if (closeForgotPasswordBtn) {
     closeForgotPasswordBtn.addEventListener('click', () => {
