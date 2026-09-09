@@ -104,38 +104,38 @@ function showFatalErrorOverlay(message) {
 // ==========================================
 
 const INITIAL_PRODUCTS = [
-  { name: "Elite", costPrice: 67000, sellingPrice: 162000, category: "Elite" },
-  { name: "Elite VIP", costPrice: 67000, sellingPrice: 162000, category: "Elite" },
-  { name: "Black Obsidian", costPrice: 100000, sellingPrice: 250000, category: "Signature" },
-  { name: "Her Majesty", costPrice: 110000, sellingPrice: 260000, category: "Signature" },
-  { name: "Cherry in the Woods", costPrice: 100000, sellingPrice: 250000, category: "Signature" },
-  { name: "Aroma Señora VI", costPrice: 81000, sellingPrice: 200000, category: "Signature" },
-  { name: "Aroma V", costPrice: 81000, sellingPrice: 200000, category: "Signature" },
-  { name: "Garden of Eden", costPrice: 110000, sellingPrice: 260000, category: "Signature" },
-  { name: "Dancing Snowfall", costPrice: 110000, sellingPrice: 260000, category: "Signature" },
-  { name: "In the Nowhere Land", costPrice: 110000, sellingPrice: 260000, category: "Signature" },
-  { name: "Verdazur", costPrice: 65000, sellingPrice: 150000, category: "Standard" },
-  { name: "Gemini & Gemini Bloom", costPrice: 100000, sellingPrice: 250000, category: "Standard" },
-  { name: "Cuban Wood", costPrice: 81000, sellingPrice: 200000, category: "Standard" },
-  { name: "Eclat", costPrice: 100000, sellingPrice: 250000, category: "Standard" },
-  { name: "Veloura", costPrice: 65000, sellingPrice: 150000, category: "Standard" },
-  { name: "Silva", costPrice: 65000, sellingPrice: 150000, category: "Standard" },
-  { name: "Verde", costPrice: 65000, sellingPrice: 150000, category: "Standard" },
-  { name: "Black Rogue", costPrice: 50000, sellingPrice: 120000, category: "Standard" },
-  { name: "Aura Gold", costPrice: 80000, sellingPrice: 180000, category: "Standard" },
-  { name: "Vanilla Expresso", costPrice: 70000, sellingPrice: 160000, category: "Standard" },
-  { name: "Cafe Citadel", costPrice: 70000, sellingPrice: 160000, category: "Standard" },
-  { name: "Crimson", costPrice: 70000, sellingPrice: 160000, category: "Standard" },
-  { name: "Azul", costPrice: 65000, sellingPrice: 150000, category: "Standard" },
-  { name: "Solis", costPrice: 65000, sellingPrice: 150000, category: "Standard" },
-  { name: "Habanera Pink", costPrice: 72000, sellingPrice: 173000, category: "Standard" },
-  { name: "Melody", costPrice: 72000, sellingPrice: 173000, category: "Standard" },
-  { name: "Porturo", costPrice: 63000, sellingPrice: 151000, category: "Standard" },
-  { name: "Roadster Intense", costPrice: 54000, sellingPrice: 130000, category: "Standard" },
-  { name: "Monument Gold", costPrice: 76000, sellingPrice: 183000, category: "Standard" },
-  { name: "Saffron Extrait", costPrice: 100000, sellingPrice: 250000, category: "Standard" },
-  { name: "Deciduous Summer", costPrice: 100000, sellingPrice: 250000, category: "Deciduous" },
-  { name: "Deciduous Spring", costPrice: 100000, sellingPrice: 250000, category: "Deciduous" },
+  { name: "Elite", costPrice: 67000, sellingPrice: 162000, category: "Elite", type: "Full Bottle" },
+  { name: "Elite VIP", costPrice: 67000, sellingPrice: 162000, category: "Elite", type: "Full Bottle" },
+  { name: "Black Obsidian", costPrice: 100000, sellingPrice: 250000, category: "Signature", type: "Full Bottle" },
+  { name: "Her Majesty", costPrice: 110000, sellingPrice: 260000, category: "Signature", type: "Full Bottle" },
+  { name: "Cherry in the Woods", costPrice: 100000, sellingPrice: 250000, category: "Signature", type: "Full Bottle" },
+  { name: "Aroma Señora VI", costPrice: 81000, sellingPrice: 200000, category: "Signature", type: "Full Bottle" },
+  { name: "Aroma V", costPrice: 81000, sellingPrice: 200000, category: "Signature", type: "Full Bottle" },
+  { name: "Garden of Eden", costPrice: 110000, sellingPrice: 260000, category: "Signature", type: "Full Bottle" },
+  { name: "Dancing Snowfall", costPrice: 110000, sellingPrice: 260000, category: "Signature", type: "Full Bottle" },
+  { name: "In the Nowhere Land", costPrice: 110000, sellingPrice: 260000, category: "Signature", type: "Full Bottle" },
+  { name: "Verdazur", costPrice: 65000, sellingPrice: 150000, category: "Standard", type: "Full Bottle" },
+  { name: "Gemini & Gemini Bloom", costPrice: 100000, sellingPrice: 250000, category: "Standard", type: "Full Bottle" },
+  { name: "Cuban Wood", costPrice: 81000, sellingPrice: 200000, category: "Standard", type: "Full Bottle" },
+  { name: "Eclat", costPrice: 100000, sellingPrice: 250000, category: "Standard", type: "Full Bottle" },
+  { name: "Veloura", costPrice: 65000, sellingPrice: 150000, category: "Standard", type: "Full Bottle" },
+  { name: "Silva", costPrice: 65000, sellingPrice: 150000, category: "Standard", type: "Full Bottle" },
+  { name: "Verde", costPrice: 65000, sellingPrice: 150000, category: "Standard", type: "Full Bottle" },
+  { name: "Black Rogue", costPrice: 50000, sellingPrice: 120000, category: "Standard", type: "Full Bottle" },
+  { name: "Aura Gold", costPrice: 80000, sellingPrice: 180000, category: "Standard", type: "Full Bottle" },
+  { name: "Vanilla Expresso", costPrice: 70000, sellingPrice: 160000, category: "Standard", type: "Full Bottle" },
+  { name: "Cafe Citadel", costPrice: 70000, sellingPrice: 160000, category: "Standard", type: "Full Bottle" },
+  { name: "Crimson", costPrice: 70000, sellingPrice: 160000, category: "Standard", type: "Full Bottle" },
+  { name: "Azul", costPrice: 65000, sellingPrice: 150000, category: "Standard", type: "Full Bottle" },
+  { name: "Solis", costPrice: 65000, sellingPrice: 150000, category: "Standard", type: "Full Bottle" },
+  { name: "Habanera Pink", costPrice: 72000, sellingPrice: 173000, category: "Standard", type: "Full Bottle" },
+  { name: "Melody", costPrice: 72000, sellingPrice: 173000, category: "Standard", type: "Full Bottle" },
+  { name: "Porturo", costPrice: 63000, sellingPrice: 151000, category: "Standard", type: "Full Bottle" },
+  { name: "Roadster Intense", costPrice: 54000, sellingPrice: 130000, category: "Standard", type: "Full Bottle" },
+  { name: "Monument Gold", costPrice: 76000, sellingPrice: 183000, category: "Standard", type: "Full Bottle" },
+  { name: "Saffron Extrait", costPrice: 100000, sellingPrice: 250000, category: "Standard", type: "Full Bottle" },
+  { name: "Deciduous Summer", costPrice: 100000, sellingPrice: 250000, category: "Deciduous", type: "Full Bottle" },
+  { name: "Deciduous Spring", costPrice: 100000, sellingPrice: 250000, category: "Deciduous", type: "Full Bottle" },
 ];
 
 const INITIAL_CUSTOMERS = [
@@ -1685,7 +1685,7 @@ function renderProducts() {
             </div>
             <div class="product-meta">
               <h4>${p.name}</h4>
-              <span>Collection: ${p.category}</span>
+              <span>Collection: ${p.category} • Type: ${p.type || 'Full Bottle'}</span>
             </div>
           </div>
         </td>
@@ -2531,6 +2531,7 @@ function openProductModal(productId = null) {
     document.getElementById('form-product-name').value = prod.name;
     document.getElementById('form-product-sku').value = prod.sku;
     document.getElementById('form-product-category').value = prod.category;
+    document.getElementById('form-product-type').value = prod.type || 'Full Bottle';
     document.getElementById('form-product-threshold').value = prod.minStockThreshold;
     document.getElementById('form-product-cost').value = prod.costPrice;
     document.getElementById('form-product-retail').value = prod.sellingPrice;
@@ -3185,6 +3186,7 @@ function setupEventListeners() {
       const id = document.getElementById('form-product-id').value;
       const name = document.getElementById('form-product-name').value;
       const category = document.getElementById('form-product-category').value;
+      const type = document.getElementById('form-product-type').value;
       const skuVal = document.getElementById('form-product-sku').value;
       const threshold = parseInt(document.getElementById('form-product-threshold').value);
       const cost = parseFloat(document.getElementById('form-product-cost').value);
@@ -3195,7 +3197,7 @@ function setupEventListeners() {
       if (id) {
         const idx = state.products.findIndex(p => p.id === id);
         if (idx !== -1) {
-          state.products[idx] = { ...state.products[idx], name, category, sku, minStockThreshold: threshold, costPrice: cost, sellingPrice: retail };
+          state.products[idx] = { ...state.products[idx], name, category, type, sku, minStockThreshold: threshold, costPrice: cost, sellingPrice: retail };
         }
       } else {
         state.products.push({
@@ -3203,6 +3205,7 @@ function setupEventListeners() {
           sku,
           name,
           category,
+          type,
           costPrice: cost,
           sellingPrice: retail,
           minStockThreshold: threshold
@@ -3211,7 +3214,7 @@ function setupEventListeners() {
 
       saveProducts();
       closeModal('modal-product-form');
-      
+
       const activeNav = document.querySelector('.nav-item.active').getAttribute('data-view');
       showView(activeNav);
     });
