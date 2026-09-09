@@ -3619,7 +3619,22 @@ function setupEventListeners() {
             errorMessage = 'Too many failed attempts. Try again later.';
           }
 
-          showToast(errorMessage, 'error');
+          // Show error in both toast and on login card
+          showToast(errorMessage, 'error', 4000);
+
+          // Also display error on the login card itself
+          let errorDiv = document.getElementById('login-error-message');
+          if (!errorDiv) {
+            errorDiv = document.createElement('div');
+            errorDiv.id = 'login-error-message';
+            errorDiv.style.cssText = 'background-color: #fee2e2; border: 1.5px solid #fca5a5; color: #991b1b; padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem; font-weight: 500;';
+            const loginForm = document.getElementById('login-form');
+            if (loginForm) {
+              loginForm.parentNode.insertBefore(errorDiv, loginForm);
+            }
+          }
+          errorDiv.innerText = '❌ ' + errorMessage;
+          errorDiv.style.display = 'block';
         }
       } else {
         // Fallback for LocalStorage
