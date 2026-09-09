@@ -3665,7 +3665,6 @@ function setupEventListeners() {
   const btnCancelForgot = document.getElementById('btn-cancel-forgot');
   const btnSendReset = document.getElementById('btn-send-reset');
   const forgotPasswordForm = document.getElementById('forgot-password-form');
-  const backdrop = document.getElementById('backdrop');
 
   if (btnForgotPassword) {
     btnForgotPassword.addEventListener('click', () => {
