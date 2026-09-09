@@ -3591,6 +3591,28 @@ function setupEventListeners() {
           if (emailInput) emailInput.value = '';
           if (passInput) passInput.value = '';
 
+          // Show loading spinner
+          const loadingSpinner = document.createElement('div');
+          loadingSpinner.id = 'login-loading-spinner';
+          loadingSpinner.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 9999;
+          `;
+          loadingSpinner.innerHTML = `
+            <div style="width: 50px; height: 50px; border: 4px solid rgba(249, 115, 22, 0.2); border-top: 4px solid #f97316; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto; margin-bottom: 1rem;"></div>
+            <p style="color: var(--text-secondary); font-size: 0.9rem;">Loading dashboard...</p>
+            <style>
+              @keyframes spin {
+                to { transform: rotate(360deg); }
+              }
+            </style>
+          `;
+          document.body.appendChild(loadingSpinner);
+
           // ── BACKGROUND SYNC (non-blocking) ─────────────────────────────
           // Run after UI is already showing so any Firestore permission hang
           // doesn't affect the user experience.
@@ -3601,6 +3623,10 @@ function setupEventListeners() {
               loginLog('Background sync complete ✓');
             } catch (syncErr) {
               loginLog('Background sync skipped (fix Firestore rules): ' + syncErr.message, '#ffaa00');
+            } finally {
+              // Remove loading spinner
+              const spinner = document.getElementById('login-loading-spinner');
+              if (spinner) spinner.remove();
             }
           })();
         } catch (error) {
