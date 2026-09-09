@@ -354,11 +354,18 @@ function saveExpenses() {
   }
 }
 
-// Default Credentials for Local Storage fallback
+// Local-storage-only fallback credentials (used ONLY when no Firebase config
+// is present at all — this app has Firebase configured, so this branch is
+// not exercised in production, but the file still ships to every visitor's
+// browser unauthenticated). Intentionally left blank: this used to contain
+// the real CEO/Manager/Admin passwords in plaintext, visible to anyone who
+// opened devtools or viewed the bundle. Set real values via the Settings
+// panel (writes to the 'aurora_credentials' localStorage key) instead of
+// hardcoding them here.
 const defaultCredentials = {
-  CEO: { email: 'ceo@aurorascents.co', password: 'Kudra@aurora' },
-  Manager: { email: 'manager@aurorascents.co', password: 'Zainab@aurora' },
-  Admin: { email: 'admin@aurorascents.co', password: 'Brian@aurora' }
+  CEO: { email: '', password: '' },
+  Manager: { email: '', password: '' },
+  Admin: { email: '', password: '' }
 };
 
 function getLocalCredentials() {
@@ -3455,21 +3462,12 @@ function setupEventListeners() {
   // Simulated Login Screen listener
   const loginForm = document.getElementById('login-form');
   if (loginForm) {
-    // Inject a debug log area below the form so errors show on-page
-    const debugBox = document.createElement('div');
-    debugBox.id = 'login-debug-log';
-    debugBox.style.cssText = 'margin-top:1rem;padding:0.75rem;background:#1a1a2e;color:#7fff7f;font-family:monospace;font-size:0.7rem;border-radius:8px;max-height:140px;overflow-y:auto;text-align:left;display:none;';
-    loginForm.parentNode.appendChild(debugBox);
-
-    function loginLog(msg, color) {
-      debugBox.style.display = 'block';
-      const line = document.createElement('div');
-      line.style.color = color || '#7fff7f';
-      line.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg;
-      debugBox.appendChild(line);
-      debugBox.scrollTop = debugBox.scrollHeight;
-      console.log('[LOGIN DEBUG]', msg);
-    }
+    // Internal login-flow step tracker — a no-op in production. This used
+    // to render a live debug panel under the login form and mirror every
+    // step to the browser console (including Firebase's raw error codes),
+    // exposing internal auth flow details to anyone with devtools open.
+    // Real, user-facing errors still surface via showToast() below.
+    function loginLog(_msg, _color) {}
 
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -3490,37 +3488,22 @@ function setupEventListeners() {
             userCredential = await signInWithEmailAndPassword(auth, email, pass);
             loginLog('Auth sign-in SUCCESS ✓');
           } catch (signInError) {
+            // No auto-registration fallback. This used to check the typed
+            // email/password against a hardcoded seed-credential list and,
+            // on a match, silently create a live Firebase account — a
+            // convenience for first-time setup that became a liability
+            // once those seed passwords were sitting in the public bundle.
+            // A failed sign-in is now always surfaced as a real error.
             loginLog('Sign-in error: ' + signInError.code + ' — ' + signInError.message, '#ffaa00');
-            // Check if credentials match default credentials
-            const creds = getLocalCredentials();
-            let role = null;
-            if (email === creds.CEO.email && pass === creds.CEO.password) role = 'CEO';
-            else if (email === creds.Manager.email && pass === creds.Manager.password) role = 'Manager';
-            else if (email === creds.Admin.email && pass === creds.Admin.password) role = 'Admin';
-
-            const isUserNotFoundErr = 
-              signInError.code === 'auth/user-not-found' || 
-              signInError.code === 'auth/invalid-credential' || 
-              signInError.code === 'auth/invalid-login-credentials' ||
-              String(signInError.message).toLowerCase().includes('user-not-found') ||
-              String(signInError.message).toLowerCase().includes('invalid-credential') ||
-              String(signInError.message).toLowerCase().includes('invalid-login-credentials');
-
-            if (role && isUserNotFoundErr) {
-              loginLog('Auto-registering seed user in Firebase Auth...');
-              userCredential = await createUserWithEmailAndPassword(auth, email, pass);
-              loginLog('Auto-register SUCCESS ✓');
-            } else {
-              loginLog('Throwing sign-in error (not a recoverable user-not-found).', '#ff5555');
-              throw signInError;
-            }
+            throw signInError;
           }
           const user = userCredential.user;
           
-          // Derive role from email as safe fallback
+          // Safe fallback role, used only until Firestore confirms the
+          // real one below. NEVER derived from the email address anymore —
+          // that let anyone self-elevate to CEO/Admin just by signing in
+          // with an email containing "ceo" or "admin".
           let role = 'Manager';
-          if (email.includes('ceo')) role = 'CEO';
-          else if (email.includes('admin')) role = 'Admin';
 
           loginLog('Auth OK. Reading role from Firestore...');
           // Try to read/write the user role from Firestore (best-effort; won't block login)
@@ -3780,9 +3763,10 @@ window.addEventListener('DOMContentLoaded', () => {
         // Signed in — derive role from email as safe default
         try {
           const email = user.email || '';
+          // Safe fallback role, used only until Firestore confirms the real
+          // one below. Never derived from the email address (see the login
+          // handler above for why).
           let role = 'Manager';
-          if (email.includes('ceo')) role = 'CEO';
-          else if (email.includes('admin')) role = 'Admin';
 
           // Best-effort: try to read the stored role from Firestore
           try {
