@@ -3701,7 +3701,6 @@ function setupEventListeners() {
 
   // Forgot Password Modal Handlers
   const btnForgotPassword = document.getElementById('btn-forgot-password');
-  const modalForgotPassword = document.getElementById('modal-forgot-password');
   const closeForgotPasswordBtn = document.getElementById('close-forgot-password');
   const btnCancelForgot = document.getElementById('btn-cancel-forgot');
   const btnSendReset = document.getElementById('btn-send-reset');
@@ -3709,24 +3708,19 @@ function setupEventListeners() {
 
   if (btnForgotPassword) {
     btnForgotPassword.addEventListener('click', () => {
-      if (modalForgotPassword) {
-        modalForgotPassword.style.display = 'flex';
-        if (backdrop) backdrop.classList.add('active');
-      }
+      openModal('modal-forgot-password');
     });
   }
 
   if (closeForgotPasswordBtn) {
     closeForgotPasswordBtn.addEventListener('click', () => {
-      if (modalForgotPassword) modalForgotPassword.style.display = 'none';
-      if (backdrop) backdrop.classList.remove('active');
+      closeModal('modal-forgot-password');
     });
   }
 
   if (btnCancelForgot) {
     btnCancelForgot.addEventListener('click', () => {
-      if (modalForgotPassword) modalForgotPassword.style.display = 'none';
-      if (backdrop) backdrop.classList.remove('active');
+      closeModal('modal-forgot-password');
     });
   }
 
@@ -3750,8 +3744,7 @@ function setupEventListeners() {
 
           // Clear form and close modal
           if (forgotPasswordForm) forgotPasswordForm.reset();
-          if (modalForgotPassword) modalForgotPassword.style.display = 'none';
-          if (backdrop) backdrop.classList.remove('active');
+          closeModal('modal-forgot-password');
         } catch (error) {
           console.error('Password reset error:', error);
           let errorMessage = 'Failed to send reset email';
@@ -3772,14 +3765,6 @@ function setupEventListeners() {
       } else {
         showToast('Firebase not configured. Cannot reset password.', 'error');
       }
-    });
-  }
-
-  // Close modal when backdrop is clicked
-  if (backdrop) {
-    backdrop.addEventListener('click', () => {
-      if (modalForgotPassword) modalForgotPassword.style.display = 'none';
-      backdrop.classList.remove('active');
     });
   }
 
