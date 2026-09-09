@@ -1,13 +1,14 @@
 import { initializeApp } from 'firebase/app';
-import { 
-  getAuth, 
-  signInWithEmailAndPassword, 
+import {
+  getAuth,
+  signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  signOut, 
-  onAuthStateChanged, 
-  updateEmail, 
+  signOut,
+  onAuthStateChanged,
+  updateEmail,
   verifyBeforeUpdateEmail,
-  updatePassword 
+  updatePassword,
+  sendPasswordResetEmail
 } from 'firebase/auth';
 import { 
   getFirestore, 
@@ -78,6 +79,7 @@ export {
   updateEmail,
   verifyBeforeUpdateEmail,
   updatePassword,
+  sendPasswordResetEmail,
   // Firestore exports
   collection,
   doc,

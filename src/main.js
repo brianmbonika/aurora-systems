@@ -1,8 +1,8 @@
 import './style.css';
-import { 
-  db, 
-  auth, 
-  isFirebaseInitialized, 
+import {
+  db,
+  auth,
+  isFirebaseInitialized,
   activeConfig,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -11,6 +11,7 @@ import {
   updateEmail,
   verifyBeforeUpdateEmail,
   updatePassword,
+  sendPasswordResetEmail,
   collection,
   doc,
   setDoc,
@@ -3654,6 +3655,91 @@ function setupEventListeners() {
           showToast('Incorrect Email or Password.', 'error');
         }
       }
+    });
+  }
+
+  // Forgot Password Modal Handlers
+  const btnForgotPassword = document.getElementById('btn-forgot-password');
+  const modalForgotPassword = document.getElementById('modal-forgot-password');
+  const closeForgotPasswordBtn = document.getElementById('close-forgot-password');
+  const btnCancelForgot = document.getElementById('btn-cancel-forgot');
+  const btnSendReset = document.getElementById('btn-send-reset');
+  const forgotPasswordForm = document.getElementById('forgot-password-form');
+  const backdrop = document.getElementById('backdrop');
+
+  if (btnForgotPassword) {
+    btnForgotPassword.addEventListener('click', () => {
+      if (modalForgotPassword) {
+        modalForgotPassword.style.display = 'flex';
+        if (backdrop) backdrop.classList.add('active');
+      }
+    });
+  }
+
+  if (closeForgotPasswordBtn) {
+    closeForgotPasswordBtn.addEventListener('click', () => {
+      if (modalForgotPassword) modalForgotPassword.style.display = 'none';
+      if (backdrop) backdrop.classList.remove('active');
+    });
+  }
+
+  if (btnCancelForgot) {
+    btnCancelForgot.addEventListener('click', () => {
+      if (modalForgotPassword) modalForgotPassword.style.display = 'none';
+      if (backdrop) backdrop.classList.remove('active');
+    });
+  }
+
+  if (btnSendReset) {
+    btnSendReset.addEventListener('click', async () => {
+      const email = document.getElementById('forgot-email')?.value.trim().toLowerCase();
+
+      if (!email) {
+        showToast('Please enter your email address', 'error');
+        return;
+      }
+
+      if (isFirebaseInitialized) {
+        try {
+          btnSendReset.disabled = true;
+          btnSendReset.innerText = 'Sending...';
+
+          await sendPasswordResetEmail(auth, email);
+
+          showToast('Password reset email sent! Check your inbox.', 'success', 5000);
+
+          // Clear form and close modal
+          if (forgotPasswordForm) forgotPasswordForm.reset();
+          if (modalForgotPassword) modalForgotPassword.style.display = 'none';
+          if (backdrop) backdrop.classList.remove('active');
+        } catch (error) {
+          console.error('Password reset error:', error);
+          let errorMessage = 'Failed to send reset email';
+
+          if (error.code === 'auth/user-not-found') {
+            errorMessage = 'Email not found';
+          } else if (error.code === 'auth/invalid-email') {
+            errorMessage = 'Invalid email address';
+          } else if (error.code === 'auth/too-many-requests') {
+            errorMessage = 'Too many requests. Please try again later.';
+          }
+
+          showToast(errorMessage, 'error');
+        } finally {
+          btnSendReset.disabled = false;
+          btnSendReset.innerText = 'Send Reset Link';
+        }
+      } else {
+        showToast('Firebase not configured. Cannot reset password.', 'error');
+      }
+    });
+  }
+
+  // Close modal when backdrop is clicked
+  if (backdrop) {
+    backdrop.addEventListener('click', () => {
+      if (modalForgotPassword) modalForgotPassword.style.display = 'none';
+      backdrop.classList.remove('active');
     });
   }
 
