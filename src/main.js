@@ -2984,12 +2984,25 @@ function setupEventListeners() {
   safeAddListener('btn-add-product', 'click', () => openProductModal());
   safeAddListener('btn-add-customer', 'click', () => openCustomerModal());
 
-  // Auto-price testers to 20,000 TZSH when type is changed
+  // Auto-price testers to 20,000 TZSH and hide wholesale cost when type is changed
   const productTypeSelect = document.getElementById('form-product-type');
   if (productTypeSelect) {
     productTypeSelect.addEventListener('change', (e) => {
+      const costGroup = document.querySelector('label[for="form-product-cost"]')?.closest('.form-group');
+      const retailLabel = document.querySelector('label[for="form-product-retail"]');
+      const retailField = document.getElementById('form-product-retail');
+
       if (e.target.value === 'Tester') {
-        document.getElementById('form-product-retail').value = 20000;
+        // Hide wholesale cost for testers
+        if (costGroup) costGroup.style.display = 'none';
+        // Update label and auto-fill price
+        if (retailLabel) retailLabel.innerText = 'Price (TZSH) *';
+        if (retailField) retailField.value = 20000;
+      } else {
+        // Show wholesale cost for full bottles
+        if (costGroup) costGroup.style.display = 'block';
+        // Restore original label
+        if (retailLabel) retailLabel.innerText = 'Retail Sell Price (TZSH) *';
       }
     });
   }
