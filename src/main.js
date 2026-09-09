@@ -2865,24 +2865,14 @@ async function deleteExpense(id) {
     return;
   }
   if (await showConfirmDialog('Are you sure you want to delete this expense?', 'Delete Expense')) {
-    const originalLength = state.expenses.length;
-    state.expenses = state.expenses.filter(e => e.id !== id);
-
-    // Verify the expense was actually deleted
-    if (state.expenses.length === originalLength) {
-      showToast('Error: Could not find expense to delete', 'error');
-      return;
-    }
-
     try {
-      await saveExpenses();
+      state.expenses = state.expenses.filter(e => e.id !== id);
+      saveExpenses();
       renderCashFlow();
       showToast('Expense deleted successfully', 'success');
     } catch (error) {
       console.error('Error deleting expense:', error);
-      showToast('Failed to delete expense', 'error');
-      // Restore the expense to state if delete failed
-      state.expenses.push(...state.expenses.filter(e => e.id === id));
+      showToast(`Failed to delete expense: ${error.message}`, 'error');
     }
   }
 }
