@@ -11,7 +11,6 @@ import {
   updateEmail,
   verifyBeforeUpdateEmail,
   updatePassword,
-  sendPasswordResetEmail,
   collection,
   doc,
   setDoc,
@@ -3695,74 +3694,6 @@ function setupEventListeners() {
         } else {
           showToast('Incorrect Email or Password.', 'error');
         }
-      }
-    });
-  }
-
-  // Forgot Password Modal Handlers
-  const closeForgotPasswordBtn = document.getElementById('close-forgot-password');
-  const btnCancelForgot = document.getElementById('btn-cancel-forgot');
-  const btnSendReset = document.getElementById('btn-send-reset');
-  const forgotPasswordForm = document.getElementById('forgot-password-form');
-
-  // Use safeAddListener for forgot password button
-  safeAddListener('btn-forgot-password', 'click', () => {
-    console.log('Forgot password clicked');
-    openModal('modal-forgot-password');
-  });
-
-  if (closeForgotPasswordBtn) {
-    closeForgotPasswordBtn.addEventListener('click', () => {
-      closeModal('modal-forgot-password');
-    });
-  }
-
-  if (btnCancelForgot) {
-    btnCancelForgot.addEventListener('click', () => {
-      closeModal('modal-forgot-password');
-    });
-  }
-
-  if (btnSendReset) {
-    btnSendReset.addEventListener('click', async () => {
-      const email = document.getElementById('forgot-email')?.value.trim().toLowerCase();
-
-      if (!email) {
-        showToast('Please enter your email address', 'error');
-        return;
-      }
-
-      if (isFirebaseInitialized) {
-        try {
-          btnSendReset.disabled = true;
-          btnSendReset.innerText = 'Sending...';
-
-          await sendPasswordResetEmail(auth, email);
-
-          showToast('Password reset email sent! Check your inbox.', 'success', 5000);
-
-          // Clear form and close modal
-          if (forgotPasswordForm) forgotPasswordForm.reset();
-          closeModal('modal-forgot-password');
-        } catch (error) {
-          console.error('Password reset error:', error);
-          let errorMessage = 'Failed to send reset email';
-
-          if (error.code === 'auth/user-not-found') {
-            errorMessage = 'Email not found';
-          } else if (error.code === 'auth/invalid-email') {
-            errorMessage = 'Invalid email address';
-          } else if (error.code === 'auth/too-many-requests') {
-            errorMessage = 'Too many requests. Please try again later.';
-          }
-
-          showToast(errorMessage, 'error');
-        } finally {
-          btnSendReset.disabled = false;
-          btnSendReset.innerText = 'Send Reset Link';
-        }
-      } else {
-        showToast('Firebase not configured. Cannot reset password.', 'error');
       }
     });
   }

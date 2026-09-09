@@ -7,8 +7,7 @@ import {
   onAuthStateChanged,
   updateEmail,
   verifyBeforeUpdateEmail,
-  updatePassword,
-  sendPasswordResetEmail
+  updatePassword
 } from 'firebase/auth';
 import { 
   getFirestore, 
@@ -79,7 +78,6 @@ export {
   updateEmail,
   verifyBeforeUpdateEmail,
   updatePassword,
-  sendPasswordResetEmail,
   // Firestore exports
   collection,
   doc,
