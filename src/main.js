@@ -1711,15 +1711,15 @@ function renderProducts() {
         </td>
         <td data-label="Actions" class="text-right">
           <div class="table-actions">
-            <button class="btn btn-secondary btn-sm-action btn-restock-action" data-id="${p.id}" style="display: inline-flex; align-items: center; gap: 0.25rem;">
+            <button class="btn btn-secondary btn-sm-action btn-restock-action" data-id="${p.id}" style="display: ${state.currentRole === 'Accountant' ? 'none' : 'inline-flex'}; align-items: center; gap: 0.25rem;">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;color:#2ecc71;"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
               In
             </button>
-            <button class="btn btn-secondary btn-sm-action btn-sell-action" data-id="${p.id}" ${p.stock === 0 ? 'disabled' : ''} style="display: inline-flex; align-items: center; gap: 0.25rem;">
+            <button class="btn btn-secondary btn-sm-action btn-sell-action" data-id="${p.id}" ${p.stock === 0 ? 'disabled' : ''} style="display: ${state.currentRole === 'Accountant' ? 'none' : 'inline-flex'}; align-items: center; gap: 0.25rem;">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;color:#ef4444;"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
               Out
             </button>
-            <button class="btn btn-outline btn-sm-action btn-edit-action" data-id="${p.id}">Edit</button>
+            <button class="btn btn-outline btn-sm-action btn-edit-action" data-id="${p.id}" style="display: ${state.currentRole === 'Accountant' ? 'none' : 'block'};">Edit</button>
           </div>
         </td>
       </tr>
@@ -2244,6 +2244,7 @@ function selectCustomer(id) {
 // Global View Switcher
 function showView(viewName) {
   // Security Redirect: If Manager tries to access restricted Cash Flow screen, force redirect to Dashboard
+  // (Accountant and Admin/CEO can access cashflow)
   if (viewName === 'cashflow' && state.currentRole === 'Manager') {
     viewName = 'dashboard';
   }
@@ -2311,6 +2312,22 @@ function switchRole(role) {
     headerAvatar.innerText = 'MA';
     headerLabel.innerText = 'Store Manager';
     navCashflow.style.display = 'none';
+  } else if (role === 'Accountant') {
+    headerAvatar.innerText = 'AC';
+    headerLabel.innerText = 'Accountant';
+    navCashflow.style.display = 'flex';
+  }
+
+  // Hide CRM nav for Accountant
+  const navCrm = document.getElementById('nav-crm');
+  if (navCrm) {
+    navCrm.style.display = (role === 'Accountant') ? 'none' : 'flex';
+  }
+
+  // Hide Add Product button for Accountant (read-only access)
+  const btnAddProduct = document.getElementById('btn-add-product');
+  if (btnAddProduct) {
+    btnAddProduct.style.display = (role === 'Accountant') ? 'none' : 'block';
   }
 
   // Toggle target prediction edit pencil button
@@ -2340,6 +2357,8 @@ function renderSettings() {
       roleTitle.innerText = 'CEO Profile';
     } else if (state.currentRole === 'Manager') {
       roleTitle.innerText = 'Store Manager Profile';
+    } else if (state.currentRole === 'Accountant') {
+      roleTitle.innerText = 'Accountant Profile';
     }
   }
 
