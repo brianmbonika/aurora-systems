@@ -292,11 +292,17 @@ async function syncCollectionToFirestore(collectionName, localArray) {
   if (!isFirebaseInitialized) return;
   try {
     const batch = writeBatch(db);
-    
+
     // 1. Upload/update all current local items
     localArray.forEach(item => {
+      // Validate item has an id
+      if (!item.id) {
+        console.warn(`Skipping ${collectionName} item without id:`, item);
+        return;
+      }
+
       const docRef = doc(db, collectionName, item.id);
-      
+
       // Clean undefined fields to avoid Firestore setDoc errors
       const cleanItem = {};
       Object.keys(item).forEach(key => {
@@ -304,7 +310,7 @@ async function syncCollectionToFirestore(collectionName, localArray) {
           cleanItem[key] = item[key];
         }
       });
-      
+
       batch.set(docRef, cleanItem);
     });
     
@@ -2854,10 +2860,30 @@ function cancelExpenseEdit() {
 }
 
 async function deleteExpense(id) {
+  if (!id) {
+    showToast('Error: Invalid expense ID', 'error');
+    return;
+  }
   if (await showConfirmDialog('Are you sure you want to delete this expense?', 'Delete Expense')) {
+    const originalLength = state.expenses.length;
     state.expenses = state.expenses.filter(e => e.id !== id);
-    saveExpenses();
-    renderCashFlow();
+
+    // Verify the expense was actually deleted
+    if (state.expenses.length === originalLength) {
+      showToast('Error: Could not find expense to delete', 'error');
+      return;
+    }
+
+    try {
+      await saveExpenses();
+      renderCashFlow();
+      showToast('Expense deleted successfully', 'success');
+    } catch (error) {
+      console.error('Error deleting expense:', error);
+      showToast('Failed to delete expense', 'error');
+      // Restore the expense to state if delete failed
+      state.expenses.push(...state.expenses.filter(e => e.id === id));
+    }
   }
 }
 
