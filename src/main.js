@@ -9,6 +9,7 @@ import {
   signOut,
   onAuthStateChanged,
   updateEmail,
+  verifyBeforeUpdateEmail,
   updatePassword,
   collection,
   doc,
@@ -3702,36 +3703,68 @@ function setupEventListeners() {
       const emailVal = document.getElementById('settings-email-input').value.trim();
       const passVal = document.getElementById('settings-password-input').value;
       
-      if (!emailVal || !passVal) {
-        showToast('Please enter a valid email and password.', 'warning');
+      if (!emailVal) {
+        showToast('Please enter a valid email.', 'warning');
         return;
       }
       
-      if (passVal.length < 6) {
+      if (passVal && passVal.length < 6) {
         showToast('Password must be at least 6 characters.', 'warning');
         return;
       }
       
       if (isFirebaseInitialized) {
-        try {
-          const user = auth.currentUser;
-          if (user) {
-            await updateEmail(user, emailVal);
+        const user = auth.currentUser;
+        if (!user) {
+          showToast('No user is currently signed in to Firebase.', 'warning');
+          return;
+        }
+
+        // Email and password changes are independent — one failing (e.g.
+        // Firebase requiring the new address to be verified first) should
+        // never silently block the other.
+        const emailChanged = emailVal && emailVal !== user.email;
+        let emailOk = !emailChanged;
+        let passwordOk = true;
+
+        if (emailChanged) {
+          try {
+            // Firebase now requires the NEW email to be verified before the
+            // account's email actually changes. This sends a confirmation
+            // link to emailVal; the login email stays as-is until that link
+            // is clicked, so this never leaves the account inaccessible.
+            await verifyBeforeUpdateEmail(user, emailVal);
+            showToast('Verification link sent to ' + emailVal + '. Click it to finish changing your login email — until then, sign in with your current email.', 'success', 8000);
+          } catch (e) {
+            console.error("Error requesting email change:", e);
+            emailOk = false;
+            showToast('Could not update email: ' + e.message, 'error');
+          }
+        }
+
+        if (passVal) {
+          try {
             await updatePassword(user, passVal);
-            
-            // Sync user role metadata in Firestore
+            passwordOk = true;
+            showToast('Password updated.', 'success');
+          } catch (e) {
+            console.error("Error updating password:", e);
+            passwordOk = false;
+            showToast('Could not update password: ' + e.message, 'error');
+          }
+        }
+
+        if (emailOk && passwordOk) {
+          try {
+            // Sync role metadata in Firestore. Keep the CURRENT auth email
+            // here, not the pending one — it isn't active until verified.
             await setDoc(doc(db, 'users', user.uid), {
-              email: emailVal,
+              email: user.email,
               role: state.currentRole
             }, { merge: true });
-            
-            showToast('Security credentials updated in Firebase Cloud!', 'success');
-          } else {
-            showToast('No user is currently signed in to Firebase.', 'warning');
+          } catch (e) {
+            console.error("Error syncing user metadata:", e);
           }
-        } catch (e) {
-          console.error("Error updating credentials:", e);
-          showToast('Failed to update credentials: ' + e.message, 'error');
         }
       } else {
         // Save locally

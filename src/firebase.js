@@ -6,6 +6,7 @@ import {
   signOut, 
   onAuthStateChanged, 
   updateEmail, 
+  verifyBeforeUpdateEmail,
   updatePassword 
 } from 'firebase/auth';
 import { 
@@ -75,6 +76,7 @@ export {
   signOut,
   onAuthStateChanged,
   updateEmail,
+  verifyBeforeUpdateEmail,
   updatePassword,
   // Firestore exports
   collection,
