@@ -2984,6 +2984,16 @@ function setupEventListeners() {
   safeAddListener('btn-add-product', 'click', () => openProductModal());
   safeAddListener('btn-add-customer', 'click', () => openCustomerModal());
 
+  // Auto-price testers to 20,000 TZSH when type is changed
+  const productTypeSelect = document.getElementById('form-product-type');
+  if (productTypeSelect) {
+    productTypeSelect.addEventListener('change', (e) => {
+      if (e.target.value === 'Tester') {
+        document.getElementById('form-product-retail').value = 20000;
+      }
+    });
+  }
+
   // Edit customer profile click
   const btnEditCustomer = document.getElementById('btn-edit-customer');
   if (btnEditCustomer) {
