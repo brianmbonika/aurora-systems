@@ -1404,7 +1404,7 @@ function renderStackedBarChart(period = 'monthly') {
 function renderBestsellers() {
   const container = document.getElementById('bestseller-products-list');
   const activeTab = document.querySelector('.tab-btn.active');
-  const activeCategory = activeTab ? activeTab.getAttribute('data-category') : 'all';
+  const activeGender = activeTab ? activeTab.getAttribute('data-gender') : 'all';
   const period = document.getElementById('bestseller-period').value;
 
   let productsWithSales = state.products.map(p => ({
@@ -1412,9 +1412,9 @@ function renderBestsellers() {
     sold: getProductSoldUnits(p.id, period)
   }));
 
-  // Filter by category
-  if (activeCategory !== 'all') {
-    productsWithSales = productsWithSales.filter(p => p.category === activeCategory);
+  // Filter by gender (if product has gender field; otherwise show all)
+  if (activeGender !== 'all') {
+    productsWithSales = productsWithSales.filter(p => p.gender === activeGender);
   }
 
   // Sort descending by sold count and take top 5
@@ -1481,31 +1481,12 @@ function updateSalesSummaryStats() {
     });
   }
 
-  let velocityText = '0%';
-  let velocityClass = 'text-muted';
-  if (prevWeeklyTotal > 0) {
-    const pct = ((weeklyTotal - prevWeeklyTotal) / prevWeeklyTotal) * 100;
-    const sign = pct >= 0 ? '+' : '';
-    velocityText = `${sign}${pct.toFixed(0)}%`;
-    velocityClass = pct >= 0 ? 'text-success' : 'text-danger';
-  } else {
-    velocityText = weeklyTotal > 0 ? '+100%' : '0%';
-    velocityClass = weeklyTotal > 0 ? 'text-success' : 'text-muted';
-  }
-
   // Update Summary DOM elements
   const weeklyEl = document.getElementById('sales-stats-weekly-total');
   const avgEl = document.getElementById('sales-stats-daily-avg');
-  const velEl = document.getElementById('sales-stats-velocity');
 
   if (weeklyEl) weeklyEl.innerText = `${weeklyTotal} units`;
   if (avgEl) avgEl.innerText = `${dailyAvg} units`;
-  if (velEl) {
-    velEl.innerHTML = velocityText + (weeklyTotal >= prevWeeklyTotal 
-      ? ' <span style="color:#2ecc71;">▲</span>' 
-      : ' <span style="color:#ef4444;">▼</span>');
-    velEl.className = `metric-value ${velocityClass}`;
-  }
 }
 
 // Render Cash Flow & Expenses View (CEO & Admin Only)
