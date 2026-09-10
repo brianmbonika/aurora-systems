@@ -3198,21 +3198,40 @@ function setupEventListeners() {
     });
   }
 
-  // Settings Database Reset button
+  // Settings Database Reset button - Admin only with password verification
   const btnResetDbSettings = document.getElementById('btn-reset-db-settings');
   if (btnResetDbSettings) {
-    btnResetDbSettings.addEventListener('click', async () => {
-      if (await showConfirmDialog('Reset the database to seed defaults? This clears all sales, custom products, CRM customers, and logged expenses.', 'Reset Database')) {
-        localStorage.removeItem('aurora_products');
-        localStorage.removeItem('aurora_transactions');
-        localStorage.removeItem('aurora_customers');
-        localStorage.removeItem('aurora_expenses');
-        localStorage.removeItem('aurora_target_amount');
-        localStorage.removeItem('aurora_current_role');
-        localStorage.removeItem('aurora_dismissed_alerts');
-        location.reload();
-      }
-    });
+    if (state.currentRole !== 'Admin') {
+      btnResetDbSettings.style.display = 'none';
+    } else {
+      btnResetDbSettings.addEventListener('click', async () => {
+        // First, ask for confirmation
+        if (await showConfirmDialog('Reset the database to seed defaults? This clears all sales, custom products, CRM customers, and logged expenses. You will need to enter your password to confirm.', 'Reset Database')) {
+          // Then ask for password verification
+          const password = prompt('Enter your password to confirm database reset:');
+          if (password) {
+            // Verify password against stored credentials (simple check)
+            // In a real app, this would hash and verify against backend
+            const email = localStorage.getItem('aurora_user_email') || '';
+            const storedPassword = localStorage.getItem('aurora_user_password') || '';
+
+            if (storedPassword && password === storedPassword) {
+              localStorage.removeItem('aurora_products');
+              localStorage.removeItem('aurora_transactions');
+              localStorage.removeItem('aurora_customers');
+              localStorage.removeItem('aurora_expenses');
+              localStorage.removeItem('aurora_target_amount');
+              localStorage.removeItem('aurora_current_role');
+              localStorage.removeItem('aurora_dismissed_alerts');
+              showToast('Database reset successfully. Reloading...', 'success');
+              location.reload();
+            } else {
+              showToast('Invalid password. Reset cancelled.', 'error');
+            }
+          }
+        }
+      });
+    }
   }
 
   // Clear History
@@ -4039,26 +4058,30 @@ function setupEventListeners() {
     });
   }
 
-  // Cloud Database Disconnect / Connect Button Handler
+  // Cloud Database Disconnect / Connect Button Handler - Admin only
   const btnDisconnect = document.getElementById('btn-disconnect-cloud');
   if (btnDisconnect) {
-    btnDisconnect.addEventListener('click', async () => {
-      if (isFirebaseInitialized) {
-        if (await showConfirmDialog('Disconnect from Firebase Cloud Database? The system will revert to local storage mode.', 'Disconnect Cloud')) {
-          localStorage.removeItem('aurora_firebase_config');
-          showToast('Disconnected from Firebase. Reloading...', 'success');
-          window.location.reload();
+    if (state.currentRole !== 'Admin') {
+      btnDisconnect.style.display = 'none';
+    } else {
+      btnDisconnect.addEventListener('click', async () => {
+        if (isFirebaseInitialized) {
+          if (await showConfirmDialog('Disconnect from Firebase Cloud Database? The system will revert to local storage mode.', 'Disconnect Cloud')) {
+            localStorage.removeItem('aurora_firebase_config');
+            showToast('Disconnected from Firebase. Reloading...', 'success');
+            window.location.reload();
+          }
+        } else {
+          // Open Connection Wizard modal
+          const wizard = document.getElementById('firebase-wizard');
+          if (wizard) wizard.classList.remove('hidden');
+
+          // Hide login overlay if showing so it doesn't overlap
+          const loginScreen = document.getElementById('login-screen');
+          if (loginScreen) loginScreen.classList.add('hidden');
         }
-      } else {
-        // Open Connection Wizard modal
-        const wizard = document.getElementById('firebase-wizard');
-        if (wizard) wizard.classList.remove('hidden');
-        
-        // Hide login overlay if showing so it doesn't overlap
-        const loginScreen = document.getElementById('login-screen');
-        if (loginScreen) loginScreen.classList.add('hidden');
-      }
-    });
+      });
+    }
   }
 }
 
