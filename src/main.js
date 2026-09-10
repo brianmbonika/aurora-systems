@@ -1659,6 +1659,7 @@ function renderProducts() {
   const searchVal = document.getElementById('inventory-search').value.toLowerCase();
   const statusFilter = document.getElementById('filter-stock-status').value;
   const categoryFilter = document.getElementById('filter-category').value;
+  const productTypeFilter = document.getElementById('filter-product-type').value;
 
   let filtered = state.products.map(p => ({
     ...p,
@@ -1667,7 +1668,7 @@ function renderProducts() {
 
   // Apply filters
   if (searchVal) {
-    filtered = filtered.filter(p => 
+    filtered = filtered.filter(p =>
       p.name.toLowerCase().includes(searchVal) ||
       p.sku.toLowerCase().includes(searchVal) ||
       p.category.toLowerCase().includes(searchVal)
@@ -1676,6 +1677,10 @@ function renderProducts() {
 
   if (categoryFilter !== 'all') {
     filtered = filtered.filter(p => p.gender === categoryFilter);
+  }
+
+  if (productTypeFilter !== 'all') {
+    filtered = filtered.filter(p => p.type === productTypeFilter);
   }
 
   if (statusFilter !== 'all') {
@@ -3214,7 +3219,12 @@ function setupEventListeners() {
     state.productsCurrentPage = 1;
     renderProducts();
   });
-  
+
+  safeAddListener('filter-product-type', 'change', () => {
+    state.productsCurrentPage = 1;
+    renderProducts();
+  });
+
   safeAddListener('tx-search', 'input', () => {
     state.transactionsCurrentPage = 1;
     renderTransactions();
