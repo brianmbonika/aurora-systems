@@ -1730,7 +1730,6 @@ function renderProducts() {
           </div>
         </td>
         <td data-label="SKU"><code>${p.sku}</code></td>
-        <td data-label="Category">${p.category}</td>
         <td data-label="Wholesale Cost" class="text-right font-medium">${formatCurrency(p.costPrice)}</td>
         <td data-label="Retail Price" class="text-right font-medium">${formatCurrency(p.sellingPrice)}</td>
         <td data-label="Stock Level" class="text-center font-bold">${p.stock}</td>
@@ -3308,7 +3307,7 @@ function setupEventListeners() {
       e.preventDefault();
       const id = document.getElementById('form-product-id').value;
       const name = document.getElementById('form-product-name').value;
-      const category = document.getElementById('form-product-category').value;
+      const notes = document.getElementById('form-product-notes')?.value || '';
       const type = document.getElementById('form-product-type').value;
       const gender = document.getElementById('form-product-gender').value;
       const skuVal = document.getElementById('form-product-sku').value;
@@ -3322,14 +3321,14 @@ function setupEventListeners() {
       if (id) {
         const idx = state.products.findIndex(p => p.id === id);
         if (idx !== -1) {
-          state.products[idx] = { ...state.products[idx], name, category, type, gender, sku, minStockThreshold: threshold, buyingCost, costPrice: cost, sellingPrice: retail };
+          state.products[idx] = { ...state.products[idx], name, notes, type, gender, sku, minStockThreshold: threshold, buyingCost, costPrice: cost, sellingPrice: retail };
         }
       } else {
         state.products.push({
           id: `prod-${uuid()}`,
           sku,
           name,
-          category,
+          notes,
           type,
           gender,
           buyingCost,

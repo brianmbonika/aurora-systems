@@ -357,7 +357,6 @@
                   <tr>
                     <th>Product Details</th>
                     <th>SKU</th>
-                    <th>Category</th>
                     <th class="text-right">Wholesale (Cost)</th>
                     <th class="text-right">Retail (Sell)</th>
                     <th class="text-center">Stock Level</th>
@@ -897,17 +896,25 @@
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label for="form-product-category">Collection/Category *</label>
-              <select id="form-product-category" required>
-                <option value="Signature" selected>Signature Collection</option>
-                <option value="Elite">Elite Collection</option>
-              </select>
+              <label for="form-product-notes">Fragrance Notes</label>
+              <textarea id="form-product-notes" placeholder="e.g., Top Notes: Ginger, Kumquat, Bergamot, Apple; Heart Notes: Laurel, Mint, Watery, Gin, Melon; Base Notes: Amber, Musk, Cedar, Haiti vetiver;" rows="3" style="resize: vertical;"></textarea>
             </div>
+          </div>
+
+          <div class="form-row">
             <div class="form-group">
               <label for="form-product-type">Product Type *</label>
               <select id="form-product-type" required>
                 <option value="Full Bottle" selected>Full Bottle</option>
                 <option value="Tester">Tester</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="form-product-gender">Gender *</label>
+              <select id="form-product-gender" required>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Unisex">Unisex</option>
               </select>
             </div>
           </div>
