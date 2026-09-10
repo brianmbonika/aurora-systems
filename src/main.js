@@ -2780,6 +2780,13 @@ function openTransactionModal(type, preSelectedProdId = null, preSelectedCustId 
       if (p) {
         document.getElementById('form-tx-price').value = p.sellingPrice;
         document.getElementById('form-tx-price-helper').innerText = `Base Retail Price: ${formatCurrency(p.sellingPrice)}`;
+
+        // Update product type display
+        const typeDisplay = document.getElementById('form-tx-product-type');
+        if (typeDisplay) {
+          typeDisplay.innerText = p.type || 'Full Bottle';
+          typeDisplay.style.color = p.type === 'Tester' ? '#f97316' : '#10b981';
+        }
       }
     };
     prodSelect.onchange = updateSellPrice;
