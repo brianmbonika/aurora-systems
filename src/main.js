@@ -3709,28 +3709,31 @@ function setupEventListeners() {
           // ── BACKGROUND SYNC (non-blocking) ─────────────────────────────
           // Run after UI is already showing so any Firestore permission hang
           // doesn't affect the user experience.
+
+          // Remove spinner after 2 seconds max (allows quick perceived load)
+          const spinnerTimeout = setTimeout(() => {
+            const spinner = document.getElementById('login-loading-spinner');
+            if (spinner) spinner.remove();
+          }, 2000);
+
           (async () => {
             try {
-              // Add 5-second timeout for sync operations
-              const syncPromise = Promise.all([
-                checkAndSeedFirestore(),
-                new Promise(resolve => setTimeout(resolve, 5000))
-              ]);
+              // Race Firestore sync against 3-second timeout
               await Promise.race([
-                syncPromise,
-                new Promise((_, reject) => setTimeout(() => reject(new Error('Sync timeout')), 5000))
+                Promise.all([
+                  checkAndSeedFirestore(),
+                  initFirestoreSync()
+                ]),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Sync timeout')), 3000))
               ]);
-              initFirestoreSync();
               loginLog('Background sync complete ✓');
             } catch (syncErr) {
               loginLog('Background sync skipped or timed out: ' + syncErr.message, '#ffaa00');
             } finally {
-              // Remove loading spinner - ALWAYS remove it
+              clearTimeout(spinnerTimeout);
+              // Remove loading spinner
               const spinner = document.getElementById('login-loading-spinner');
-              if (spinner) {
-                spinner.style.display = 'none';
-                setTimeout(() => spinner.remove(), 100);
-              }
+              if (spinner) spinner.remove();
             }
           })();
         } catch (error) {
