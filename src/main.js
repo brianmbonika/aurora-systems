@@ -855,6 +855,28 @@ function renderDashboard() {
   document.getElementById('target-progress-current').innerText = formatCurrency(profitVal);
   document.getElementById('target-progress-bar').style.width = `${progressPercent}%`;
 
+  // Generate dynamic insights
+  const insightsEl = document.getElementById('target-insights');
+  if (insightsEl) {
+    let insight = '';
+
+    if (progressPercent === 0) {
+      insight = 'Start recording sales to track progress toward your target.';
+    } else if (progressPercent < 25) {
+      insight = `You're ${progressPercent.toFixed(0)}% of the way to your target. Keep building momentum! 💪`;
+    } else if (progressPercent < 50) {
+      insight = `Great progress! You've reached ${progressPercent.toFixed(0)}% of your target. Half way there! 🚀`;
+    } else if (progressPercent < 75) {
+      insight = `Excellent! You're over 50% toward your target. The finish line is in sight! 🎯`;
+    } else if (progressPercent < 100) {
+      insight = `Outstanding! You're ${progressPercent.toFixed(0)}% toward your target. Almost there! 🔥`;
+    } else {
+      insight = `🎉 Congratulations! You've exceeded your target! Mission accomplished!`;
+    }
+
+    insightsEl.innerText = insight;
+  }
+
   // Render alerts and notifications
   renderNotifications();
 
