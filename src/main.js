@@ -1081,8 +1081,8 @@ function renderDashboardStatsGrid() {
           <span class="subcard-title">Stock Worth (Cost)</span>
           <span class="subcard-trend">Asset</span>
         </div>
-        <h3 class="subcard-value">${formatCurrency(state.products.filter(p => p.type !== 'Tester').reduce((sum, p) => sum + getProductStock(p.id) * p.costPrice, 0))}</h3>
-        <span class="subcard-date">Full Bottles value</span>
+        <h3 class="subcard-value">${formatCurrency(state.products.filter(p => p.type !== 'Tester').reduce((sum, p) => sum + getProductStock(p.id) * (p.buyingCost || p.costPrice || 0), 0))}</h3>
+        <span class="subcard-date">Full Bottles value (at buying cost)</span>
       </div>
 
       <div class="kpi-subcard">
@@ -1222,8 +1222,8 @@ function renderDashboardStatsGrid() {
           <span class="subcard-title">Stock Worth (Cost)</span>
           <span class="subcard-trend">Asset</span>
         </div>
-        <h3 class="subcard-value">${formatCurrency(state.products.filter(p => p.type !== 'Tester').reduce((sum, p) => sum + getProductStock(p.id) * p.costPrice, 0))}</h3>
-        <span class="subcard-date">Full Bottles value</span>
+        <h3 class="subcard-value">${formatCurrency(state.products.filter(p => p.type !== 'Tester').reduce((sum, p) => sum + getProductStock(p.id) * (p.buyingCost || p.costPrice || 0), 0))}</h3>
+        <span class="subcard-date">Full Bottles value (at buying cost)</span>
       </div>
 
       <div class="kpi-subcard">
@@ -3264,6 +3264,46 @@ function setupEventListeners() {
   // 1. Save / Edit Product
   const productForm = document.getElementById('product-form');
   if (productForm) {
+    // Real-time profit margin calculations
+    const updateProfitMargins = () => {
+      const buyingCost = parseFloat(document.getElementById('form-product-buying-cost')?.value) || 0;
+      const wholesaleCost = parseFloat(document.getElementById('form-product-cost')?.value) || 0;
+      const retailPrice = parseFloat(document.getElementById('form-product-retail')?.value) || 0;
+
+      // Buying to Wholesale markup
+      if (buyingCost > 0 && wholesaleCost > buyingCost) {
+        const markupPct = (((wholesaleCost - buyingCost) / buyingCost) * 100).toFixed(0);
+        document.getElementById('buying-to-wholesale-margin').innerText = `Markup: +${markupPct}%`;
+      } else {
+        document.getElementById('buying-to-wholesale-margin').innerText = 'Markup: —';
+      }
+
+      // Wholesale to Retail markup
+      if (wholesaleCost > 0 && retailPrice > wholesaleCost) {
+        const markupPct = (((retailPrice - wholesaleCost) / wholesaleCost) * 100).toFixed(0);
+        document.getElementById('wholesale-to-retail-margin').innerText = `Markup: +${markupPct}%`;
+      } else {
+        document.getElementById('wholesale-to-retail-margin').innerText = 'Markup: —';
+      }
+
+      // Total profit margin
+      if (buyingCost > 0 && retailPrice > buyingCost) {
+        const profitPct = (((retailPrice - buyingCost) / buyingCost) * 100).toFixed(0);
+        document.getElementById('total-profit-margin').innerText = `+${profitPct}% (${formatCurrency(retailPrice - buyingCost)})`;
+      } else {
+        document.getElementById('total-profit-margin').innerText = '—';
+      }
+    };
+
+    // Add listeners for profit margin updates
+    ['form-product-buying-cost', 'form-product-cost', 'form-product-retail'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('input', updateProfitMargins);
+        el.addEventListener('change', updateProfitMargins);
+      }
+    });
+
     productForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const id = document.getElementById('form-product-id').value;
@@ -3273,6 +3313,7 @@ function setupEventListeners() {
       const gender = document.getElementById('form-product-gender').value;
       const skuVal = document.getElementById('form-product-sku').value;
       const threshold = parseInt(document.getElementById('form-product-threshold').value);
+      const buyingCost = parseFloat(document.getElementById('form-product-buying-cost').value);
       const cost = parseFloat(document.getElementById('form-product-cost').value);
       const retail = parseFloat(document.getElementById('form-product-retail').value);
 
@@ -3281,7 +3322,7 @@ function setupEventListeners() {
       if (id) {
         const idx = state.products.findIndex(p => p.id === id);
         if (idx !== -1) {
-          state.products[idx] = { ...state.products[idx], name, category, type, gender, sku, minStockThreshold: threshold, costPrice: cost, sellingPrice: retail };
+          state.products[idx] = { ...state.products[idx], name, category, type, gender, sku, minStockThreshold: threshold, buyingCost, costPrice: cost, sellingPrice: retail };
         }
       } else {
         state.products.push({
@@ -3291,6 +3332,7 @@ function setupEventListeners() {
           category,
           type,
           gender,
+          buyingCost,
           costPrice: cost,
           sellingPrice: retail,
           minStockThreshold: threshold

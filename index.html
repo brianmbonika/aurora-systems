@@ -925,14 +925,30 @@
               <input type="number" id="form-product-threshold" required value="10" min="1" />
             </div>
           </div>
+          <!-- Pricing Structure with Profit Proportions -->
           <div class="form-row">
             <div class="form-group">
-              <label for="form-product-cost">Wholesale Cost (TZSH) *</label>
-              <input type="number" id="form-product-cost" required min="0" placeholder="e.g., 100000" />
+              <label for="form-product-buying-cost">Buying Cost (TZSH) *</label>
+              <input type="number" id="form-product-buying-cost" required min="0" placeholder="e.g., 100000" />
+              <small style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 0.25rem; display: block;">What you paid for it</small>
             </div>
+            <div class="form-group">
+              <label for="form-product-cost">Wholesale Cost (TZSH) *</label>
+              <input type="number" id="form-product-cost" required min="0" placeholder="e.g., 150000" />
+              <small style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 0.25rem; display: block; font-weight: 500;" id="buying-to-wholesale-margin">Markup: —</small>
+            </div>
+          </div>
+
+          <div class="form-row">
             <div class="form-group">
               <label for="form-product-retail">Retail Sell Price (TZSH) *</label>
               <input type="number" id="form-product-retail" required min="0" placeholder="e.g., 250000" />
+              <small style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 0.25rem; display: block; font-weight: 500;" id="wholesale-to-retail-margin">Markup: —</small>
+            </div>
+            <div class="form-group">
+              <label>Total Profit Margin *</label>
+              <div style="padding: 0.75rem; background: rgba(16, 185, 129, 0.1); border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.2); font-weight: 600; color: #10b981; font-size: 1.1rem;" id="total-profit-margin">—</div>
+              <small style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 0.25rem; display: block;">Selling Price - Buying Cost</small>
             </div>
           </div>
         </div>
