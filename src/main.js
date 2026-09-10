@@ -842,11 +842,7 @@ function renderDashboard() {
   // 2. Render Subcards Grid (dynamic based on role)
   renderDashboardStatsGrid();
 
-  // 3. Render Stacked Bar Chart ("Product Sale")
-  const barPeriod = document.getElementById('bar-chart-period').value;
-  renderStackedBarChart(barPeriod);
-
-  // 4. Render Target Progress Card (Target is dynamic and editable)
+  // 3. Render Target Progress Card (Target is dynamic and editable)
   const targetMax = state.targetAmount;
   const progressPercent = targetMax > 0 ? Math.min(100, Math.max(0, (profitVal / targetMax) * 100)) : 0;
   
@@ -2929,12 +2925,6 @@ function setupEventListeners() {
   });
 
   // Bar chart period change
-  safeAddListener('bar-chart-period', 'change', () => {
-    const el = document.getElementById('bar-chart-period');
-    const barPeriod = el ? el.value : 'monthly';
-    renderStackedBarChart(barPeriod);
-  });
-
   // Floating Quick Action Modals
   safeAddListener('btn-quick-action', 'click', () => {
     openModal('modal-quick-action');
