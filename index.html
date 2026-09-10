@@ -885,9 +885,13 @@
         <div class="modal-body">
           <input type="hidden" id="form-product-id" name="product-id" />
           <div class="form-row">
-            <div class="form-group">
+            <div class="form-group" style="position: relative;">
               <label for="form-product-name">Fragrance Name *</label>
-              <input type="text" id="form-product-name" name="product-name" required placeholder="e.g., Cherry in the Woods" />
+              <input type="text" id="form-product-name" name="product-name" required placeholder="e.g., Cherry in the Woods" autocomplete="off" />
+              <!-- Product lookup dropdown -->
+              <div id="product-lookup-dropdown" style="position: absolute; top: 100%; left: 0; right: 0; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; max-height: 250px; overflow-y: auto; z-index: 1000; display: none; margin-top: 0.25rem; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                <!-- Dynamically populated with product suggestions -->
+              </div>
             </div>
             <div class="form-group">
               <label for="form-product-sku">SKU Code (Auto-generated if blank)</label>

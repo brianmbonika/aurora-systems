@@ -1,0 +1,244 @@
+{
+  "products": [
+    {
+      "name": "AL FAKHER 67ML FOR MEN EDP",
+      "gender": "Male",
+      "notes": "Oud, spicy, woody"
+    },
+    {
+      "name": "AURA Gold EDP for Women",
+      "gender": "Female",
+      "notes": "Floral, gold, luxurious"
+    },
+    {
+      "name": "AURA Silver EDP for men",
+      "gender": "Male",
+      "notes": "Fresh, clean, silver"
+    },
+    {
+      "name": "Aurora Amour EDP for Women",
+      "gender": "Female",
+      "notes": "Romance, floral, passion"
+    },
+    {
+      "name": "Aurora Arabesque EDP Unisex",
+      "gender": "Unisex",
+      "notes": "Arabian, woody, complex"
+    },
+    {
+      "name": "Aurora Arabesque Hayat EDP Unisex",
+      "gender": "Unisex",
+      "notes": "Oriental, spicy, rich"
+    },
+    {
+      "name": "Aurora Aroma II EDP for Men",
+      "gender": "Male",
+      "notes": "Aromatic, fresh, spicy"
+    },
+    {
+      "name": "Aurora Aroma IV EDP for Men",
+      "gender": "Male",
+      "notes": "Aromatic, woody, masculine"
+    },
+    {
+      "name": "Aurora Aroma IX EDP for Men",
+      "gender": "Male",
+      "notes": "Aromatic, fresh, bold"
+    },
+    {
+      "name": "Aurora Aroma Senora I EDP for Women",
+      "gender": "Female",
+      "notes": "Aromatic, floral, elegant"
+    },
+    {
+      "name": "Aurora Aroma Senora III EDP For Women",
+      "gender": "Female",
+      "notes": "Aromatic, feminine, sophisticated"
+    },
+    {
+      "name": "Aurora Aroma Senora VI EDP For Women",
+      "gender": "Female",
+      "notes": "Aromatic, floral, refined"
+    },
+    {
+      "name": "Aurora Aroma Senora VIII EDP for Women",
+      "gender": "Female",
+      "notes": "Aromatic, sweet, feminine"
+    },
+    {
+      "name": "Aurora Aroma V EDP for Men",
+      "gender": "Male",
+      "notes": "Aromatic, fresh, crisp"
+    },
+    {
+      "name": "Aurora Aroma VII EDP for Men",
+      "gender": "Male",
+      "notes": "Aromatic, spicy, warm"
+    },
+    {
+      "name": "Aurora Black Elixir EDP for Men",
+      "gender": "Male",
+      "notes": "Dark, mysterious, oud"
+    },
+    {
+      "name": "Aurora Black Potion EDP for Men",
+      "gender": "Male",
+      "notes": "Dark, magical, intense"
+    },
+    {
+      "name": "Aurora Black Rouge EDP For Women",
+      "gender": "Female",
+      "notes": "Red, bold, seductive"
+    },
+    {
+      "name": "Aurora Cafe Citadel EDP Unisex",
+      "gender": "Unisex",
+      "notes": "Coffee, woody, strong"
+    },
+    {
+      "name": "Aurora Call Of The Wild EDP for Women",
+      "gender": "Female",
+      "notes": "Natural, wild, free"
+    },
+    {
+      "name": "Aurora Celestial Collection | The Guardian of Heaven EDP for Men",
+      "gender": "Male",
+      "notes": "Celestial, heavenly, divine"
+    },
+    {
+      "name": "Aurora Celestial Collection In The Nowhere Land EDP Unisex",
+      "gender": "Unisex",
+      "notes": "Mystical, ethereal, unique"
+    },
+    {
+      "name": "Aurora Celestial Collection La Bête de Gevaudan EDP for Men",
+      "gender": "Male",
+      "notes": "Dark, wild, fierce"
+    },
+    {
+      "name": "Aurora Chevalier EDP for Men",
+      "gender": "Male",
+      "notes": "Noble, woody, classic"
+    },
+    {
+      "name": "Aurora Chrome EDP for Men",
+      "gender": "Male",
+      "notes": "Fresh, metal, modern"
+    },
+    {
+      "name": "Aurora Chrome Sport EDP for Men",
+      "gender": "Male",
+      "notes": "Fresh, sporty, energetic"
+    },
+    {
+      "name": "Aurora Cleopatra EDP for Women",
+      "gender": "Female",
+      "notes": "Exotic, floral, royal"
+    },
+    {
+      "name": "Aurora Cuban Incense EDP for Men",
+      "gender": "Male",
+      "notes": "Tobacco, incense, spicy"
+    },
+    {
+      "name": "Aurora Cuban Wood EDP for Men",
+      "gender": "Male",
+      "notes": "Wood, tobacco, warm"
+    },
+    {
+      "name": "Aurora Deciduous Autumn EDP for Women",
+      "gender": "Female",
+      "notes": "Autumn, warm, spiced"
+    },
+    {
+      "name": "Aurora Deciduous Spring EDP for Women",
+      "gender": "Female",
+      "notes": "Spring, fresh, floral"
+    },
+    {
+      "name": "Aurora Deciduous Summer EDP For Women",
+      "gender": "Female",
+      "notes": "Summer, light, fruity"
+    },
+    {
+      "name": "Aurora Deciduous Winter EDP for Women",
+      "gender": "Female",
+      "notes": "Winter, crisp, cool"
+    },
+    {
+      "name": "Aurora Delicate EDP for Women",
+      "gender": "Female",
+      "notes": "Soft, gentle, delicate"
+    },
+    {
+      "name": "Aurora Delicate Rose EDP for Women",
+      "gender": "Female",
+      "notes": "Rose, soft, romantic"
+    },
+    {
+      "name": "Aurora Eclat De Lune Pink EDP for Women",
+      "gender": "Female",
+      "notes": "Pink, fruity, feminine"
+    },
+    {
+      "name": "Aurora Eclat De Lune Red EDP for Women",
+      "gender": "Female",
+      "notes": "Red, bold, passionate"
+    },
+    {
+      "name": "Aurora Elixir EDP for Men",
+      "gender": "Male",
+      "notes": "Magical, exotic, rich"
+    },
+    {
+      "name": "Aurora Epic Oud EDP for Men",
+      "gender": "Male",
+      "notes": "Oud, epic, intense"
+    },
+    {
+      "name": "Aurora Explorer Black EDP for Men",
+      "gender": "Male",
+      "notes": "Dark, adventurous, bold"
+    },
+    {
+      "name": "Aurora Explorer Gold EDP for Women",
+      "gender": "Female",
+      "notes": "Gold, luxury, warm"
+    },
+    {
+      "name": "Aurora Explorer Silver EDP for Men",
+      "gender": "Male",
+      "notes": "Silver, fresh, cool"
+    },
+    {
+      "name": "Aurora Feminity Collection Bella EDP For Women",
+      "gender": "Female",
+      "notes": "Floral, beautiful, elegant"
+    },
+    {
+      "name": "Aurora Feminity Collection Blush EDP For Women",
+      "gender": "Female",
+      "notes": "Blush, pink, romantic"
+    },
+    {
+      "name": "Aurora Forbidden Love EDP for Women",
+      "gender": "Female",
+      "notes": "Seductive, forbidden, passionate"
+    },
+    {
+      "name": "Aurora Habanera Black EDP for Men",
+      "gender": "Male",
+      "notes": "Dark, spicy, sensual"
+    },
+    {
+      "name": "Aurora Scents Cherry in The Woods Extrait De Parfum Unisex",
+      "gender": "Unisex",
+      "notes": "Cherry, woody, natural"
+    },
+    {
+      "name": "Aurora Vanilla Espresso EDP Unisex",
+      "gender": "Unisex",
+      "notes": "Vanilla, coffee, warm"
+    }
+  ]
+}

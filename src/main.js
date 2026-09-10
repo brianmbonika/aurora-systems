@@ -190,6 +190,23 @@ let state = {
 // Dismissed system notification IDs
 let dismissedAlerts = JSON.parse(localStorage.getItem('aurora_dismissed_alerts') || '[]');
 
+// Product database for lookup and auto-fill
+let productDatabase = [];
+
+// Load product database from JSON file
+async function loadProductDatabase() {
+  try {
+    const response = await fetch('/src/data/products-database.json');
+    if (response.ok) {
+      const data = await response.json();
+      productDatabase = data.products || [];
+      console.log(`✓ Loaded ${productDatabase.length} products from database`);
+    }
+  } catch (error) {
+    console.warn('Could not load product database:', error.message);
+  }
+}
+
 // Initialize State from LocalStorage or seed defaults
 function initStorage() {
   const storedRole = localStorage.getItem('aurora_current_role');
@@ -3302,7 +3319,85 @@ function setupEventListeners() {
   document.getElementById('crm-search').addEventListener('input', () => renderCRM());
 
   // Form Submissions
-  
+
+  // Setup Product Name Lookup & Auto-fill
+  const productNameField = document.getElementById('form-product-name');
+  const lookupDropdown = document.getElementById('product-lookup-dropdown');
+
+  if (productNameField && lookupDropdown) {
+    productNameField.addEventListener('input', (e) => {
+      const query = e.target.value.trim().toLowerCase();
+
+      if (query.length < 1) {
+        lookupDropdown.style.display = 'none';
+        return;
+      }
+
+      // Filter products from database
+      const matches = productDatabase.filter(prod =>
+        prod.name.toLowerCase().includes(query)
+      ).slice(0, 8); // Show max 8 suggestions
+
+      if (matches.length === 0) {
+        lookupDropdown.style.display = 'none';
+        return;
+      }
+
+      // Render dropdown
+      lookupDropdown.innerHTML = matches.map(prod => `
+        <div class="lookup-item" style="
+          padding: 0.75rem 1rem;
+          cursor: pointer;
+          border-bottom: 1px solid var(--border-color);
+          font-size: 0.9rem;
+          transition: background 0.15s;
+        " data-product-name="${prod.name}" data-product-gender="${prod.gender}" data-product-notes="${prod.notes}">
+          <strong>${prod.name}</strong>
+          <span style="color: var(--text-secondary); font-size: 0.8rem; margin-left: 0.5rem;">${prod.gender}</span>
+        </div>
+      `).join('');
+
+      lookupDropdown.style.display = 'block';
+
+      // Add click listeners to suggestions
+      lookupDropdown.querySelectorAll('.lookup-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const name = item.getAttribute('data-product-name');
+          const gender = item.getAttribute('data-product-gender');
+          const notes = item.getAttribute('data-product-notes');
+
+          // Auto-fill form fields
+          productNameField.value = name;
+          document.getElementById('form-product-gender').value = gender;
+          document.getElementById('form-product-notes').value = notes;
+
+          // Generate SKU
+          const skuField = document.getElementById('form-product-sku');
+          if (skuField && !skuField.value) {
+            skuField.value = generateSKU(name);
+          }
+
+          lookupDropdown.style.display = 'none';
+        });
+
+        // Hover effect
+        item.addEventListener('mouseenter', () => {
+          item.style.background = 'var(--bg-hover)';
+        });
+        item.addEventListener('mouseleave', () => {
+          item.style.background = 'transparent';
+        });
+      });
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (e.target !== productNameField && !lookupDropdown.contains(e.target)) {
+        lookupDropdown.style.display = 'none';
+      }
+    });
+  }
+
   // 1. Save / Edit Product
   const productForm = document.getElementById('product-form');
   if (productForm) {
@@ -4097,6 +4192,7 @@ function setupEventListeners() {
 
 window.addEventListener('DOMContentLoaded', () => {
   initStorage();
+  loadProductDatabase(); // Load product lookup database
   updateConnectionStatusUI();
 
   if (isFirebaseInitialized) {
