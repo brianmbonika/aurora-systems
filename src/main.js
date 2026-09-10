@@ -2569,15 +2569,25 @@ function openProductModal(productId = null) {
     document.getElementById('form-product-id').value = prod.id;
     document.getElementById('form-product-name').value = prod.name;
     document.getElementById('form-product-sku').value = prod.sku;
-    document.getElementById('form-product-category').value = prod.category;
+    document.getElementById('form-product-notes').value = prod.notes || '';
     document.getElementById('form-product-type').value = prod.type || 'Full Bottle';
     document.getElementById('form-product-gender').value = prod.gender || 'Unisex';
     document.getElementById('form-product-threshold').value = prod.minStockThreshold;
+    document.getElementById('form-product-buying-cost').value = prod.buyingCost || '';
     document.getElementById('form-product-cost').value = prod.costPrice;
     document.getElementById('form-product-retail').value = prod.sellingPrice;
   } else {
     title.innerText = 'Add New Perfume';
     document.getElementById('form-product-id').value = '';
+    document.getElementById('form-product-name').value = '';
+    document.getElementById('form-product-sku').value = '';
+    document.getElementById('form-product-notes').value = '';
+    document.getElementById('form-product-type').value = 'Full Bottle';
+    document.getElementById('form-product-gender').value = 'Unisex';
+    document.getElementById('form-product-threshold').value = '10';
+    document.getElementById('form-product-buying-cost').value = '';
+    document.getElementById('form-product-cost').value = '';
+    document.getElementById('form-product-retail').value = '';
   }
 
   openModal('modal-product-form');
