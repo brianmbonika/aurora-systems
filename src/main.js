@@ -2756,7 +2756,7 @@ function openTransactionModal(type, preSelectedProdId = null, preSelectedCustId 
     modalTitle.innerText = 'Stock In (Restock)';
     submitBtn.innerText = 'Add to Inventory';
     submitBtn.className = 'btn btn-primary';
-    priceLabel.innerText = 'Unit Wholesale Cost (TZSH) *';
+    priceLabel.innerText = 'Unit Buying Cost (TZSH) *';
     customerGroup.style.display = 'none';
     
     const updateCostPrice = () => {
