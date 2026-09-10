@@ -1242,28 +1242,25 @@ function renderDashboardStatsGrid() {
         <span class="subcard-date">Restock cost + Ops expenses</span>
       </div>
 
-      <div class="kpi-subcard" style="grid-column: 1 / -1; padding: 0; overflow: hidden; display: flex; flex-direction: column;">
-        <div class="kpi-subcard-header" style="padding: 1.5rem 1.5rem 1rem 1.5rem; border-bottom: 1px solid var(--border-color);">
+      <div class="kpi-subcard">
+        <div class="kpi-subcard-header">
           ${iconWrap(ICONS.receipt)}
           <span class="subcard-title">Expenses Log</span>
           <span class="subcard-trend">Recent</span>
         </div>
-        <div style="flex: 1; overflow-y: auto; padding: 0;">
+        <div style="font-size: 0.85rem; color: var(--text-secondary); max-height: 120px; overflow-y: auto;">
           ${state.expenses.length === 0 ?
-            `<div style="padding: 2rem 1.5rem; text-align: center; color: var(--text-muted);">No expenses recorded</div>` :
+            `<div style="padding: 1rem 0; text-align: center; color: var(--text-muted);">No expenses</div>` :
             state.expenses
               .sort((a, b) => new Date(b.date) - new Date(a.date))
-              .slice(0, 8)
+              .slice(0, 3)
               .map(exp => `
-                <div style="padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                <div style="padding: 0.5rem 0; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color);">
                   <div style="flex: 1;">
-                    <div style="font-weight: 500; color: var(--text-primary); font-size: 0.9rem;">${exp.description || 'Expense'}</div>
-                    <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; gap: 1rem; margin-top: 0.25rem;">
-                      <span style="background: ${['Marketing', 'Operations', 'Utilities', 'Transport'].includes(exp.category) ? 'rgba(249, 115, 22, 0.1)' : 'rgba(100, 116, 139, 0.1)'}; padding: 0.2rem 0.6rem; border-radius: 4px; color: ${['Marketing', 'Operations', 'Utilities', 'Transport'].includes(exp.category) ? '#f97316' : '#64748b'};">${exp.category}</span>
-                      <span>${new Date(exp.date).toLocaleDateString()}</span>
-                    </div>
+                    <div style="font-weight: 500; color: var(--text-primary); font-size: 0.8rem;">${exp.description || 'Expense'}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">${exp.category} • ${new Date(exp.date).toLocaleDateString()}</div>
                   </div>
-                  <div style="font-weight: 600; color: #ef4444; text-align: right; font-size: 0.95rem;">${formatCurrency(exp.amount)}</div>
+                  <div style="font-weight: 600; color: #ef4444; text-align: right; font-size: 0.85rem; white-space: nowrap; margin-left: 0.5rem;">${formatCurrency(exp.amount)}</div>
                 </div>
               `).join('')
           }
