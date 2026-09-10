@@ -786,8 +786,12 @@ function formatDate(isoString) {
 
 // Render Dashboard View
 function renderDashboard() {
+  // Remove loading spinner as soon as dashboard starts rendering
+  const spinner = document.getElementById('login-loading-spinner');
+  if (spinner) spinner.remove();
+
   const kpis = calculateKPIs();
-  
+
   // 1. Large profit gradient card
   const isManager = state.currentRole === 'Manager';
   const profitVal = isManager ? kpis.grossProfit : kpis.netProfit;
@@ -3681,8 +3685,11 @@ function setupEventListeners() {
           if (emailInput) emailInput.value = '';
           if (passInput) passInput.value = '';
 
-          // Show loading spinner
-          const loadingSpinner = document.createElement('div');
+          // Show loading spinner (remove any existing first)
+          let loadingSpinner = document.getElementById('login-loading-spinner');
+          if (loadingSpinner) loadingSpinner.remove();
+
+          loadingSpinner = document.createElement('div');
           loadingSpinner.id = 'login-loading-spinner';
           loadingSpinner.style.cssText = `
             position: fixed;
@@ -3707,11 +3714,11 @@ function setupEventListeners() {
           // Run after UI is already showing so any Firestore permission hang
           // doesn't affect the user experience.
 
-          // Remove spinner after 2 seconds max (allows quick perceived load)
-          const spinnerTimeout = setTimeout(() => {
+          // Remove spinner after 1.5 seconds max (quick load)
+          let spinnerTimeout = setTimeout(() => {
             const spinner = document.getElementById('login-loading-spinner');
             if (spinner) spinner.remove();
-          }, 2000);
+          }, 1500);
 
           (async () => {
             try {
