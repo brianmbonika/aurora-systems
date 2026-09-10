@@ -353,7 +353,7 @@ h1, h2, h3, h4, h5, h6 {
 /* Top row: Profit Card (1.1fr) + KPI 2x2 grid (1fr) */
 .dashboard-top-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 1.5rem;
   margin-bottom: 1.5rem;
 }
@@ -368,7 +368,7 @@ h1, h2, h3, h4, h5, h6 {
 .kpi-gradient-card {
   background: var(--profit-gradient);
   border-radius: 24px;
-  padding: 1.5rem;
+  padding: 2rem;
   color: #ffffff;
   position: relative;
   overflow: hidden;
@@ -376,7 +376,7 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 180px;
+  min-height: 220px;
 }
 
 .card-inner {
@@ -423,8 +423,8 @@ h1, h2, h3, h4, h5, h6 {
 /* Responsive Subcards Grid */
 .kpi-subcards-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
   grid-column: 1 / -1;
 }
 
@@ -432,7 +432,7 @@ h1, h2, h3, h4, h5, h6 {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: 20px;
-  padding: 1.25rem;
+  padding: 1.5rem;
   box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
