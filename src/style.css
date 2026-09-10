@@ -2536,6 +2536,16 @@ input:focus, select.large-select:focus {
 }
 
 @media (max-width: 500px) {
+  .filter-group {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .filter-group select {
+    width: 100%;
+    flex: none;
+  }
+
   .kpi-subcards-grid {
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 0.65rem !important;
