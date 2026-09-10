@@ -1333,7 +1333,7 @@ function renderStackedBarChart(period = 'monthly') {
       const monthStart = d.getTime();
       const nextMonth = new Date(d.getFullYear(), d.getMonth() + 1, 1).getTime();
       
-      const sales = { Signature: 0, Elite: 0, Deciduous: 0, Standard: 0 };
+      const sales = { Signature: 0, Elite: 0 };
       state.transactions.forEach(tx => {
         const txTime = new Date(tx.timestamp).getTime();
         if (txTime >= monthStart && txTime < nextMonth && tx.type === 'OUT' && (tx.reason || '').toLowerCase().includes('sale')) {
@@ -1356,7 +1356,7 @@ function renderStackedBarChart(period = 'monthly') {
       const start = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
       const end = start + oneDay;
 
-      const sales = { Signature: 0, Elite: 0, Deciduous: 0, Standard: 0 };
+      const sales = { Signature: 0, Elite: 0 };
       state.transactions.forEach(tx => {
         const txTime = new Date(tx.timestamp).getTime();
         if (txTime >= start && txTime < end && tx.type === 'OUT' && (tx.reason || '').toLowerCase().includes('sale')) {
@@ -1373,7 +1373,7 @@ function renderStackedBarChart(period = 'monthly') {
   // Find max sum of sales to scale heights
   let maxSales = 10;
   data.forEach(d => {
-    const sum = d.sales.Signature + d.sales.Elite + d.sales.Deciduous + d.sales.Standard;
+    const sum = d.sales.Signature + d.sales.Elite;
     if (sum > maxSales) maxSales = sum;
   });
 
@@ -1381,24 +1381,18 @@ function renderStackedBarChart(period = 'monthly') {
   container.innerHTML = data.map(d => {
     const sigVal = d.sales.Signature;
     const eliVal = d.sales.Elite;
-    const decVal = d.sales.Deciduous;
-    const stdVal = d.sales.Standard;
-    const total = sigVal + eliVal + decVal + stdVal;
-    
+    const total = sigVal + eliVal;
+
     const scale = total > 0 ? (total / maxSales) * 100 : 0;
-    
+
     const sigPct = total > 0 ? (sigVal / total) * 100 : 0;
     const eliPct = total > 0 ? (eliVal / total) * 100 : 0;
-    const decPct = total > 0 ? (decVal / total) * 100 : 0;
-    const stdPct = total > 0 ? (stdVal / total) * 100 : 0;
 
     return `
       <div class="bar-column">
         <div class="bar-stack" style="height: ${Math.max(5, scale)}%;">
           ${sigVal > 0 ? `<div class="bar-segment signature" style="height: ${sigPct}%;"></div>` : ''}
           ${eliVal > 0 ? `<div class="bar-segment elite" style="height: ${eliPct}%;"></div>` : ''}
-          ${decVal > 0 ? `<div class="bar-segment deciduous" style="height: ${decPct}%;"></div>` : ''}
-          ${stdVal > 0 ? `<div class="bar-segment standard" style="height: ${stdPct}%;"></div>` : ''}
         </div>
         <div class="bar-label">${d.label}</div>
       </div>
@@ -2532,6 +2526,7 @@ function openProductModal(productId = null) {
     document.getElementById('form-product-sku').value = prod.sku;
     document.getElementById('form-product-category').value = prod.category;
     document.getElementById('form-product-type').value = prod.type || 'Full Bottle';
+    document.getElementById('form-product-gender').value = prod.gender || 'Unisex';
     document.getElementById('form-product-threshold').value = prod.minStockThreshold;
     document.getElementById('form-product-cost').value = prod.costPrice;
     document.getElementById('form-product-retail').value = prod.sellingPrice;
@@ -2616,14 +2611,14 @@ function openCustomerModal(customerId = null) {
 }
 
 // Transaction Modal setup (IN = Restock, OUT = Sale)
-function openTransactionModal(type, preSelectedProdId = null) {
+function openTransactionModal(type, preSelectedProdId = null, preSelectedCustId = null) {
   const modalTitle = document.getElementById('tx-form-title');
   const submitBtn = document.getElementById('btn-submit-tx');
   const priceLabel = document.getElementById('label-tx-price');
   const customerGroup = document.getElementById('form-tx-customer-group');
   const prodSelect = document.getElementById('form-tx-product');
   const custSelect = document.getElementById('form-tx-customer');
-  
+
   document.getElementById('tx-form').reset();
   document.getElementById('form-tx-type').value = type;
 
@@ -2688,8 +2683,14 @@ function openTransactionModal(type, preSelectedProdId = null) {
     fresh.addEventListener('click', () => activateMode(fresh.dataset.mode));
   });
 
-  // Start on Guest
-  activateMode('guest');
+  // Start on Guest, or existing customer if pre-selected
+  if (preSelectedCustId) {
+    activateMode('existing');
+    if (custSelectEl) custSelectEl.value = preSelectedCustId;
+    if (hiddenCustInput) hiddenCustInput.value = preSelectedCustId;
+  } else {
+    activateMode('guest');
+  }
   // Clear new customer fields
   ['form-tx-new-cust-name','form-tx-new-cust-phone','form-tx-new-cust-email'].forEach(id => {
     const el = document.getElementById(id);
@@ -2773,7 +2774,7 @@ function openTargetDetailsModal() {
 
   // 3. Render categories contribution table
   const tbody = document.getElementById('target-modal-contribution-body');
-  const collections = ['Signature', 'Elite', 'Deciduous', 'Standard'];
+  const collections = ['Signature', 'Elite'];
   
   const categoriesStats = collections.map(col => {
     let sold = 0;
@@ -3021,6 +3022,20 @@ function setupEventListeners() {
     });
   }
 
+  // Record Sale for customer button
+  const btnRecordSaleForCustomer = document.getElementById('btn-record-sale-for-customer');
+  if (btnRecordSaleForCustomer) {
+    btnRecordSaleForCustomer.addEventListener('click', () => {
+      const selected = document.querySelector('.customer-card.selected');
+      if (selected) {
+        const customerId = selected.getAttribute('data-id');
+        openTransactionModal('OUT', null, customerId);
+      } else {
+        showToast('Please select a customer first.', 'warning');
+      }
+    });
+  }
+
   // Edit target amount pencil click
   const btnEditTarget = document.getElementById('btn-edit-target');
   if (btnEditTarget) {
@@ -3210,6 +3225,7 @@ function setupEventListeners() {
       const name = document.getElementById('form-product-name').value;
       const category = document.getElementById('form-product-category').value;
       const type = document.getElementById('form-product-type').value;
+      const gender = document.getElementById('form-product-gender').value;
       const skuVal = document.getElementById('form-product-sku').value;
       const threshold = parseInt(document.getElementById('form-product-threshold').value);
       const cost = parseFloat(document.getElementById('form-product-cost').value);
@@ -3220,7 +3236,7 @@ function setupEventListeners() {
       if (id) {
         const idx = state.products.findIndex(p => p.id === id);
         if (idx !== -1) {
-          state.products[idx] = { ...state.products[idx], name, category, type, sku, minStockThreshold: threshold, costPrice: cost, sellingPrice: retail };
+          state.products[idx] = { ...state.products[idx], name, category, type, gender, sku, minStockThreshold: threshold, costPrice: cost, sellingPrice: retail };
         }
       } else {
         state.products.push({
@@ -3229,6 +3245,7 @@ function setupEventListeners() {
           name,
           category,
           type,
+          gender,
           costPrice: cost,
           sellingPrice: retail,
           minStockThreshold: threshold
@@ -3519,6 +3536,39 @@ function setupEventListeners() {
       const email = emailInput ? emailInput.value.trim().toLowerCase() : '';
       const pass = passInput ? passInput.value : '';
 
+      // Clear previous error message - hide it immediately
+      const errorDiv = document.getElementById('login-error-message');
+      if (errorDiv) {
+        errorDiv.style.display = 'none';
+        errorDiv.innerText = '';
+      }
+
+      // Show loading spinner
+      const loadingSpinner = document.createElement('div');
+      loadingSpinner.id = 'login-loading-spinner';
+      loadingSpinner.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        z-index: 9999;
+      `;
+      loadingSpinner.innerHTML = `
+        <div style="width: 50px; height: 50px; border: 4px solid rgba(249, 115, 22, 0.2); border-top: 4px solid #f97316; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto; margin-bottom: 1rem;"></div>
+        <p style="color: var(--text-secondary); font-size: 0.9rem;">Signing in...</p>
+        <style>
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        </style>
+      `;
+      document.body.appendChild(loadingSpinner);
+
+      // Disable submit button
+      const submitBtn = loginForm.querySelector('button[type="submit"]');
+      if (submitBtn) submitBtn.disabled = true;
+
       loginLog('Button clicked. Email: ' + email);
       loginLog('Firebase initialized: ' + isFirebaseInitialized);
 
@@ -3632,6 +3682,14 @@ function setupEventListeners() {
           loginLog('FATAL login error: ' + error.code + ' — ' + error.message, '#ff5555');
           console.error("Firebase Auth Error:", error);
 
+          // Remove loading spinner
+          const loadingSpinner = document.getElementById('login-loading-spinner');
+          if (loadingSpinner) loadingSpinner.remove();
+
+          // Re-enable submit button
+          const submitBtn = loginForm.querySelector('button[type="submit"]');
+          if (submitBtn) submitBtn.disabled = false;
+
           // Show specific error messages based on Firebase error code
           let errorMessage = 'Authentication Failed';
           if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
@@ -3692,6 +3750,14 @@ function setupEventListeners() {
           if (emailInput) emailInput.value = '';
           if (passInput) passInput.value = '';
         } else {
+          // Remove loading spinner
+          const loadingSpinner = document.getElementById('login-loading-spinner');
+          if (loadingSpinner) loadingSpinner.remove();
+
+          // Re-enable submit button
+          const submitBtn = loginForm.querySelector('button[type="submit"]');
+          if (submitBtn) submitBtn.disabled = false;
+
           showToast('Incorrect Email or Password.', 'error');
         }
       }

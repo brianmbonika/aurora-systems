@@ -250,8 +250,6 @@
                   <div class="bar-chart-legend">
                     <span class="legend-chip signature">Signature</span>
                     <span class="legend-chip elite">Elite</span>
-                    <span class="legend-chip deciduous">Deciduous</span>
-                    <span class="legend-chip standard">Standard</span>
                   </div>
                 </div>
               </div>
@@ -678,10 +676,16 @@
                   <div class="customer-orders-history" style="margin-top:0.75rem;">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
                       <h3 style="margin:0;">Purchase History</h3>
-                      <button id="btn-clear-history" class="btn btn-outline" style="padding:0.35rem 0.75rem;font-size:0.75rem;border-color:#ef4444;color:#ef4444;display:inline-flex;align-items:center;gap:0.3rem;font-weight:600;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                    Clear History
-                  </button>
+                      <div style="display:flex;gap:0.5rem;">
+                        <button id="btn-record-sale-for-customer" class="btn btn-primary" style="padding:0.35rem 0.75rem;font-size:0.75rem;display:inline-flex;align-items:center;gap:0.3rem;font-weight:600;">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                          Record Sale
+                        </button>
+                        <button id="btn-clear-history" class="btn btn-outline" style="padding:0.35rem 0.75rem;font-size:0.75rem;border-color:#ef4444;color:#ef4444;display:inline-flex;align-items:center;gap:0.3rem;font-weight:600;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                      Clear History
+                    </button>
+                      </div>
                     </div>
                     <div class="table-container mini">
                       <table class="data-table">
@@ -916,10 +920,8 @@
             <div class="form-group">
               <label for="form-product-category">Collection/Category *</label>
               <select id="form-product-category" required>
+                <option value="Signature" selected>Signature Collection</option>
                 <option value="Elite">Elite Collection</option>
-                <option value="Signature">Signature Collection</option>
-                <option value="Deciduous">Deciduous Collection</option>
-                <option value="Standard" selected>Other / Standard Perfumes</option>
               </select>
             </div>
             <div class="form-group">
@@ -931,6 +933,14 @@
             </div>
           </div>
           <div class="form-row">
+            <div class="form-group">
+              <label for="form-product-gender">Gender *</label>
+              <select id="form-product-gender" required>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Unisex">Unisex</option>
+              </select>
+            </div>
             <div class="form-group">
               <label for="form-product-threshold">Min Alert Threshold *</label>
               <input type="number" id="form-product-threshold" required value="10" min="1" />
