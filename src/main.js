@@ -196,11 +196,15 @@ let productDatabase = [];
 // Load product database from JSON file
 async function loadProductDatabase() {
   try {
-    const response = await fetch('/src/data/products-database.json');
+    // Use import.meta.url to get proper relative path
+    const dbUrl = new URL('./data/products-database.json', import.meta.url).href;
+    const response = await fetch(dbUrl);
     if (response.ok) {
       const data = await response.json();
       productDatabase = data.products || [];
       console.log(`✓ Loaded ${productDatabase.length} products from database`);
+    } else {
+      console.warn('Database fetch returned status:', response.status);
     }
   } catch (error) {
     console.warn('Could not load product database:', error.message);
