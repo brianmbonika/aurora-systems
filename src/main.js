@@ -1631,7 +1631,7 @@ function renderProducts() {
   }
 
   if (categoryFilter !== 'all') {
-    filtered = filtered.filter(p => p.category === categoryFilter);
+    filtered = filtered.filter(p => p.gender === categoryFilter);
   }
 
   if (statusFilter !== 'all') {
