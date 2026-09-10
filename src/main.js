@@ -476,7 +476,9 @@ function initFirestoreSync() {
     const items = [];
     snapshot.forEach(docSnap => items.push(docSnap.data()));
     state.expenses = items;
+    localStorage.setItem('aurora_expenses', JSON.stringify(state.expenses));
     renderCashFlow();
+    renderDashboard(); // Re-render dashboard to update Net Profit with new ops expenses
   }, (err) => handleSyncError('expenses', err));
 
   // Sync Target Amount
