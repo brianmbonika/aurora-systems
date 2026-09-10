@@ -3681,15 +3681,26 @@ function setupEventListeners() {
           // doesn't affect the user experience.
           (async () => {
             try {
-              await checkAndSeedFirestore();
+              // Add 5-second timeout for sync operations
+              const syncPromise = Promise.all([
+                checkAndSeedFirestore(),
+                new Promise(resolve => setTimeout(resolve, 5000))
+              ]);
+              await Promise.race([
+                syncPromise,
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Sync timeout')), 5000))
+              ]);
               initFirestoreSync();
               loginLog('Background sync complete ✓');
             } catch (syncErr) {
-              loginLog('Background sync skipped (fix Firestore rules): ' + syncErr.message, '#ffaa00');
+              loginLog('Background sync skipped or timed out: ' + syncErr.message, '#ffaa00');
             } finally {
-              // Remove loading spinner
+              // Remove loading spinner - ALWAYS remove it
               const spinner = document.getElementById('login-loading-spinner');
-              if (spinner) spinner.remove();
+              if (spinner) {
+                spinner.style.display = 'none';
+                setTimeout(() => spinner.remove(), 100);
+              }
             }
           })();
         } catch (error) {
