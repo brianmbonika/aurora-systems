@@ -1065,8 +1065,8 @@ function renderDashboardStatsGrid() {
           <span class="subcard-title">Total Stock Units</span>
           <span class="subcard-trend">Live</span>
         </div>
-        <h3 class="subcard-value">${state.products.reduce((sum, p) => sum + getProductStock(p.id), 0).toLocaleString()}</h3>
-        <span class="subcard-date">Bottles currently in stock</span>
+        <h3 class="subcard-value">${state.products.filter(p => p.type !== 'Tester').reduce((sum, p) => sum + getProductStock(p.id), 0).toLocaleString()}</h3>
+        <span class="subcard-date">Full Bottles in stock</span>
       </div>
 
       <div class="kpi-subcard">
@@ -1075,18 +1075,18 @@ function renderDashboardStatsGrid() {
           <span class="subcard-title">Stock Worth (Cost)</span>
           <span class="subcard-trend">Asset</span>
         </div>
-        <h3 class="subcard-value">${formatCurrency(kpis.totalValuation)}</h3>
-        <span class="subcard-date">Total value at buying price</span>
+        <h3 class="subcard-value">${formatCurrency(state.products.filter(p => p.type !== 'Tester').reduce((sum, p) => sum + getProductStock(p.id) * p.costPrice, 0))}</h3>
+        <span class="subcard-date">Full Bottles value</span>
       </div>
-      
+
       <div class="kpi-subcard">
         <div class="kpi-subcard-header">
-          ${iconWrap(ICONS.shoppingBag)}
-          <span class="subcard-title">Total Sold</span>
-          <span class="subcard-trend">${qtyTrend}</span>
+          ${iconWrap(ICONS.gift)}
+          <span class="subcard-title">Samples Given</span>
+          <span class="subcard-trend">Promo</span>
         </div>
-        <h3 class="subcard-value">${kpis.totalSoldUnits.toLocaleString()}</h3>
-        <span class="subcard-date">Update: Today</span>
+        <h3 class="subcard-value">${state.products.filter(p => p.type === 'Tester').reduce((sum, p) => sum + getProductStock(p.id), 0).toLocaleString()}</h3>
+        <span class="subcard-date">Tester products in stock</span>
       </div>
 
       <div class="kpi-subcard">
@@ -1206,8 +1206,8 @@ function renderDashboardStatsGrid() {
           <span class="subcard-title">Total Stock Units</span>
           <span class="subcard-trend">Live</span>
         </div>
-        <h3 class="subcard-value">${state.products.reduce((sum, p) => sum + getProductStock(p.id), 0).toLocaleString()}</h3>
-        <span class="subcard-date">Bottles currently in stock</span>
+        <h3 class="subcard-value">${state.products.filter(p => p.type !== 'Tester').reduce((sum, p) => sum + getProductStock(p.id), 0).toLocaleString()}</h3>
+        <span class="subcard-date">Full Bottles in stock</span>
       </div>
 
       <div class="kpi-subcard">
@@ -1216,8 +1216,8 @@ function renderDashboardStatsGrid() {
           <span class="subcard-title">Stock Worth (Cost)</span>
           <span class="subcard-trend">Asset</span>
         </div>
-        <h3 class="subcard-value">${formatCurrency(kpis.totalValuation)}</h3>
-        <span class="subcard-date">Total value at buying price</span>
+        <h3 class="subcard-value">${formatCurrency(state.products.filter(p => p.type !== 'Tester').reduce((sum, p) => sum + getProductStock(p.id) * p.costPrice, 0))}</h3>
+        <span class="subcard-date">Full Bottles value</span>
       </div>
 
       <div class="kpi-subcard">
@@ -1425,10 +1425,12 @@ function renderBestsellers() {
   const activeGender = activeTab ? activeTab.getAttribute('data-gender') : 'all';
   const period = document.getElementById('bestseller-period').value;
 
-  let productsWithSales = state.products.map(p => ({
-    ...p,
-    sold: getProductSoldUnits(p.id, period)
-  }));
+  let productsWithSales = state.products
+    .filter(p => p.type !== 'Tester')
+    .map(p => ({
+      ...p,
+      sold: getProductSoldUnits(p.id, period)
+    }));
 
   // Filter by gender (if product has gender field; otherwise show all)
   if (activeGender !== 'all') {
