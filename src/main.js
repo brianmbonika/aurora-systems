@@ -158,9 +158,9 @@ function isValidPhone(phone) {
 }
 
 // Helper to generate clean SKU
-function generateSKU(name, category) {
+function generateSKU(name, category = 'AS') {
   const cleanName = name.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
-  const cleanCat = category.toUpperCase().slice(0, 3);
+  const cleanCat = (category || 'AS').toUpperCase().slice(0, 3);
   return `AS-${cleanCat}-${cleanName}`;
 }
 
