@@ -353,7 +353,7 @@ h1, h2, h3, h4, h5, h6 {
 /* Top row: Profit Card (1.1fr) + KPI 2x2 grid (1fr) */
 .dashboard-top-row {
   display: grid;
-  grid-template-columns: 1fr 2fr;
+  grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
   margin-bottom: 1.5rem;
 }
@@ -423,8 +423,9 @@ h1, h2, h3, h4, h5, h6 {
 /* Responsive Subcards Grid */
 .kpi-subcards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
+  grid-column: 1 / -1;
 }
 
 .kpi-subcard {
