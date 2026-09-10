@@ -1087,7 +1087,7 @@ function renderDashboardStatsGrid() {
 
       <div class="kpi-subcard">
         <div class="kpi-subcard-header">
-          ${iconWrap(ICONS.gift)}
+          ${iconWrap(ICONS.shoppingBag)}
           <span class="subcard-title">Samples Given</span>
           <span class="subcard-trend">Promo</span>
         </div>
