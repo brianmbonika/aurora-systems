@@ -3403,7 +3403,6 @@ function setupEventListeners() {
         showToast(`✓ New customer "${newName}" saved to CRM.`, 'success');
       }
       // guest mode → customerId stays null
-      const notes = document.getElementById('form-tx-notes').value.trim();
 
       if (type === 'OUT') {
         const currentStock = getProductStock(prodId);
@@ -3415,7 +3414,7 @@ function setupEventListeners() {
 
       const defaultNotes = type === 'IN' ? 'Supplier Restock' : 'Retail Sale';
       const prod = state.products.find(p => p.id === prodId);
-      
+
       state.transactions.push({
         id: `tx-${uuid()}`,
         productId: prodId,
@@ -3423,7 +3422,7 @@ function setupEventListeners() {
         quantity: qty,
         unitPrice: price,
         costPrice: type === 'OUT' && prod ? prod.costPrice : undefined,
-        reason: notes || defaultNotes,
+        reason: defaultNotes,
         customerId: customerId || null,
         timestamp: new Date().toISOString()
       });
