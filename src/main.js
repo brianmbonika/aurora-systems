@@ -3044,13 +3044,21 @@ function setupEventListeners() {
 
       if (e.target.value === 'Tester') {
         // Hide wholesale cost for testers
-        if (costGroup) costGroup.style.display = 'none';
+        if (costGroup) {
+          costGroup.style.display = 'none';
+          const costInput = costGroup.querySelector('input');
+          if (costInput) costInput.required = false;
+        }
         // Update label and auto-fill price
         if (retailLabel) retailLabel.innerText = 'Price (TZSH) *';
         if (retailField) retailField.value = 20000;
       } else {
         // Show wholesale cost for full bottles
-        if (costGroup) costGroup.style.display = 'block';
+        if (costGroup) {
+          costGroup.style.display = 'block';
+          const costInput = costGroup.querySelector('input');
+          if (costInput) costInput.required = true;
+        }
         // Restore original label
         if (retailLabel) retailLabel.innerText = 'Retail Sell Price (TZSH) *';
       }
