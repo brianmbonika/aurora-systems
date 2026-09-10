@@ -3326,7 +3326,7 @@ function setupEventListeners() {
       const cost = parseFloat(document.getElementById('form-product-cost').value);
       const retail = parseFloat(document.getElementById('form-product-retail').value);
 
-      const sku = skuVal.trim() || generateSKU(name, category);
+      const sku = skuVal.trim() || generateSKU(name);
 
       if (id) {
         const idx = state.products.findIndex(p => p.id === id);
