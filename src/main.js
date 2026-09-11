@@ -2769,7 +2769,7 @@ function displayUsersList(users) {
       </div>
       <div style="display: flex; gap: 0.25rem;">
         <button class="btn btn-sm-action" style="padding: 0.35rem 0.6rem; font-size: 0.75rem;" onclick="changeUserRolePrompt('${user.uid}', '${user.email}')">Change Role</button>
-        <button class="btn btn-sm-action" style="padding: 0.35rem 0.6rem; font-size: 0.75rem; color: var(--danger);" onclick="if(confirm('Remove ${user.email}?')) removeUser('${user.uid}', '${user.email}').then(() => location.reload())">Remove</button>
+        <button class="btn btn-sm-action" style="padding: 0.35rem 0.6rem; font-size: 0.75rem; color: var(--danger);" data-uid="${user.uid}" data-email="${user.email}" class="btn-remove-user">Remove</button>
       </div>
     </div>
   `).join('');
@@ -3304,6 +3304,18 @@ function setupEventListeners() {
   
   safeAddListener('btn-add-product', 'click', () => openProductModal());
   safeAddListener('btn-add-customer', 'click', () => openCustomerModal());
+
+  // Remove user button handler (event delegation)
+  document.addEventListener('click', async (e) => {
+    if (e.target.classList.contains('btn-remove-user')) {
+      const uid = e.target.getAttribute('data-uid');
+      const email = e.target.getAttribute('data-email');
+      if (confirm(`Remove ${email}?`)) {
+        await removeUser(uid, email);
+        location.reload();
+      }
+    }
+  });
 
   // Auto-price testers to 20,000 TZSH and hide wholesale cost when type is changed
   const productTypeSelect = document.getElementById('form-product-type');
