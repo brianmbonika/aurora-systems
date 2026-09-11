@@ -1703,7 +1703,10 @@ function renderProducts() {
     filtered = filtered.filter(p => p.gender === categoryFilter);
   }
 
-  if (productTypeFilter !== 'all') {
+  // REQUIRE product type filter - never show Testers and Full Bottles together
+  if (productTypeFilter === 'all') {
+    filtered = [];
+  } else {
     filtered = filtered.filter(p => p.type === productTypeFilter);
   }
 
@@ -1728,7 +1731,27 @@ function renderProducts() {
   const endIndex = startIndex + state.productsItemsPerPage;
   const paginatedItems = filtered.slice(startIndex, endIndex);
 
-  tableBody.innerHTML = paginatedItems.map(p => {
+  // Show message if no type selected or no products
+  if (productTypeFilter === 'all') {
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+          <p style="margin: 0; font-size: 0.95rem;">👇 Select a product type above to view products</p>
+          <p style="margin: 0.5rem 0 0 0; font-size: 0.85rem;">Choose between Full Bottles or Testers</p>
+        </td>
+      </tr>
+    `;
+    if (paginationContainer) paginationContainer.innerHTML = '';
+    return;
+  }
+
+  tableBody.innerHTML = paginatedItems.length === 0 ? `
+    <tr>
+      <td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+        No products found matching your filters
+      </td>
+    </tr>
+  ` : paginatedItems.map(p => {
     let statusClass = 'instock';
     let statusText = 'In Stock';
     if (p.stock === 0) {
