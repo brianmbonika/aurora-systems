@@ -2768,8 +2768,8 @@ function displayUsersList(users) {
         <p style="margin: 0; font-size: 0.75rem; color: var(--text-secondary);">Role: <span style="background: var(--bg-accent); color: var(--text-accent); padding: 0.15rem 0.4rem; border-radius: 4px;">${user.role}</span></p>
       </div>
       <div style="display: flex; gap: 0.25rem;">
-        <button class="btn btn-sm-action" style="padding: 0.35rem 0.6rem; font-size: 0.75rem;" onclick="changeUserRolePrompt('${user.uid}', '${user.email}')">Change Role</button>
-        <button class="btn btn-sm-action" style="padding: 0.35rem 0.6rem; font-size: 0.75rem; color: var(--danger);" data-uid="${user.uid}" data-email="${user.email}" class="btn-remove-user">Remove</button>
+        <button class="btn btn-sm-action btn-change-role" style="padding: 0.35rem 0.6rem; font-size: 0.75rem;" data-uid="${user.uid}" data-email="${user.email}">Change Role</button>
+        <button class="btn btn-sm-action btn-remove-user" style="padding: 0.35rem 0.6rem; font-size: 0.75rem; color: var(--danger);" data-uid="${user.uid}" data-email="${user.email}">Remove</button>
       </div>
     </div>
   `).join('');
@@ -3305,7 +3305,7 @@ function setupEventListeners() {
   safeAddListener('btn-add-product', 'click', () => openProductModal());
   safeAddListener('btn-add-customer', 'click', () => openCustomerModal());
 
-  // Remove user button handler (event delegation)
+  // User management button handlers (event delegation)
   document.addEventListener('click', async (e) => {
     if (e.target.classList.contains('btn-remove-user')) {
       const uid = e.target.getAttribute('data-uid');
@@ -3314,6 +3314,11 @@ function setupEventListeners() {
         await removeUser(uid, email);
         location.reload();
       }
+    }
+    if (e.target.classList.contains('btn-change-role')) {
+      const uid = e.target.getAttribute('data-uid');
+      const email = e.target.getAttribute('data-email');
+      await changeUserRolePrompt(uid, email);
     }
   });
 
