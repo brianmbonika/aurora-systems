@@ -2617,6 +2617,153 @@ async function deleteProductFromInventory(productId) {
   }
 }
 
+// ==========================================
+// USER MANAGEMENT FUNCTIONS (Admin Only)
+// ==========================================
+
+// Add new user (Admin only)
+async function addNewUser(email, password, role) {
+  if (state.currentRole !== 'Admin') {
+    showNotification('Only Admins can create users.', 'error');
+    return false;
+  }
+
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const uid = userCredential.user.uid;
+
+    // Store user role in Firestore
+    await setDoc(doc(db, 'users', uid), {
+      email: email,
+      role: role,
+      createdAt: new Date().toISOString(),
+      createdBy: state.currentUser?.email
+    });
+
+    console.log('✅ User created:', email);
+    showNotification(`User "${email}" created with role "${role}"`, 'success');
+    return true;
+  } catch (error) {
+    console.error('Error creating user:', error);
+    showNotification(`Error: ${error.message}`, 'error');
+    return false;
+  }
+}
+
+// Remove user (Admin only)
+async function removeUser(uid, email) {
+  if (state.currentRole !== 'Admin') {
+    showNotification('Only Admins can remove users.', 'error');
+    return false;
+  }
+
+  try {
+    // Delete user document
+    await deleteDoc(doc(db, 'users', uid));
+    console.log('✅ User deleted:', email);
+    showNotification(`User "${email}" has been removed`, 'success');
+    return true;
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    showNotification(`Error: ${error.message}`, 'error');
+    return false;
+  }
+}
+
+// Change user password (Admin can change others, users can change own)
+async function changeUserPassword(newPassword, targetUid = null) {
+  try {
+    const userToUpdate = targetUid ? { uid: targetUid } : auth.currentUser;
+
+    if (!userToUpdate) {
+      showNotification('No user selected.', 'error');
+      return false;
+    }
+
+    if (targetUid && state.currentRole !== 'Admin') {
+      showNotification('Only Admins can change other users\' passwords.', 'error');
+      return false;
+    }
+
+    await updatePassword(userToUpdate, newPassword);
+    console.log('✅ Password updated');
+    showNotification('Password updated successfully', 'success');
+    return true;
+  } catch (error) {
+    console.error('Error updating password:', error);
+    showNotification(`Error: ${error.message}`, 'error');
+    return false;
+  }
+}
+
+// Get all users (Admin only)
+async function getAllUsers() {
+  if (state.currentRole !== 'Admin') {
+    return [];
+  }
+
+  try {
+    const snapshot = await getDocs(collection(db, 'users'));
+    const users = [];
+    snapshot.forEach(doc => {
+      users.push({
+        uid: doc.id,
+        ...doc.data()
+      });
+    });
+    return users;
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    return [];
+  }
+}
+
+// Update user role (Admin only)
+async function updateUserRole(uid, newRole) {
+  if (state.currentRole !== 'Admin') {
+    showNotification('Only Admins can change user roles.', 'error');
+    return false;
+  }
+
+  try {
+    await updateDoc(doc(db, 'users', uid), {
+      role: newRole,
+      updatedAt: new Date().toISOString()
+    });
+    console.log('✅ User role updated:', uid);
+    showNotification(`User role updated to "${newRole}"`, 'success');
+    return true;
+  } catch (error) {
+    console.error('Error updating role:', error);
+    showNotification(`Error: ${error.message}`, 'error');
+    return false;
+  }
+}
+
+// Display users list
+function displayUsersList(users) {
+  const usersList = document.getElementById('users-list');
+  if (!usersList) return;
+
+  if (users.length === 0) {
+    usersList.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.8rem;">No users found.</p>';
+    return;
+  }
+
+  usersList.innerHTML = users.map(user => `
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border);">
+      <div>
+        <p style="margin: 0; font-weight: 500; font-size: 0.9rem;">${user.email}</p>
+        <p style="margin: 0; font-size: 0.75rem; color: var(--text-secondary);">Role: <span style="background: var(--bg-accent); color: var(--text-accent); padding: 0.15rem 0.4rem; border-radius: 4px;">${user.role}</span></p>
+      </div>
+      <div style="display: flex; gap: 0.25rem;">
+        <button class="btn btn-sm-action" style="padding: 0.35rem 0.6rem; font-size: 0.75rem;" onclick="openModal('modal-change-role-' + '${user.uid}')">Change Role</button>
+        <button class="btn btn-sm-action" style="padding: 0.35rem 0.6rem; font-size: 0.75rem; color: var(--danger);" onclick="if(confirm('Remove ${user.email}?')) removeUser('${user.uid}', '${user.email}')">Remove</button>
+      </div>
+    </div>
+  `).join('');
+}
+
 // Product Form Modal setup
 function openProductModal(productId = null) {
   const modal = document.getElementById('modal-product-form');
@@ -4138,6 +4285,32 @@ function setupEventListeners() {
   }
 
   // Save Settings Credentials Submit Handler
+  // Hide User Management from non-Admins
+  const usersGroup = document.getElementById('settings-users-group');
+  if (usersGroup) {
+    if (state.currentRole !== 'Admin') {
+      usersGroup.style.display = 'none';
+    } else {
+      // Setup user management handlers for Admins
+      const btnAddUser = document.getElementById('btn-add-user');
+      const btnManageUsers = document.getElementById('btn-manage-users');
+
+      if (btnAddUser) {
+        btnAddUser.addEventListener('click', () => {
+          openModal('modal-add-user');
+        });
+      }
+
+      if (btnManageUsers) {
+        btnManageUsers.addEventListener('click', async () => {
+          const users = await getAllUsers();
+          displayUsersList(users);
+          document.getElementById('users-list-container').style.display = 'block';
+        });
+      }
+    }
+  }
+
   const btnSaveCreds = document.getElementById('btn-save-credentials');
   if (btnSaveCreds) {
     btnSaveCreds.addEventListener('click', async () => {
