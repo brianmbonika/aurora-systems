@@ -2535,6 +2535,17 @@ function getSystemAlerts() {
   return alerts;
 }
 
+// Show notification feedback to user
+function showNotification(message, type = 'info') {
+  console.log(`[${type.toUpperCase()}] ${message}`);
+  // Simple browser alert for now (can be enhanced with toast notifications later)
+  if (type === 'error') {
+    alert(`❌ ${message}`);
+  } else if (type === 'success') {
+    console.log(`✅ Success: ${message}`);
+  }
+}
+
 // Render dynamic alerts popover
 function renderNotifications() {
   const allAlerts = getSystemAlerts();
