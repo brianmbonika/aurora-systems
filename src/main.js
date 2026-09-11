@@ -1153,16 +1153,17 @@ function renderDashboardStatsGrid() {
         }
       }
     });
-    let salesTrend = '0%';
+    let salesTrend = '—';
     let salesTrendClass = '';
-    if (salesPrevWeek > 0) {
+    if (salesPrevWeek > 0 && salesThisWeek >= 0) {
       const pct = ((salesThisWeek - salesPrevWeek) / salesPrevWeek) * 100;
       salesTrend = `${pct >= 0 ? '▲' : '▼'} ${pct >= 0 ? '+' : ''}${pct.toFixed(0)}%`;
       salesTrendClass = pct >= 0 ? '' : 'down';
-    } else {
-      salesTrend = salesThisWeek > 0 ? '▲ +100%' : '0%';
+    } else if (salesPrevWeek === 0 && salesThisWeek > 0) {
+      salesTrend = '▲ New activity';
       salesTrendClass = '';
     }
+    // If both are 0, show "—" (no data)
 
     // 2. Total Expenses (Cash Out) weekly trend
     let expensesThisWeek = 0;
@@ -1187,16 +1188,17 @@ function renderDashboardStatsGrid() {
         expensesPrevWeek += e.amount;
       }
     });
-    let expensesTrend = '0%';
+    let expensesTrend = '—';
     let expensesTrendClass = '';
-    if (expensesPrevWeek > 0) {
+    if (expensesPrevWeek > 0 && expensesThisWeek >= 0) {
       const pct = ((expensesThisWeek - expensesPrevWeek) / expensesPrevWeek) * 100;
       expensesTrend = `${pct >= 0 ? '▲' : '▼'} ${pct >= 0 ? '+' : ''}${pct.toFixed(0)}%`;
       expensesTrendClass = pct >= 0 ? 'down' : ''; // Expense going up is danger/down
-    } else {
-      expensesTrend = expensesThisWeek > 0 ? '▲ +100%' : '0%';
-      expensesTrendClass = expensesThisWeek > 0 ? 'down' : '';
+    } else if (expensesPrevWeek === 0 && expensesThisWeek > 0) {
+      expensesTrend = '▲ New expenses';
+      expensesTrendClass = 'down';
     }
+    // If both are 0, show "—" (no data)
 
     // 3. Gross Profit weekly trend
     const grossThisWeek = getProfitForPeriod(7, 0, 'Manager'); // Manager profit calculation returns Gross Profit
