@@ -2589,6 +2589,15 @@ function closeModal(modalId) {
 }
 
 function openModal(modalId) {
+  // Prevent Managers from accessing Admin-only modals
+  if (state.currentRole === 'Manager') {
+    const adminOnlyModals = ['modal-expense-form', 'firebase-wizard', 'modal-settings'];
+    if (adminOnlyModals.includes(modalId)) {
+      showNotification('You do not have permission to access this function.', 'error');
+      return;
+    }
+  }
+
   document.querySelectorAll('.modal-dialog').forEach(m => m.classList.remove('active'));
   document.getElementById(modalId).classList.add('active');
   backdrop.classList.add('active');
