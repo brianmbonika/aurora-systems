@@ -2800,7 +2800,7 @@ function openProductModal(productId = null) {
 
     // Show delete button only when editing
     const btnDelete = document.getElementById('btn-delete-product');
-    if (btnDelete) btnDelete.style.display = 'block';
+    if (btnDelete) btnDelete.style.display = 'inline-flex';
 
     document.getElementById('form-product-id').value = prod.id;
     document.getElementById('form-product-name').value = prod.name;
