@@ -3082,7 +3082,17 @@ function setupEventListeners() {
   // Quick Action Sub-buttons
   safeAddListener('qa-log-sale', 'click', () => openTransactionModal('OUT'));
   safeAddListener('qa-log-restock', 'click', () => openTransactionModal('IN'));
-  safeAddListener('qa-log-expense', 'click', () => openModal('modal-expense-form'));
+  // Hide Record Expense from non-Admin users (Manager only)
+  const btnRecordExpense = document.getElementById('qa-log-expense');
+  if (btnRecordExpense) {
+    if (state.currentRole === 'Manager') {
+      btnRecordExpense.style.display = 'none';
+    } else {
+      safeAddListener('qa-log-expense', 'click', () => openModal('modal-expense-form'));
+    }
+  } else {
+    safeAddListener('qa-log-expense', 'click', () => openModal('modal-expense-form'));
+  }
   safeAddListener('qa-add-product', 'click', () => openProductModal());
   
   // Safe check for qa-add-customer
