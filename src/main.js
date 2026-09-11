@@ -3260,9 +3260,11 @@ function setupEventListeners() {
 
   // Settings Database Reset button - Admin only with password verification
   const btnResetDbSettings = document.getElementById('btn-reset-db-settings');
+  const dbDiagnosticsGroup = btnResetDbSettings?.closest('div[style*="flex"]')?.parentElement;
   if (btnResetDbSettings) {
     if (state.currentRole !== 'Admin') {
       btnResetDbSettings.style.display = 'none';
+      if (dbDiagnosticsGroup) dbDiagnosticsGroup.style.display = 'none';
     } else {
       btnResetDbSettings.addEventListener('click', async () => {
         // First, ask for confirmation
@@ -4198,9 +4200,11 @@ function setupEventListeners() {
 
   // Cloud Database Disconnect / Connect Button Handler - Admin only
   const btnDisconnect = document.getElementById('btn-disconnect-cloud');
+  const cloudStatusGroup = document.getElementById('settings-cloud-group');
   if (btnDisconnect) {
     if (state.currentRole !== 'Admin') {
       btnDisconnect.style.display = 'none';
+      if (cloudStatusGroup) cloudStatusGroup.style.display = 'none';
     } else {
       btnDisconnect.addEventListener('click', async () => {
         if (isFirebaseInitialized) {
