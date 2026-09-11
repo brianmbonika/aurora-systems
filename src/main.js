@@ -2752,16 +2752,26 @@ function displayUsersList(users) {
 
   usersList.innerHTML = users.map(user => `
     <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border);">
-      <div>
+      <div style="flex: 1;">
         <p style="margin: 0; font-weight: 500; font-size: 0.9rem;">${user.email}</p>
         <p style="margin: 0; font-size: 0.75rem; color: var(--text-secondary);">Role: <span style="background: var(--bg-accent); color: var(--text-accent); padding: 0.15rem 0.4rem; border-radius: 4px;">${user.role}</span></p>
       </div>
       <div style="display: flex; gap: 0.25rem;">
-        <button class="btn btn-sm-action" style="padding: 0.35rem 0.6rem; font-size: 0.75rem;" onclick="openModal('modal-change-role-' + '${user.uid}')">Change Role</button>
-        <button class="btn btn-sm-action" style="padding: 0.35rem 0.6rem; font-size: 0.75rem; color: var(--danger);" onclick="if(confirm('Remove ${user.email}?')) removeUser('${user.uid}', '${user.email}')">Remove</button>
+        <button class="btn btn-sm-action" style="padding: 0.35rem 0.6rem; font-size: 0.75rem;" onclick="changeUserRolePrompt('${user.uid}', '${user.email}')">Change Role</button>
+        <button class="btn btn-sm-action" style="padding: 0.35rem 0.6rem; font-size: 0.75rem; color: var(--danger);" onclick="if(confirm('Remove ${user.email}?')) removeUser('${user.uid}', '${user.email}').then(() => location.reload())">Remove</button>
       </div>
     </div>
   `).join('');
+}
+
+// Change user role via prompt
+async function changeUserRolePrompt(uid, email) {
+  const newRole = prompt(`Change role for ${email}:\n\nCurrent roles: Admin or Manager`);
+  if (!newRole || !['Admin', 'Manager'].includes(newRole)) {
+    showNotification('Invalid role. Must be Admin or Manager.', 'error');
+    return;
+  }
+  await updateUserRole(uid, newRole);
 }
 
 // Product Form Modal setup
@@ -4288,19 +4298,34 @@ function setupEventListeners() {
   }
 
   // Save Settings Credentials Submit Handler
-  // Hide User Management from non-Admins
+  // User Management - Show for Admins only
   const usersGroup = document.getElementById('settings-users-group');
   if (usersGroup) {
     if (state.currentRole !== 'Admin') {
       usersGroup.style.display = 'none';
     } else {
+      // SHOW for Admins
+      usersGroup.style.display = 'flex';
+
       // Setup user management handlers for Admins
       const btnAddUser = document.getElementById('btn-add-user');
       const btnManageUsers = document.getElementById('btn-manage-users');
 
       if (btnAddUser) {
-        btnAddUser.addEventListener('click', () => {
-          openModal('modal-add-user');
+        btnAddUser.addEventListener('click', async () => {
+          const email = prompt('Enter new user email:');
+          if (!email) return;
+
+          const password = prompt('Enter password:');
+          if (!password) return;
+
+          const role = prompt('Enter role (Admin/Manager):\nType: Admin or Manager');
+          if (!role || !['Admin', 'Manager'].includes(role)) {
+            showNotification('Invalid role. Must be Admin or Manager.', 'error');
+            return;
+          }
+
+          await addNewUser(email, password, role);
         });
       }
 
