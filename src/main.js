@@ -2800,7 +2800,7 @@ function openProductModal(productId = null) {
 
     // Show delete button only when editing
     const btnDelete = document.getElementById('btn-delete-product');
-    if (btnDelete) btnDelete.style.display = 'inline-flex';
+    if (btnDelete) btnDelete.classList.add('show');
 
     document.getElementById('form-product-id').value = prod.id;
     document.getElementById('form-product-name').value = prod.name;
@@ -2827,7 +2827,7 @@ function openProductModal(productId = null) {
 
     // Hide delete button when adding new product
     const btnDelete = document.getElementById('btn-delete-product');
-    if (btnDelete) btnDelete.style.display = 'none';
+    if (btnDelete) btnDelete.classList.remove('show');
   }
 
   openModal('modal-product-form');

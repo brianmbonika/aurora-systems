@@ -2913,6 +2913,16 @@ input:focus, select.large-select:focus {
   border-radius: 10px;
 }
 
+/* Hide delete button by default */
+.hidden-delete {
+  display: none !important;
+}
+
+/* Show delete button when visible */
+.hidden-delete.show {
+  display: inline-flex !important;
+}
+
 /* Mobile toast responsive */
 @media (max-width: 600px) {
   #toast-container {
