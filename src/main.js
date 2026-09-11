@@ -3426,12 +3426,15 @@ function setupEventListeners() {
 
   // Settings Database Reset button - Admin only with password verification
   const btnResetDbSettings = document.getElementById('btn-reset-db-settings');
-  const dbDiagnosticsGroup = btnResetDbSettings?.closest('div[style*="flex"]')?.parentElement;
   if (btnResetDbSettings) {
     if (state.currentRole !== 'Admin') {
+      // Hide entire Database Diagnostics section for non-Admins
+      const dbDiagnosticsGroup = document.querySelector('[id$="db-diagnostics"]') || btnResetDbSettings.closest('div');
       btnResetDbSettings.style.display = 'none';
       if (dbDiagnosticsGroup) dbDiagnosticsGroup.style.display = 'none';
     } else {
+      // SHOW for Admins
+      btnResetDbSettings.style.display = 'block';
       btnResetDbSettings.addEventListener('click', async () => {
         // First, ask for confirmation
         if (await showConfirmDialog('Reset the database to seed defaults? This clears all sales, custom products, CRM customers, and logged expenses. You will need to enter your password to confirm.', 'Reset Database')) {
@@ -4398,6 +4401,9 @@ function setupEventListeners() {
       btnDisconnect.style.display = 'none';
       if (cloudStatusGroup) cloudStatusGroup.style.display = 'none';
     } else {
+      // SHOW for Admins
+      btnDisconnect.style.display = 'inline-block';
+      if (cloudStatusGroup) cloudStatusGroup.style.display = 'flex';
       btnDisconnect.addEventListener('click', async () => {
         if (isFirebaseInitialized) {
           if (await showConfirmDialog('Disconnect from Firebase Cloud Database? The system will revert to local storage mode.', 'Disconnect Cloud')) {
