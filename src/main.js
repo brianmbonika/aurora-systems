@@ -2786,6 +2786,11 @@ function openProductModal(productId = null) {
     const prod = state.products.find(p => p.id === productId);
     if (!prod) return;
     title.innerText = 'Edit Perfume';
+
+    // Show delete button only when editing
+    const btnDelete = document.getElementById('btn-delete-product');
+    if (btnDelete) btnDelete.style.display = 'block';
+
     document.getElementById('form-product-id').value = prod.id;
     document.getElementById('form-product-name').value = prod.name;
     document.getElementById('form-product-sku').value = prod.sku;
@@ -2808,6 +2813,10 @@ function openProductModal(productId = null) {
     document.getElementById('form-product-buying-cost').value = '';
     document.getElementById('form-product-cost').value = '';
     document.getElementById('form-product-retail').value = '';
+
+    // Hide delete button when adding new product
+    const btnDelete = document.getElementById('btn-delete-product');
+    if (btnDelete) btnDelete.style.display = 'none';
   }
 
   openModal('modal-product-form');
@@ -3241,6 +3250,21 @@ function setupEventListeners() {
   safeAddListener('btn-cancel-edit-target', 'click', () => closeModal('modal-edit-target'));
 
   safeAddListener('btn-cancel-product', 'click', () => closeModal('modal-product-form'));
+
+  // Delete product button handler (shown only when editing)
+  safeAddListener('btn-delete-product', 'click', async () => {
+    const prodId = document.getElementById('form-product-id').value;
+    if (!prodId) {
+      showNotification('No product selected to delete.', 'error');
+      return;
+    }
+
+    const prodName = document.getElementById('form-product-name').value;
+    if (confirm(`Delete "${prodName}"? This cannot be undone.`)) {
+      await deleteProductFromInventory(prodId);
+      closeModal('modal-product-form');
+    }
+  });
   safeAddListener('btn-cancel-tx', 'click', () => closeModal('modal-transaction-form'));
   safeAddListener('btn-cancel-customer', 'click', () => closeModal('modal-customer-form'));
   safeAddListener('btn-cancel-exp-modal', 'click', () => closeModal('modal-expense-form'));
