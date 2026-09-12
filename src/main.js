@@ -1745,13 +1745,19 @@ function renderProducts() {
     return;
   }
 
-  tableBody.innerHTML = paginatedItems.length === 0 ? `
-    <tr>
-      <td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
-        No products found matching your filters
-      </td>
-    </tr>
-  ` : paginatedItems.map(p => {
+  if (paginatedItems.length === 0) {
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+          No products found matching your filters
+        </td>
+      </tr>
+    `;
+    if (paginationContainer) paginationContainer.innerHTML = '';
+    return;
+  }
+
+  tableBody.innerHTML = paginatedItems.map(p => {
     let statusClass = 'instock';
     let statusText = 'In Stock';
     if (p.stock === 0) {
