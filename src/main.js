@@ -1573,6 +1573,48 @@ function renderCashFlow() {
   document.getElementById('cf-val-expenses').innerText = formatCurrency(totalExpenses);
   document.getElementById('cf-val-balance').innerText = formatCurrency(cumulativeBalance);
 
+  // Calculate trends for sales and expenses
+  const now = new Date();
+  const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+
+  const thisMonthSales = state.transactions
+    .filter(t => t.type === 'OUT' && new Date(t.date) >= thisMonthStart)
+    .reduce((sum, t) => sum + (t.quantity * (t.sellingPrice || 0)), 0);
+
+  const lastMonthSales = state.transactions
+    .filter(t => t.type === 'OUT' && new Date(t.date) >= lastMonthStart && new Date(t.date) <= lastMonthEnd)
+    .reduce((sum, t) => sum + (t.quantity * (t.sellingPrice || 0)), 0);
+
+  const thisMonthExpenses = state.expenses
+    .filter(e => new Date(e.date) >= thisMonthStart)
+    .reduce((sum, e) => sum + e.amount, 0);
+
+  const lastMonthExpenses = state.expenses
+    .filter(e => new Date(e.date) >= lastMonthStart && new Date(e.date) <= lastMonthEnd)
+    .reduce((sum, e) => sum + e.amount, 0);
+
+  // Calculate trend percentages or show "—"
+  const salesTrendEl = document.querySelector('[class*="text-success"][class*="cf-subtext"]');
+  const expensesTrendEl = document.querySelector('[class*="text-danger"][class*="cf-subtext"]');
+
+  if (lastMonthSales === 0 && thisMonthSales === 0) {
+    if (salesTrendEl) salesTrendEl.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/></svg> —';
+  } else if (lastMonthSales > 0) {
+    const salesTrend = ((thisMonthSales - lastMonthSales) / lastMonthSales * 100).toFixed(0);
+    const icon = salesTrend >= 0 ? '<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>' : '<polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/>';
+    if (salesTrendEl) salesTrendEl.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${icon}</svg> ${salesTrend > 0 ? '+' : ''}${salesTrend}% Than Last Month`;
+  }
+
+  if (lastMonthExpenses === 0 && thisMonthExpenses === 0) {
+    if (expensesTrendEl) expensesTrendEl.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/></svg> —';
+  } else if (lastMonthExpenses > 0) {
+    const expenseTrend = ((thisMonthExpenses - lastMonthExpenses) / lastMonthExpenses * 100).toFixed(0);
+    const icon = expenseTrend >= 0 ? '<polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/>' : '<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>';
+    if (expensesTrendEl) expensesTrendEl.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${icon}</svg> ${expenseTrend > 0 ? '+' : ''}${expenseTrend}% Than Last Month`;
+  }
+
   const balanceCard = document.getElementById('cf-balance-card');
   const balanceStatus = document.getElementById('cf-val-balance-status');
   const balanceIcon = document.getElementById('cf-balance-icon');
