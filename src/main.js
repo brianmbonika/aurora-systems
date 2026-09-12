@@ -1680,6 +1680,7 @@ function renderCumulativeCashFlowChart() {
 // Render Products Catalog View
 function renderProducts() {
   const tableBody = document.getElementById('products-table-body');
+  const paginationContainer = document.getElementById('products-pagination-container');
   const searchVal = document.getElementById('inventory-search').value.toLowerCase();
   const statusFilter = document.getElementById('filter-stock-status').value;
   const categoryFilter = document.getElementById('filter-category').value;
@@ -1810,7 +1811,6 @@ function renderProducts() {
   }).join('');
 
   // Render Pagination Controls Footer
-  const paginationContainer = document.getElementById('products-pagination-container');
   if (paginationContainer) {
     if (totalItems === 0) {
       paginationContainer.innerHTML = '';
