@@ -1,0 +1,175 @@
+// Aurora Systems Firestore Security Rules
+// Project: aurora-system-b3203
+//
+// Role Hierarchy:
+// - Admin: Full access to all data
+// - CEO: Full access, can edit config targets, view all reports
+// - Manager: Limited access (products, customers, own inventory)
+// - Authenticated Users: Limited to own data
+// - Unauthenticated: No access
+//
+// Last Updated: 2026-09-13
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getRole() {
+      // Get the role from the user's document in /users collection
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && getRole() == 'admin';
+    }
+
+    function isCEO() {
+      return isSignedIn() && getRole() == 'ceo';
+    }
+
+    function isManager() {
+      return isSignedIn() && getRole() == 'manager';
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function canManageUsers() {
+      return isAdmin() || isCEO();
+    }
+
+    function canViewFinancials() {
+      return isAdmin() || isCEO();
+    }
+
+    function canModifyProducts() {
+      return isAdmin() || isCEO();
+    }
+
+    // ============================================================
+    // /users - User profiles and roles
+    // ============================================================
+    // Only admins can modify roles. Users can read their own document.
+    // Admins can view all user documents.
+    match /users/{userId} {
+      // Read: Admin can read all, users can read own
+      allow read: if isAdmin() || isCEO() || isOwner(userId);
+
+      // Write: Only admins can write (role assignments are system critical)
+      allow create: if false; // Users created via Firebase Auth only
+
+      // Update: Only admins/CEOs can modify user documents
+      allow update: if isAdmin() || isCEO();
+
+      allow delete: if isAdmin();
+    }
+
+    // ============================================================
+    // /config - System configuration (annual targets, settings)
+    // ============================================================
+    // CEO can write targets, all authenticated can read for dashboards
+    match /config/{doc} {
+      match /{document=**} {
+        // Read: All authenticated users can read (needed for dashboards)
+        allow read: if isSignedIn();
+
+        // Write: Only CEO and Admin can modify configuration
+        allow write: if isAdmin() || isCEO();
+      }
+    }
+
+    // ============================================================
+    // /products - Product catalog (SKU, price, inventory levels)
+    // ============================================================
+    // All can read products (needed for sales entry, customer interface)
+    // Only Admin/CEO can modify catalog
+    match /products/{productId} {
+      allow read: if isSignedIn();
+      allow create: if canModifyProducts();
+      allow update: if canModifyProducts();
+      allow delete: if isAdmin();
+    }
+
+    // ============================================================
+    // /transactions - Audit log (immutable, system-generated)
+    // ============================================================
+    // All authenticated users can read (audit transparency)
+    // No one can write/modify/delete (system only)
+    match /transactions/{transactionId} {
+      allow read: if isSignedIn();
+      allow create: if false; // System-only writes
+      allow update: if false; // Immutable log
+      allow delete: if false; // Never delete audit logs
+    }
+
+    // ============================================================
+    // /customers - CRM customer profiles
+    // ============================================================
+    // All can read customers (shared database view)
+    // Creator can update own, admin can update all
+    match /customers/{customerId} {
+      // Read: All authenticated users can read
+      allow read: if isSignedIn();
+
+      // Create: Any authenticated user can add customer
+      allow create: if isSignedIn() && request.resource.data.createdBy == request.auth.uid;
+
+      // Update: Owner (creator) can update, or Admin/CEO
+      allow update: if isSignedIn() && (
+        request.auth.uid == resource.data.createdBy ||
+        isAdmin() ||
+        isCEO()
+      );
+
+      // Delete: Only admin
+      allow delete: if isAdmin();
+    }
+
+    // ============================================================
+    // /expenses - Financial records and operational expenses
+    // ============================================================
+    // Only Admin and CEO can view and manage expenses
+    // Manager role CANNOT access this (security boundary)
+    match /expenses/{expenseId} {
+      allow read: if canViewFinancials();
+      allow create: if canViewFinancials() && request.resource.data.createdBy == request.auth.uid;
+      allow update: if canViewFinancials();
+      allow delete: if isAdmin();
+    }
+
+    // ============================================================
+    // /inventory - Real-time stock tracking and movements
+    // ============================================================
+    // All can read inventory (needed for dashboard, stock alerts)
+    // Creator and Admin can update own entries
+    match /inventory/{inventoryId} {
+      allow read: if isSignedIn();
+
+      // Create: Any authenticated user
+      allow create: if isSignedIn() && request.resource.data.createdBy == request.auth.uid;
+
+      // Update: Owner (creator) can update, or Admin/CEO
+      allow update: if isSignedIn() && (
+        request.auth.uid == resource.data.createdBy ||
+        isAdmin() ||
+        isCEO()
+      );
+
+      // Delete: Only admin (maintain audit trail)
+      allow delete: if isAdmin();
+    }
+
+    // ============================================================
+    // Deny-all default (explicit deny)
+    // ============================================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
