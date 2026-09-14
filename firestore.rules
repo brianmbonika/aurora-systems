@@ -25,15 +25,15 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isSignedIn() && getRole() == 'admin';
+      return isSignedIn() && (getRole() == 'Admin' || getRole() == 'admin');
     }
 
     function isCEO() {
-      return isSignedIn() && getRole() == 'ceo';
+      return isSignedIn() && (getRole() == 'CEO' || getRole() == 'ceo');
     }
 
     function isManager() {
-      return isSignedIn() && getRole() == 'manager';
+      return isSignedIn() && (getRole() == 'Manager' || getRole() == 'manager');
     }
 
     function isOwner(uid) {
