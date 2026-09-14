@@ -62,7 +62,8 @@ service cloud.firestore {
       allow read: if isAdmin() || isCEO() || isOwner(userId);
 
       // Write: Only admins can write (role assignments are system critical)
-      allow create: if false; // Users created via Firebase Auth only
+      // Allow authenticated users to create their own document (auto-seed role as Manager)
+      allow create: if isSignedIn() && request.auth.uid == userId;
 
       // Update: Only admins/CEOs can modify user documents
       allow update: if isAdmin() || isCEO();
