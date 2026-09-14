@@ -353,30 +353,30 @@ async function syncCollectionToFirestore(collectionName, localArray) {
   }
 }
 
-function saveProducts() {
+async function saveProducts() {
   if (isFirebaseInitialized) {
-    syncCollectionToFirestore('products', state.products);
+    await syncCollectionToFirestore('products', state.products);
   } else {
     localStorage.setItem('aurora_products', JSON.stringify(state.products));
   }
 }
-function saveTransactions() {
+async function saveTransactions() {
   if (isFirebaseInitialized) {
-    syncCollectionToFirestore('transactions', state.transactions);
+    await syncCollectionToFirestore('transactions', state.transactions);
   } else {
     localStorage.setItem('aurora_transactions', JSON.stringify(state.transactions));
   }
 }
-function saveCustomers() {
+async function saveCustomers() {
   if (isFirebaseInitialized) {
-    syncCollectionToFirestore('customers', state.customers);
+    await syncCollectionToFirestore('customers', state.customers);
   } else {
     localStorage.setItem('aurora_customers', JSON.stringify(state.customers));
   }
 }
-function saveExpenses() {
+async function saveExpenses() {
   if (isFirebaseInitialized) {
-    syncCollectionToFirestore('expenses', state.expenses);
+    await syncCollectionToFirestore('expenses', state.expenses);
   } else {
     localStorage.setItem('aurora_expenses', JSON.stringify(state.expenses));
   }
@@ -3782,7 +3782,7 @@ function setupEventListeners() {
       }
     });
 
-    productForm.addEventListener('submit', (e) => {
+    productForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const id = document.getElementById('form-product-id').value;
       const name = document.getElementById('form-product-name').value;
@@ -3817,7 +3817,7 @@ function setupEventListeners() {
         });
       }
 
-      saveProducts();
+      await saveProducts();
       closeModal('modal-product-form');
 
       const activeNav = document.querySelector('.nav-item.active').getAttribute('data-view');
