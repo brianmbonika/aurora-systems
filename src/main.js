@@ -466,6 +466,7 @@ function initFirestoreSync() {
   const unsubProducts = onSnapshot(collection(db, 'products'), (snapshot) => {
     const items = [];
     snapshot.forEach(docSnap => items.push(docSnap.data()));
+    console.log(`📦 Listener fired: ${items.length} products in Firestore`);
     if (items.length > 0) {
       state.products = items;
       renderProducts();
@@ -536,19 +537,23 @@ async function checkAndSeedFirestore() {
 
     const prodSnap = await getDocs(collection(db, 'products'));
     if (prodSnap.empty) {
-      console.log("Firestore database is empty. Automatically seeding default catalog...");
+      console.log("Firestore database is empty. Automatically seeding 49-product catalog...");
       const batch = writeBatch(db);
-      
-      // Seed Products
-      const seedProducts = INITIAL_PRODUCTS.map(p => ({
+
+      // Seed Products - use productDatabase (49 products) or fall back to INITIAL_PRODUCTS
+      const sourcProducts = (productDatabase && productDatabase.length > 0) ? productDatabase : INITIAL_PRODUCTS;
+      const seedProducts = sourcProducts.map(p => ({
         id: `prod-${uuid()}`,
         sku: generateSKU(p.name),
         name: p.name,
-        type: p.type,
-        buyingCost: p.costPrice,
-        costPrice: p.costPrice,
-        sellingPrice: p.sellingPrice,
-        minStockThreshold: 10
+        type: p.type || 'Full Bottle',
+        category: p.gender || 'Unisex',
+        buyingCost: p.costPrice || 78000,
+        costPrice: p.costPrice || 78000,
+        wholesalePrice: 120000,
+        sellingPrice: p.sellingPrice || 150000,
+        minStockThreshold: 10,
+        notes: p.notes || ''
       }));
       seedProducts.forEach(p => {
         batch.set(doc(db, 'products', p.id), p);

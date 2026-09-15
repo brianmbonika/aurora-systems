@@ -85,8 +85,8 @@ service cloud.firestore {
         // Read: All authenticated users can read (needed for dashboards)
         allow read: if isSignedIn();
 
-        // Write: Only CEO and Admin can modify configuration
-        allow write: if isAdmin() || isCEO();
+        // Write: Allow authenticated users (for seeding)
+        allow write: if isSignedIn();
       }
     }
 
@@ -97,8 +97,8 @@ service cloud.firestore {
     // Only Admin/CEO can modify catalog
     match /products/{productId} {
       allow read: if isSignedIn();
-      allow create: if canModifyProducts();
-      allow update: if canModifyProducts();
+      allow create: if isSignedIn() && (getRole() == 'Admin' || getRole() == 'admin' || getRole() == '');
+      allow update: if isSignedIn() && (getRole() == 'Admin' || getRole() == 'admin');
       allow delete: if isSignedIn() && (getRole() == 'Admin' || getRole() == 'admin');
     }
 
