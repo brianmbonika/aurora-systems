@@ -3601,6 +3601,29 @@ function setupEventListeners() {
     }
   }
 
+  // Seed Firebase Products
+  const btnSeedFirebase = document.getElementById('btn-seed-firebase-products');
+  if (btnSeedFirebase) {
+    if (state.currentRole !== 'Admin') {
+      btnSeedFirebase.style.display = 'none';
+    } else {
+      btnSeedFirebase.style.display = 'block';
+      btnSeedFirebase.addEventListener('click', async () => {
+        if (await showConfirmDialog('Seed Firebase with Aurora Scents products? This will create 32 products with pricing and stock data.', 'Seed Products')) {
+          try {
+            showToast('Seeding products...', 'info');
+            await checkAndSeedFirestore();
+            showToast('✅ Products seeded successfully!', 'success');
+            setTimeout(() => location.reload(), 1500);
+          } catch (error) {
+            console.error('Seed error:', error);
+            showToast(`Seed failed: ${error.message}`, 'error');
+          }
+        }
+      });
+    }
+  }
+
   // Clear History
   safeAddListener('btn-clear-tx-history', 'click', async () => {
     if (await showConfirmDialog('Clear all transaction history? Stock counts will reset to zero.', 'Clear History')) {
