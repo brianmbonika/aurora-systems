@@ -2692,13 +2692,16 @@ function openModal(modalId) {
 async function deleteProductFromInventory(productId) {
   try {
     const docRef = doc(db, 'products', productId);  // ✅ FIXED: Delete from products, not inventory
+    console.log(`Attempting to delete product: ${productId}`);
     await deleteDoc(docRef);
     console.log(`✅ Product deleted: ${productId}`);
     renderProducts();
     showNotification('Product deleted successfully!', 'success');
   } catch (error) {
-    console.error('Error deleting product:', error);
-    showNotification('Failed to delete product. Please try again.', 'error');
+    console.error('❌ Error deleting product:', error);
+    console.error('Error code:', error.code);
+    console.error('Error message:', error.message);
+    showNotification(`Failed to delete product: ${error.message}`, 'error');
   }
 }
 
