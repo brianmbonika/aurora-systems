@@ -2407,8 +2407,8 @@ function showView(viewName) {
   } else if (viewName === 'inventory') {
     title.innerText = 'Inventory Catalog';
     subtitle.innerText = 'Aurora Scents fragrance collection & pricing';
-    // Auto-select Full Bottles by default
-    document.getElementById('filter-product-type').value = 'Full Bottles';
+    // Auto-select Full Bottles by default (note: option value is singular "Full Bottle")
+    document.getElementById('filter-product-type').value = 'Full Bottle';
     renderProducts();
   } else if (viewName === 'transactions') {
     title.innerText = 'Stock Movements';
