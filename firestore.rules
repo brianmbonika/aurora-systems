@@ -99,7 +99,7 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow create: if canModifyProducts();
       allow update: if canModifyProducts();
-      allow delete: if isAdmin();
+      allow delete: if isSignedIn() && (getRole() == 'Admin' || getRole() == 'admin');
     }
 
     // ============================================================
