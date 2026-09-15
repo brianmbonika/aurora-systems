@@ -542,9 +542,10 @@ async function checkAndSeedFirestore() {
       // Seed Products
       const seedProducts = INITIAL_PRODUCTS.map(p => ({
         id: `prod-${uuid()}`,
-        sku: generateSKU(p.name, p.category),
+        sku: generateSKU(p.name),
         name: p.name,
-        category: p.category,
+        type: p.type,
+        buyingCost: p.costPrice,
         costPrice: p.costPrice,
         sellingPrice: p.sellingPrice,
         minStockThreshold: 10
