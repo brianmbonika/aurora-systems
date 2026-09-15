@@ -21,15 +21,20 @@ service cloud.firestore {
 
     function getRole() {
       // Get the role from the user's document in /users collection
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+      // Return empty string if document doesn't exist yet (handles race conditions)
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role
+        : '';
     }
 
     function isAdmin() {
-      return isSignedIn() && (getRole() == 'Admin' || getRole() == 'admin');
+      let role = getRole();
+      return isSignedIn() && (role == 'Admin' || role == 'admin');
     }
 
     function isCEO() {
-      return isSignedIn() && (getRole() == 'CEO' || getRole() == 'ceo');
+      let role = getRole();
+      return isSignedIn() && (role == 'CEO' || role == 'ceo');
     }
 
     function isManager() {

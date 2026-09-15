@@ -4645,9 +4645,20 @@ window.addEventListener('DOMContentLoaded', () => {
           if (loginScreen) loginScreen.classList.add('hidden');
           switchRole(role);
 
-          // Background sync — non-blocking
+          // Background sync — non-blocking, but with delay to ensure user doc is synced
           (async () => {
             try {
+              // Wait 500ms to ensure user document is replicated in Firestore
+              // This prevents race conditions where getRole() fails in security rules
+              await new Promise(resolve => setTimeout(resolve, 500));
+
+              // Verify the user document actually exists and has the correct role
+              const verifyUserDoc = await getDoc(doc(db, 'users', user.uid));
+              if (verifyUserDoc.exists()) {
+                const verifiedRole = verifyUserDoc.data().role;
+                console.log(`✓ User role verified in Firestore: ${verifiedRole}`);
+              }
+
               await checkAndSeedFirestore();
               initFirestoreSync();
             } catch (syncErr) {
