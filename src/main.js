@@ -2688,10 +2688,10 @@ function openModal(modalId) {
   backdrop.classList.add('active');
 }
 
-// Delete product from inventory
+// Delete product from products catalog
 async function deleteProductFromInventory(productId) {
   try {
-    const docRef = doc(db, 'inventory', productId);
+    const docRef = doc(db, 'products', productId);  // ✅ FIXED: Delete from products, not inventory
     await deleteDoc(docRef);
     console.log(`✅ Product deleted: ${productId}`);
     renderProducts();
