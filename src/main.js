@@ -523,7 +523,11 @@ function initFirestoreSync() {
 
       // Enrich missing Fragrantica profile / images from database
       if (!p.imageUrl || !p.seasons || p.seasons.length === 0) {
-        const dbMatch = productDatabase.find(d => p.name.toLowerCase().includes(d.name.toLowerCase().replace(' (tester)', '').replace(' edp', '')));
+        const cleanPName = p.name.toLowerCase().replace(/\s*\(tester\)/i, '').replace(/\s*edp.*/i, '').trim();
+        const dbMatch = productDatabase.find(d => {
+          const cleanDName = d.name.toLowerCase().replace(/\s*\(tester\)/i, '').replace(/\s*edp.*/i, '').trim();
+          return cleanPName.includes(cleanDName) || cleanDName.includes(cleanPName);
+        });
         if (dbMatch) {
           if (!p.imageUrl && dbMatch.imageUrl) { p.imageUrl = dbMatch.imageUrl; needsSave = true; }
           if ((!p.seasons || p.seasons.length === 0) && dbMatch.seasons) { p.seasons = dbMatch.seasons; needsSave = true; }
@@ -3091,6 +3095,8 @@ function openProductViewModal(productId) {
     ? `<img src="${prod.imageUrl}" alt="${prod.name}" style="width:100%; max-height:220px; object-fit:contain; border-radius:12px;" onerror="this.onerror=null;this.parentNode.innerHTML='<div style=\'padding:2rem; text-align:center; color:var(--text-secondary);\'>🍾 No Photo Available</div>';">`
     : `<div style="padding:2rem; text-align:center; color:var(--text-secondary); background:rgba(255,255,255,0.03); border-radius:12px;">🍾 No Photo Available</div>`;
 
+  const currentStock = typeof getProductStock === 'function' ? getProductStock(prod.id) : (prod.stock || 0);
+
   if (modalBody) {
     modalBody.innerHTML = `
       <div style="display:flex; flex-direction:column; gap:1.25rem;">
@@ -3152,7 +3158,7 @@ function openProductViewModal(productId) {
           </div>
           <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:0.75rem; text-align:center;">
             <div style="font-size:0.7rem; text-transform:uppercase; color:var(--text-secondary); font-weight:600;">Current Stock</div>
-            <div style="font-size:1.1rem; font-weight:800; color:${prod.stock > 0 ? 'var(--text-primary)' : '#ef4444'}; margin-top:0.2rem;">${prod.stock} units</div>
+            <div style="font-size:1.1rem; font-weight:800; color:${currentStock > 0 ? 'var(--text-primary)' : '#ef4444'}; margin-top:0.2rem;">${currentStock} units</div>
           </div>
         </div>
 
