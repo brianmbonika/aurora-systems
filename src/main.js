@@ -630,18 +630,20 @@ async function checkAndSeedFirestore(force = false) {
     }
 
     const prodSnap = await getDocs(collection(db, 'products'));
+    const seedProducts = createSeedProducts();
+
     if (prodSnap.empty || force) {
       console.log("Seeding Firestore database with Full Bottles and Testers...");
       const batch = writeBatch(db);
 
-      const seedProducts = createSeedProducts();
       // Build a set of existing product names to avoid duplicates
       const existingNames = new Set(
         prodSnap.docs.map(d => (d.data().name || '').trim().toLowerCase())
       );
       const newProducts = force
-        ? seedProducts  // force=true: overwrite by ID (safe, won't create new docs)
+        ? seedProducts  // force=true: overwrite by ID
         : seedProducts.filter(p => !existingNames.has(p.name.trim().toLowerCase()));
+
       newProducts.forEach(p => {
         batch.set(doc(db, 'products', p.id), p);
       });
@@ -693,12 +695,66 @@ async function checkAndSeedFirestore(force = false) {
 
       await batch.commit();
       console.log("Firestore database seeded successfully with Full Bottles and Testers.");
+    } else {
+      // Check existing products in Firestore and update any missing/stale imageUrls or metadata
+      const batch = writeBatch(db);
+      let needsBatchCommit = false;
+
+      prodSnap.docs.forEach(docSnap => {
+        const p = docSnap.data();
+        let updated = false;
+
+        const cleanPName = (p.name || '').toLowerCase()
+          .replace(/\s*\(tester\)/i, '')
+          .replace(/\s*edp.*/i, '')
+          .replace(/aurora\s*/i, '')
+          .replace(/&.*/i, '')
+          .trim();
+
+        const dbMatch = productDatabase.find(d => {
+          const cleanDName = d.name.toLowerCase()
+            .replace(/\s*\(tester\)/i, '')
+            .replace(/\s*edp.*/i, '')
+            .replace(/aurora\s*/i, '')
+            .replace(/&.*/i, '')
+            .trim();
+          return cleanPName.includes(cleanDName) || cleanDName.includes(cleanPName) || (cleanPName.split(' ')[0] && cleanDName.split(' ')[0] && cleanPName.split(' ')[0] === cleanDName.split(' ')[0] && cleanPName.split(' ')[0].length > 3);
+        });
+
+        const targetImage = dbMatch ? dbMatch.imageUrl : "https://cdn.shopify.com/s/files/1/0706/2464/1274/files/AURAGOLD_3.jpg?v=1764331965";
+        
+        if (!p.imageUrl || p.imageUrl !== targetImage || p.imageUrl.includes('aurorascents.com')) {
+          p.imageUrl = targetImage;
+          updated = true;
+        }
+
+        if (dbMatch) {
+          if (!p.seasons || p.seasons.length === 0) { p.seasons = dbMatch.seasons; updated = true; }
+          if (!p.timeOfDay || p.timeOfDay.length === 0) { p.timeOfDay = dbMatch.timeOfDay; updated = true; }
+          if (!p.rating) { p.rating = dbMatch.rating; updated = true; }
+        }
+
+        if (updated) {
+          batch.set(doc(db, 'products', p.id), p, { merge: true });
+          needsBatchCommit = true;
+        }
+      });
+
+      if (needsBatchCommit) {
+        await batch.commit();
+        console.log("Updated product image URLs and metadata in Firestore.");
+      }
     }
   } catch (e) {
     console.error("Error checking or seeding Firestore database:", e);
-    throw e;
   }
 }
+
+// Expose force sync helper to window for manual recovery if needed
+window.forceSeedProducts = async function() {
+  await checkAndSeedFirestore(true);
+  showToast('Products database re-seeded successfully!', 'success');
+};
 
 // ==========================================
 // 3. FINANCIAL & INVENTORY CALCULATIONS
