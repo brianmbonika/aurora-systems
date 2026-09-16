@@ -1955,8 +1955,8 @@ function renderProducts() {
               Out
             </button>
             <button class="btn btn-outline btn-sm-action btn-edit-action" data-id="${p.id}" style="display: ${state.currentRole === 'Accountant' ? 'none' : 'block'};">Edit</button>
-            <button type="button" class="btn btn-danger btn-sm-action btn-delete-action" data-id="${p.id}" title="Delete Product" style="display: ${state.currentRole === 'Accountant' ? 'none' : 'inline-flex'}; align-items: center; gap: 0.25rem; background: none; border: 1px solid #ef4444; color: #ef4444; padding: 0.35rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;color:#ef4444;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            <button type="button" class="btn btn-danger btn-sm-action btn-delete-action" data-id="${p.id}" title="Delete Product" style="display: ${state.currentRole === 'Accountant' ? 'none' : 'inline-flex'}; align-items: center; gap: 0.2rem; background: none; border: 1px solid #ef4444; color: #ef4444; border-radius: 6px; cursor: pointer;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;color:#ef4444;flex-shrink:0;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
               Delete
             </button>
           </div>
