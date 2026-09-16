@@ -552,7 +552,7 @@ function initFirestoreSync() {
       }
 
       // Hard fallback if still unassigned or empty
-      if (!p.imageUrl || p.imageUrl.includes('aurorascents.com')) { p.imageUrl = "https://cdn.shopify.com/s/files/1/0706/2464/1274/files/AURAGOLD_3.jpg?v=1764331965"; needsSave = true; }
+      if (!p.imageUrl || p.imageUrl.includes('aurorascents.com') || p.imageUrl.includes('cdn.shopify.com')) { p.imageUrl = "/images/products/AURAGOLD_3.jpg"; needsSave = true; }
       if (!p.gender || p.gender === 'undefined') { p.gender = "Unisex"; p.category = "Unisex"; needsSave = true; }
       if (!p.seasons || p.seasons.length === 0) { p.seasons = ["spring", "fall"]; needsSave = true; }
       if (!p.timeOfDay || p.timeOfDay.length === 0) { p.timeOfDay = ["day", "night"]; needsSave = true; }
@@ -718,9 +718,9 @@ async function checkAndSeedFirestore(force = false) {
           return cleanPName.includes(cleanDName) || cleanDName.includes(cleanPName) || (cleanPName.split(' ')[0] && cleanDName.split(' ')[0] && cleanPName.split(' ')[0] === cleanDName.split(' ')[0] && cleanPName.split(' ')[0].length > 3);
         });
 
-        const targetImage = dbMatch ? dbMatch.imageUrl : "https://cdn.shopify.com/s/files/1/0706/2464/1274/files/AURAGOLD_3.jpg?v=1764331965";
+        const targetImage = dbMatch ? dbMatch.imageUrl : "/images/products/AURAGOLD_3.jpg";
         
-        if (!p.imageUrl || p.imageUrl !== targetImage || p.imageUrl.includes('aurorascents.com')) {
+        if (!p.imageUrl || p.imageUrl !== targetImage || p.imageUrl.includes('aurorascents.com') || p.imageUrl.includes('cdn.shopify.com')) {
           p.imageUrl = targetImage;
           updated = true;
         }
