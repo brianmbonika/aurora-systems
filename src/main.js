@@ -3148,31 +3148,33 @@ function displayUsersList(users) {
   `).join('');
 }
 
-// Change user role — custom UI dialog (no native prompt, blocked in deployed apps)
+// Change user role — custom UI dialog (all 4 roles: Admin, CEO, Accountant, Manager)
 function changeUserRolePrompt(uid, email, currentRole) {
   return new Promise((resolve) => {
-    // Build a lightweight overlay
     const existingOverlay = document.getElementById('role-picker-overlay');
     if (existingOverlay) existingOverlay.remove();
 
+    const roles = [
+      { value: 'Admin',      desc: 'Full access + user management' },
+      { value: 'CEO',        desc: 'Full financial visibility' },
+      { value: 'Accountant', desc: 'Finance & reports, no stock ops' },
+      { value: 'Manager',    desc: 'Sell & restock only' },
+    ];
     const overlay = document.createElement('div');
     overlay.id = 'role-picker-overlay';
     overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;';
     overlay.innerHTML = `
-      <div style="background:var(--bg-card,#1e1e2e);border:1px solid var(--border-color,rgba(255,255,255,0.1));border-radius:16px;padding:1.5rem;min-width:300px;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
-        <h3 style="margin:0 0 0.35rem;font-size:1rem;font-weight:700;">Change Role</h3>
+      <div style="background:var(--bg-card,#1e1e2e);border:1px solid var(--border-color,rgba(255,255,255,0.1));border-radius:16px;padding:1.5rem;min-width:300px;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+        <h3 style="margin:0 0 0.25rem;font-size:1rem;font-weight:700;">Change Role</h3>
         <p style="margin:0 0 1rem;font-size:0.82rem;color:var(--text-secondary,#aaa);">Select a new role for <strong>${email}</strong></p>
-        <div style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:1.25rem;">
-          <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;padding:0.65rem 0.9rem;border-radius:10px;border:2px solid ${currentRole==='Admin'?'var(--primary,#f97316)':'var(--border-color,rgba(255,255,255,0.1))'};">
-            <input type="radio" name="new-role" value="Admin" ${currentRole==='Admin'?'checked':''} style="accent-color:var(--primary,#f97316);">
-            <span style="font-weight:600;">Admin</span>
-            <span style="margin-left:auto;font-size:0.75rem;color:var(--text-secondary,#aaa);">Full access</span>
-          </label>
-          <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;padding:0.65rem 0.9rem;border-radius:10px;border:2px solid ${currentRole==='Manager'?'var(--primary,#f97316)':'var(--border-color,rgba(255,255,255,0.1))'};">
-            <input type="radio" name="new-role" value="Manager" ${currentRole==='Manager'?'checked':''} style="accent-color:var(--primary,#f97316);">
-            <span style="font-weight:600;">Manager</span>
-            <span style="margin-left:auto;font-size:0.75rem;color:var(--text-secondary,#aaa);">View + sell only</span>
-          </label>
+        <div style="display:flex;flex-direction:column;gap:0.45rem;margin-bottom:1.25rem;">
+          ${roles.map(r => `
+            <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;padding:0.6rem 0.9rem;border-radius:10px;border:2px solid ${currentRole===r.value?'var(--primary,#f97316)':'var(--border-color,rgba(255,255,255,0.1))'};transition:border-color 0.15s;">
+              <input type="radio" name="new-role" value="${r.value}" ${currentRole===r.value?'checked':''} style="accent-color:var(--primary,#f97316);flex-shrink:0;">
+              <span style="font-weight:600;font-size:0.88rem;">${r.value}</span>
+              <span style="margin-left:auto;font-size:0.72rem;color:var(--text-secondary,#aaa);">${r.desc}</span>
+            </label>
+          `).join('')}
         </div>
         <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
           <button id="role-picker-cancel" class="btn btn-secondary" style="padding:0.45rem 1rem;font-size:0.85rem;">Cancel</button>
@@ -5088,9 +5090,9 @@ function setupEventListeners() {
           const password = prompt('Enter password:');
           if (!password) return;
 
-          const role = prompt('Enter role (Admin/Manager):\nType: Admin or Manager');
-          if (!role || !['Admin', 'Manager'].includes(role)) {
-            showNotification('Invalid role. Must be Admin or Manager.', 'error');
+          const role = prompt('Enter role:\nType one of: Admin, CEO, Accountant, Manager');
+          if (!role || !['Admin', 'CEO', 'Accountant', 'Manager'].includes(role)) {
+            showNotification('Invalid role. Must be Admin, CEO, Accountant, or Manager.', 'error');
             return;
           }
 
