@@ -3141,21 +3141,69 @@ function displayUsersList(users) {
         <p style="margin: 0; font-size: 0.75rem; color: var(--text-secondary);">Role: <span style="background: var(--bg-accent); color: var(--text-accent); padding: 0.15rem 0.4rem; border-radius: 4px;">${user.role}</span></p>
       </div>
       <div style="display: flex; gap: 0.25rem;">
-        <button class="btn btn-sm-action btn-change-role" style="padding: 0.35rem 0.6rem; font-size: 0.75rem;" data-uid="${user.uid}" data-email="${user.email}">Change Role</button>
+        <button class="btn btn-sm-action btn-change-role" style="padding: 0.35rem 0.6rem; font-size: 0.75rem;" data-uid="${user.uid}" data-email="${user.email}" data-current-role="${user.role}">Change Role</button>
         <button class="btn btn-sm-action btn-remove-user" style="padding: 0.35rem 0.6rem; font-size: 0.75rem; color: var(--danger);" data-uid="${user.uid}" data-email="${user.email}">Remove</button>
       </div>
     </div>
   `).join('');
 }
 
-// Change user role via prompt
-async function changeUserRolePrompt(uid, email) {
-  const newRole = prompt(`Change role for ${email}:\n\nCurrent roles: Admin or Manager`);
-  if (!newRole || !['Admin', 'Manager'].includes(newRole)) {
-    showNotification('Invalid role. Must be Admin or Manager.', 'error');
-    return;
-  }
-  await updateUserRole(uid, newRole);
+// Change user role — custom UI dialog (no native prompt, blocked in deployed apps)
+function changeUserRolePrompt(uid, email, currentRole) {
+  return new Promise((resolve) => {
+    // Build a lightweight overlay
+    const existingOverlay = document.getElementById('role-picker-overlay');
+    if (existingOverlay) existingOverlay.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'role-picker-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;';
+    overlay.innerHTML = `
+      <div style="background:var(--bg-card,#1e1e2e);border:1px solid var(--border-color,rgba(255,255,255,0.1));border-radius:16px;padding:1.5rem;min-width:300px;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+        <h3 style="margin:0 0 0.35rem;font-size:1rem;font-weight:700;">Change Role</h3>
+        <p style="margin:0 0 1rem;font-size:0.82rem;color:var(--text-secondary,#aaa);">Select a new role for <strong>${email}</strong></p>
+        <div style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:1.25rem;">
+          <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;padding:0.65rem 0.9rem;border-radius:10px;border:2px solid ${currentRole==='Admin'?'var(--primary,#f97316)':'var(--border-color,rgba(255,255,255,0.1))'};">
+            <input type="radio" name="new-role" value="Admin" ${currentRole==='Admin'?'checked':''} style="accent-color:var(--primary,#f97316);">
+            <span style="font-weight:600;">Admin</span>
+            <span style="margin-left:auto;font-size:0.75rem;color:var(--text-secondary,#aaa);">Full access</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;padding:0.65rem 0.9rem;border-radius:10px;border:2px solid ${currentRole==='Manager'?'var(--primary,#f97316)':'var(--border-color,rgba(255,255,255,0.1))'};">
+            <input type="radio" name="new-role" value="Manager" ${currentRole==='Manager'?'checked':''} style="accent-color:var(--primary,#f97316);">
+            <span style="font-weight:600;">Manager</span>
+            <span style="margin-left:auto;font-size:0.75rem;color:var(--text-secondary,#aaa);">View + sell only</span>
+          </label>
+        </div>
+        <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
+          <button id="role-picker-cancel" class="btn btn-secondary" style="padding:0.45rem 1rem;font-size:0.85rem;">Cancel</button>
+          <button id="role-picker-confirm" class="btn btn-primary" style="padding:0.45rem 1rem;font-size:0.85rem;">Save Role</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    // Highlight selected radio on click
+    overlay.querySelectorAll('input[name="new-role"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        overlay.querySelectorAll('label').forEach(l => l.style.borderColor = 'var(--border-color,rgba(255,255,255,0.1))');
+        radio.closest('label').style.borderColor = 'var(--primary,#f97316)';
+      });
+    });
+
+    document.getElementById('role-picker-cancel').addEventListener('click', () => {
+      overlay.remove();
+      resolve(null);
+    });
+    document.getElementById('role-picker-confirm').addEventListener('click', async () => {
+      const selected = overlay.querySelector('input[name="new-role"]:checked');
+      if (!selected) { showToast('Please select a role.', 'warning'); return; }
+      const newRole = selected.value;
+      overlay.remove();
+      const success = await updateUserRole(uid, newRole);
+      resolve(success ? newRole : null);
+    });
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) { overlay.remove(); resolve(null); } });
+  });
 }
 // Open Product Fragrance Profile Modal
 function openProductViewModal(productId) {
@@ -3880,20 +3928,31 @@ function setupEventListeners() {
   safeAddListener('btn-add-product', 'click', () => openProductModal());
   safeAddListener('btn-add-customer', 'click', () => openCustomerModal());
 
-  // User management button handlers (event delegation)
+  // User management button handlers (event delegation on document)
   document.addEventListener('click', async (e) => {
     if (e.target.classList.contains('btn-remove-user')) {
       const uid = e.target.getAttribute('data-uid');
       const email = e.target.getAttribute('data-email');
-      if (await showConfirmDialog(`Remove ${email}?`, 'Remove User')) {
-        await removeUser(uid, email);
-        location.reload();
+      if (await showConfirmDialog(`Remove ${email} from the system?`, 'Remove User')) {
+        const success = await removeUser(uid, email);
+        if (success) {
+          // Refresh list inline without page reload
+          const users = await getAllUsers();
+          displayUsersList(users);
+        }
       }
     }
     if (e.target.classList.contains('btn-change-role')) {
       const uid = e.target.getAttribute('data-uid');
       const email = e.target.getAttribute('data-email');
-      await changeUserRolePrompt(uid, email);
+      const currentRole = e.target.getAttribute('data-current-role') || '';
+      const result = await changeUserRolePrompt(uid, email, currentRole);
+      if (result) {
+        // Refresh list inline
+        const users = await getAllUsers();
+        displayUsersList(users);
+        showToast(`Role updated to ${result}`, 'success');
+      }
     }
   });
 
