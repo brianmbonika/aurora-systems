@@ -2579,6 +2579,56 @@ function renderSettings() {
   }
 }
 
+// ── ONE-TIME DUPLICATE CLEANUP ────────────────────────────────────────────────
+// Run from browser console: removeDuplicateProducts()
+window.removeDuplicateProducts = async function() {
+  if (state.currentRole !== 'Admin') { console.error('Admin only'); return; }
+  console.log('🔍 Scanning for duplicate products...');
+
+  const groups = {};
+  for (const p of state.products) {
+    const key = (p.name || '').trim().toLowerCase();
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(p);
+  }
+
+  const dupeGroups = Object.entries(groups).filter(([, g]) => g.length > 1);
+  if (dupeGroups.length === 0) {
+    console.log('✅ No duplicates found!');
+    showNotification('No duplicate products found — catalog is already clean!', 'success');
+    return;
+  }
+
+  const txCounts = {};
+  state.transactions.forEach(tx => {
+    if (tx.productId) txCounts[tx.productId] = (txCounts[tx.productId] || 0) + 1;
+  });
+
+  const toDelete = [];
+  for (const [, group] of dupeGroups) {
+    group.sort((a, b) => (txCounts[b.id] || 0) - (txCounts[a.id] || 0));
+    const [keep, ...remove] = group;
+    console.log(`  ✅ Keeping "${keep.name}" (${txCounts[keep.id] || 0} txns)`);
+    remove.forEach(dup => {
+      console.log(`  🗑️  Removing duplicate "${dup.name}" id:${dup.id}`);
+      toDelete.push(dup.id);
+    });
+  }
+
+  const confirmed = await showConfirmDialog(
+    `Found ${toDelete.length} duplicate(s) across ${dupeGroups.length} product name(s). Remove them now?`,
+    'Remove Duplicates'
+  );
+  if (!confirmed) return;
+
+  showToast(`Removing ${toDelete.length} duplicate(s)...`, 'info');
+  for (const pid of toDelete) {
+    await deleteProductFromInventory(pid);
+  }
+  console.log(`✅ Removed ${toDelete.length} duplicate(s).`);
+  showNotification(`✅ Done! Removed ${toDelete.length} duplicate product(s).`, 'success');
+};
+
 // Calculate dynamic alerts
 function getSystemAlerts() {
   const alerts = [];
