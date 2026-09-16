@@ -521,19 +521,21 @@ function initFirestoreSync() {
         }
       }
 
-      // Enrich missing Fragrantica profile / images from database
-      if (!p.imageUrl || !p.seasons || p.seasons.length === 0) {
-        const cleanPName = p.name.toLowerCase().replace(/\s*\(tester\)/i, '').replace(/\s*edp.*/i, '').trim();
-        const dbMatch = productDatabase.find(d => {
-          const cleanDName = d.name.toLowerCase().replace(/\s*\(tester\)/i, '').replace(/\s*edp.*/i, '').trim();
-          return cleanPName.includes(cleanDName) || cleanDName.includes(cleanPName);
-        });
-        if (dbMatch) {
-          if (!p.imageUrl && dbMatch.imageUrl) { p.imageUrl = dbMatch.imageUrl; needsSave = true; }
-          if ((!p.seasons || p.seasons.length === 0) && dbMatch.seasons) { p.seasons = dbMatch.seasons; needsSave = true; }
-          if ((!p.timeOfDay || p.timeOfDay.length === 0) && dbMatch.timeOfDay) { p.timeOfDay = dbMatch.timeOfDay; needsSave = true; }
-          if (!p.rating && dbMatch.rating) { p.rating = dbMatch.rating; needsSave = true; }
+      // Enrich missing/stale Fragrantica profile and real Shopify CDN images from database
+      const cleanPName = p.name.toLowerCase().replace(/\s*\(tester\)/i, '').replace(/\s*edp.*/i, '').trim();
+      const dbMatch = productDatabase.find(d => {
+        const cleanDName = d.name.toLowerCase().replace(/\s*\(tester\)/i, '').replace(/\s*edp.*/i, '').trim();
+        return cleanPName.includes(cleanDName) || cleanDName.includes(cleanPName);
+      });
+      if (dbMatch) {
+        // Update image if missing or using old broken URL pattern
+        if (dbMatch.imageUrl && (!p.imageUrl || p.imageUrl.includes('aurorascents.com/cdn/shop/files/'))) { 
+          p.imageUrl = dbMatch.imageUrl; 
+          needsSave = true; 
         }
+        if ((!p.seasons || p.seasons.length === 0) && dbMatch.seasons) { p.seasons = dbMatch.seasons; needsSave = true; }
+        if ((!p.timeOfDay || p.timeOfDay.length === 0) && dbMatch.timeOfDay) { p.timeOfDay = dbMatch.timeOfDay; needsSave = true; }
+        if (!p.rating && dbMatch.rating) { p.rating = dbMatch.rating; needsSave = true; }
       }
     });
 
