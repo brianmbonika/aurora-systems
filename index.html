@@ -1266,6 +1266,23 @@
       </form>
     </div>
 
+    <!-- Modal: Fragrance Profile & Product Detail View -->
+    <div class="modal-dialog" id="modal-product-view" style="max-width: 600px;">
+      <div class="modal-header" style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;">
+        <h2 id="view-product-title">Perfume Details</h2>
+        <button class="close-btn" id="close-product-view-modal">×</button>
+      </div>
+      <div class="modal-body" id="view-product-body" style="padding: 1.25rem 0;">
+        <!-- Dynamically rendered perfume profile card -->
+      </div>
+      <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
+        <button class="btn btn-outline" id="btn-edit-from-view" style="display:inline-flex; align-items:center; gap:0.4rem;">
+          ✏️ Edit Perfume
+        </button>
+        <button class="btn btn-primary" id="btn-close-product-view">Close Profile</button>
+      </div>
+    </div>
+
     <!-- Custom Toast Notification Container -->
     <div id="toast-container" style="position:fixed;top:1.5rem;right:1.5rem;z-index:10000;display:flex;flex-direction:column;gap:0.5rem;pointer-events:none;"></div>
 

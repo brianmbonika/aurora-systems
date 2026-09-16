@@ -1900,12 +1900,12 @@ function renderProducts() {
     return `
       <tr>
         <td data-label="Product Details">
-          <div class="product-cell">
-            <div class="product-avatar" style="display:flex;align-items:center;justify-content:center;overflow:hidden;width:40px;height:40px;background:rgba(255,255,255,0.05);border-radius:8px;">
+          <div class="product-cell btn-view-product-action" data-id="${p.id}" style="cursor: pointer;" title="Click to view perfume details & Fragrantica profile">
+            <div class="product-avatar" style="display:flex;align-items:center;justify-content:center;overflow:hidden;width:44px;height:44px;background:rgba(255,255,255,0.05);border-radius:8px;flex-shrink:0;">
               ${avatarHTML}
             </div>
             <div class="product-meta">
-              <h4>${p.name} ${p.rating ? `<span style="font-size:0.75rem; color: #f59e0b; margin-left:0.25rem;">★ ${p.rating}</span>` : ''}</h4>
+              <h4 style="color: var(--accent); transition: color 0.2s; font-weight: 600;">${p.name} ${p.rating ? `<span style="font-size:0.75rem; color: #f59e0b; margin-left:0.25rem;">★ ${p.rating}</span>` : ''}</h4>
               <span>Collection: ${p.category} • Type: ${p.type || 'Full Bottle'} ${(seasonBadges || timeBadges) ? `• ${seasonBadges} ${timeBadges}` : ''}</span>
             </div>
           </div>
@@ -1958,6 +1958,14 @@ function renderProducts() {
       `;
     }
   }
+
+  // Click perfume cell to view Fragrance Profile Modal
+  document.querySelectorAll('.btn-view-product-action').forEach(el => {
+    el.addEventListener('click', (e) => {
+      const prodId = e.currentTarget.getAttribute('data-id');
+      openProductViewModal(prodId);
+    });
+  });
 
   // Re-attach inline table action listeners
   document.querySelectorAll('.btn-restock-action').forEach(btn => {
@@ -3050,6 +3058,141 @@ async function changeUserRolePrompt(uid, email) {
   }
   await updateUserRole(uid, newRole);
 }
+// Open Product Fragrance Profile Modal
+function openProductViewModal(productId) {
+  const prod = state.products.find(p => p.id === productId);
+  if (!prod) return;
+
+  const modalBody = document.getElementById('view-product-body');
+  const modalTitle = document.getElementById('view-product-title');
+  if (modalTitle) modalTitle.innerText = prod.name;
+
+  const seasonLabels = {
+    winter: '❄️ Winter',
+    spring: '🌸 Spring',
+    summer: '☀️ Summer',
+    fall: '🍂 Fall'
+  };
+
+  const seasonsHTML = (prod.seasons && prod.seasons.length > 0)
+    ? prod.seasons.map(s => `<span style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); padding:0.35rem 0.65rem; border-radius:20px; font-size:0.85rem; display:inline-flex; align-items:center; gap:0.3rem;">${seasonLabels[s] || s}</span>`).join('')
+    : '<span style="color:var(--text-secondary); font-size:0.85rem;">Not specified</span>';
+
+  const timeLabels = {
+    day: '☀️ Daytime',
+    night: '🌙 Nighttime'
+  };
+
+  const timeHTML = (prod.timeOfDay && prod.timeOfDay.length > 0)
+    ? prod.timeOfDay.map(t => `<span style="background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.25); color:#f59e0b; padding:0.35rem 0.65rem; border-radius:20px; font-size:0.85rem; display:inline-flex; align-items:center; gap:0.3rem;">${timeLabels[t] || t}</span>`).join('')
+    : '<span style="color:var(--text-secondary); font-size:0.85rem;">Not specified</span>';
+
+  const avatarHTML = prod.imageUrl
+    ? `<img src="${prod.imageUrl}" alt="${prod.name}" style="width:100%; max-height:220px; object-fit:contain; border-radius:12px;" onerror="this.onerror=null;this.parentNode.innerHTML='<div style=\'padding:2rem; text-align:center; color:var(--text-secondary);\'>🍾 No Photo Available</div>';">`
+    : `<div style="padding:2rem; text-align:center; color:var(--text-secondary); background:rgba(255,255,255,0.03); border-radius:12px;">🍾 No Photo Available</div>`;
+
+  if (modalBody) {
+    modalBody.innerHTML = `
+      <div style="display:flex; flex-direction:column; gap:1.25rem;">
+        <!-- Product Image Hero -->
+        <div style="background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:1.25rem; display:flex; justify-content:center; align-items:center;">
+          ${avatarHTML}
+        </div>
+
+        <!-- Meta Header -->
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem;">
+          <div>
+            <h3 style="margin:0 0 0.25rem 0; font-size:1.3rem; font-weight:700; color:var(--text-primary);">${prod.name}</h3>
+            <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap; font-size:0.85rem; color:var(--text-secondary);">
+              <span>SKU: <code style="color:var(--accent); font-weight:600;">${prod.sku}</code></span>
+              <span>•</span>
+              <span>Type: <strong>${prod.type || 'Full Bottle'}</strong></span>
+              <span>•</span>
+              <span>Gender: <strong>${prod.gender || 'Unisex'}</strong></span>
+            </div>
+          </div>
+          ${prod.rating ? `
+            <div style="background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.3); padding:0.4rem 0.75rem; border-radius:12px; text-align:center; flex-shrink:0;">
+              <div style="font-size:1.1rem; font-weight:800; color:#f59e0b;">★ ${prod.rating}</div>
+              <div style="font-size:0.65rem; text-transform:uppercase; color:var(--text-secondary); font-weight:600;">Fragrantica</div>
+            </div>
+          ` : ''}
+        </div>
+
+        <!-- Fragrantica Wearability Section -->
+        <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:1rem; display:flex; flex-direction:column; gap:0.85rem;">
+          <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--accent);">
+            🌸 Fragrantica Wearability Profile
+          </div>
+
+          <div>
+            <div style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:0.4rem; font-weight:500;">Best Seasons</div>
+            <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+              ${seasonsHTML}
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:0.4rem; font-weight:500;">Recommended Time of Day</div>
+            <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+              ${timeHTML}
+            </div>
+          </div>
+        </div>
+
+        <!-- Pricing & Stock Cards Grid -->
+        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:0.75rem;">
+          <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:0.75rem; text-align:center;">
+            <div style="font-size:0.7rem; text-transform:uppercase; color:var(--text-secondary); font-weight:600;">Wholesale</div>
+            <div style="font-size:1rem; font-weight:700; color:var(--text-primary); margin-top:0.2rem;">${formatCurrency(prod.costPrice)}</div>
+          </div>
+          <div style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2); border-radius:12px; padding:0.75rem; text-align:center;">
+            <div style="font-size:0.7rem; text-transform:uppercase; color:#10b981; font-weight:600;">Retail Sell</div>
+            <div style="font-size:1rem; font-weight:700; color:#10b981; margin-top:0.2rem;">${formatCurrency(prod.sellingPrice)}</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:0.75rem; text-align:center;">
+            <div style="font-size:0.7rem; text-transform:uppercase; color:var(--text-secondary); font-weight:600;">Current Stock</div>
+            <div style="font-size:1.1rem; font-weight:800; color:${prod.stock > 0 ? 'var(--text-primary)' : '#ef4444'}; margin-top:0.2rem;">${prod.stock} units</div>
+          </div>
+        </div>
+
+        <!-- Fragrance Notes -->
+        ${prod.notes ? `
+          <div style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:1rem;">
+            <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--accent); margin-bottom:0.4rem;">
+              🌿 Fragrance Notes Pyramid
+            </div>
+            <p style="margin:0; font-size:0.88rem; line-height:1.5; color:var(--text-secondary); white-space:pre-line;">
+              ${prod.notes}
+            </p>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  // Setup Edit button inside view modal
+  const btnEdit = document.getElementById('btn-edit-from-view');
+  if (btnEdit) {
+    btnEdit.onclick = () => {
+      closeModal('modal-product-view');
+      openProductModal(prod.id);
+    };
+  }
+
+  const btnClose = document.getElementById('btn-close-product-view');
+  if (btnClose) {
+    btnClose.onclick = () => closeModal('modal-product-view');
+  }
+
+  const closeIcon = document.getElementById('close-product-view-modal');
+  if (closeIcon) {
+    closeIcon.onclick = () => closeModal('modal-product-view');
+  }
+
+  openModal('modal-product-view');
+}
+
 
 // Product Form Modal setup
 function openProductModal(productId = null) {
