@@ -540,7 +540,7 @@ function initFirestoreSync() {
       });
 
       if (dbMatch) {
-        if (dbMatch.imageUrl && (!p.imageUrl || p.imageUrl.includes('aurorascents.com/cdn/shop/files/'))) { 
+        if (dbMatch.imageUrl && p.imageUrl !== dbMatch.imageUrl) { 
           p.imageUrl = dbMatch.imageUrl; 
           needsSave = true; 
         }
@@ -551,8 +551,8 @@ function initFirestoreSync() {
         if (!p.rating && dbMatch.rating) { p.rating = dbMatch.rating; needsSave = true; }
       }
 
-      // Hard fallback if still unassigned
-      if (!p.imageUrl) { p.imageUrl = "https://cdn.shopify.com/s/files/1/0706/2464/1274/files/AURAGOLD_3.jpg?v=1764331965"; needsSave = true; }
+      // Hard fallback if still unassigned or empty
+      if (!p.imageUrl || p.imageUrl.includes('aurorascents.com')) { p.imageUrl = "https://cdn.shopify.com/s/files/1/0706/2464/1274/files/AURAGOLD_3.jpg?v=1764331965"; needsSave = true; }
       if (!p.gender || p.gender === 'undefined') { p.gender = "Unisex"; p.category = "Unisex"; needsSave = true; }
       if (!p.seasons || p.seasons.length === 0) { p.seasons = ["spring", "fall"]; needsSave = true; }
       if (!p.timeOfDay || p.timeOfDay.length === 0) { p.timeOfDay = ["day", "night"]; needsSave = true; }
@@ -1921,7 +1921,8 @@ function renderProducts() {
 
     const defaultBottleSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;color:rgba(255,255,255,0.85);"><path d="M9 3h6v3H9z"/><path d="M12 6v4"/><path d="M6 10a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v9a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3v-9z"/></svg>`;
     const avatarHTML = p.imageUrl 
-      ? `<img src="${p.imageUrl}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">`
+      ? `<img src="${p.imageUrl}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" onerror="this.onerror=null; this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">
+         <div class="avatar-fallback" style="display:none; width:100%; height:100%; align-items:center; justify-content:center; background:rgba(255,255,255,0.05); border-radius:8px;">${defaultBottleSVG}</div>`
       : defaultBottleSVG;
 
     return `
