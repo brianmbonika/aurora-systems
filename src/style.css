@@ -284,17 +284,21 @@ h1, h2, h3, h4, h5, h6 {
 .icon-btn .badge {
   position: absolute;
   top: -6px;
-  right: -6px;
+  right: -8px;
   background-color: var(--danger);
   color: white;
   font-size: 0.65rem;
   font-weight: 700;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 0 0 2px var(--bg-card, #1e293b);
+  white-space: nowrap;
+  box-sizing: border-box;
 }
 
 .profile-chip {

@@ -2834,7 +2834,7 @@ function renderNotifications() {
   if (alertBadge) {
     if (alerts.length > 0) {
       alertBadge.style.display = 'flex';
-      alertBadge.innerText = alerts.length;
+      alertBadge.innerText = alerts.length > 99 ? '99+' : alerts.length;
     } else {
       alertBadge.style.display = 'none';
     }
