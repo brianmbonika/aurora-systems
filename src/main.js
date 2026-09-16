@@ -1897,9 +1897,10 @@ function renderProducts() {
       return '';
     }).join(' ');
 
+    const defaultBottleSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;color:rgba(255,255,255,0.85);"><path d="M9 3h6v3H9z"/><path d="M12 6v4"/><path d="M6 10a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v9a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3v-9z"/></svg>`;
     const avatarHTML = p.imageUrl 
-      ? `<img src="${p.imageUrl}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" onerror="this.onerror=null;this.parentNode.innerHTML='<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\' style=\'width:20px;height:20px;color:rgba(255,255,255,0.85);\'><path d=\'M9 3h6v3H9z\'/><path d=\'M12 6v4\'/><path d=\'M6 10a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v9a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3v-9z\'/></svg>';">`
-      : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;color:rgba(255,255,255,0.85);"><path d="M9 3h6v3H9z"/><path d="M12 6v4"/><path d="M6 10a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v9a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3v-9z"/></svg>`;
+      ? `<img src="${p.imageUrl}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'rgba(255,255,255,0.85)\' stroke-width=\'2\'><path d=\'M9 3h6v3H9z\'/><path d=\'M12 6v4\'/><path d=\'M6 10a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v9a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3v-9z\'/></svg>';">`
+      : defaultBottleSVG;
 
     return `
       <tr>
@@ -3092,7 +3093,7 @@ function openProductViewModal(productId) {
     : '<span style="color:var(--text-secondary); font-size:0.85rem;">Not specified</span>';
 
   const avatarHTML = prod.imageUrl
-    ? `<img src="${prod.imageUrl}" alt="${prod.name}" style="width:100%; max-height:220px; object-fit:contain; border-radius:12px;" onerror="this.onerror=null;this.parentNode.innerHTML='<div style=\'padding:2rem; text-align:center; color:var(--text-secondary);\'>🍾 No Photo Available</div>';">`
+    ? `<img src="${prod.imageUrl}" alt="${prod.name}" style="width:100%; max-height:220px; object-fit:contain; border-radius:12px;" onerror="this.style.display='none';">`
     : `<div style="padding:2rem; text-align:center; color:var(--text-secondary); background:rgba(255,255,255,0.03); border-radius:12px;">🍾 No Photo Available</div>`;
 
   const currentStock = typeof getProductStock === 'function' ? getProductStock(prod.id) : (prod.stock || 0);
