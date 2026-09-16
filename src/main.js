@@ -3673,10 +3673,14 @@ function setupEventListeners() {
 
   // Clear History
   safeAddListener('btn-clear-tx-history', 'click', async () => {
-    if (await showConfirmDialog('Clear all transaction history? Stock counts will reset to zero.', 'Clear History')) {
+    if (await showConfirmDialog('Clear all transaction history? All logged stock movements will be removed.', 'Clear History')) {
       state.transactions = [];
       saveTransactions();
-      showView('transactions');
+      if (isFirebaseInitialized) {
+        await syncCollectionToFirestore('transactions', []);
+      }
+      renderTransactions();
+      showToast('Transaction history cleared successfully.', 'success');
     }
   });
 
