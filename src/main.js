@@ -467,10 +467,9 @@ function initFirestoreSync() {
     const items = [];
     snapshot.forEach(docSnap => items.push(docSnap.data()));
     console.log(`📦 Listener fired: ${items.length} products in Firestore`);
-    if (items.length > 0) {
-      state.products = items;
-      renderProducts();
-    }
+    state.products = items;
+    localStorage.setItem('aurora_products', JSON.stringify(state.products));
+    renderProducts();
   }, (err) => handleSyncError('products', err));
 
   // Sync Transactions
@@ -1903,13 +1902,13 @@ function renderProducts() {
 
   // Delete product handler
   document.querySelectorAll('.btn-delete-action').forEach(btn => {
-    btn.addEventListener('click', (e) => {
+    btn.addEventListener('click', async (e) => {
       const prodId = e.currentTarget.getAttribute('data-id');
       const product = state.products.find(p => p.id === prodId);
       if (!product) return;
 
-      if (confirm(`Delete "${product.name}" from inventory? This action cannot be undone.`)) {
-        deleteProductFromInventory(prodId);
+      if (await showConfirmDialog(`Delete "${product.name}" from inventory? This action cannot be undone.`, 'Delete Product')) {
+        await deleteProductFromInventory(prodId);
       }
     });
   });
@@ -2696,16 +2695,36 @@ function openModal(modalId) {
 // Delete product from products catalog
 async function deleteProductFromInventory(productId) {
   try {
-    const docRef = doc(db, 'products', productId);  // ✅ FIXED: Delete from products, not inventory
     console.log(`Attempting to delete product: ${productId}`);
-    await deleteDoc(docRef);
-    console.log(`✅ Product deleted: ${productId}`);
+
+    // 1. Remove from local state array
+    state.products = state.products.filter(p => p.id !== productId);
+
+    // 2. Persist to localStorage
+    localStorage.setItem('aurora_products', JSON.stringify(state.products));
+
+    // 3. Delete from Firebase Firestore if connected
+    if (isFirebaseInitialized) {
+      try {
+        const docRef = doc(db, 'products', productId);
+        await deleteDoc(docRef);
+        console.log(`✅ Product deleted from Firestore: ${productId}`);
+      } catch (fbErr) {
+        console.warn('Firestore delete notice:', fbErr);
+      }
+    }
+
+    // 4. Update UI views
     renderProducts();
+    const activeNav = document.querySelector('.nav-item.active');
+    const viewName = activeNav ? activeNav.getAttribute('data-view') : 'inventory';
+    if (viewName === 'dashboard') {
+      renderDashboard();
+    }
+
     showNotification('Product deleted successfully!', 'success');
   } catch (error) {
     console.error('❌ Error deleting product:', error);
-    console.error('Error code:', error.code);
-    console.error('Error message:', error.message);
     showNotification(`Failed to delete product: ${error.message}`, 'error');
   }
 }
@@ -3353,7 +3372,7 @@ function setupEventListeners() {
     }
 
     const prodName = document.getElementById('form-product-name').value;
-    if (confirm(`Delete "${prodName}"? This cannot be undone.`)) {
+    if (await showConfirmDialog(`Delete "${prodName}"? This cannot be undone.`, 'Delete Product')) {
       await deleteProductFromInventory(prodId);
       closeModal('modal-product-form');
     }
@@ -3392,7 +3411,7 @@ function setupEventListeners() {
     if (e.target.classList.contains('btn-remove-user')) {
       const uid = e.target.getAttribute('data-uid');
       const email = e.target.getAttribute('data-email');
-      if (confirm(`Remove ${email}?`)) {
+      if (await showConfirmDialog(`Remove ${email}?`, 'Remove User')) {
         await removeUser(uid, email);
         location.reload();
       }
