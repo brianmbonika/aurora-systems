@@ -902,8 +902,45 @@
           </div>
           <div class="form-row">
             <div class="form-group" style="width: 100%;">
+              <label for="form-product-image">Product Bottle Image URL (Aurora Scents)</label>
+              <input type="url" id="form-product-image" name="product-image" placeholder="https://aurorascents.com/cdn/shop/files/AuraGold.png" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="width: 100%;">
               <label for="form-product-notes">Fragrance Notes <span style="font-size: 0.85rem; color: var(--text-secondary);">(Auto-filled from database)</span></label>
-              <textarea id="form-product-notes" name="product-notes" placeholder="e.g., Top Notes: Ginger, Kumquat, Bergamot, Apple; Heart Notes: Laurel, Mint, Watery, Gin, Melon; Base Notes: Amber, Musk, Cedar, Haiti vetiver;" rows="5" style="resize: vertical; min-height: 120px;"></textarea>
+              <textarea id="form-product-notes" name="product-notes" placeholder="e.g., Top Notes: Ginger, Kumquat, Bergamot, Apple; Heart Notes: Laurel, Mint, Watery, Gin, Melon; Base Notes: Amber, Musk, Cedar, Haiti vetiver;" rows="4" style="resize: vertical; min-height: 100px;"></textarea>
+            </div>
+          </div>
+
+          <!-- Fragrantica Profile Info -->
+          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+            <div style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem;">
+              <span>🌸 Fragrantica Wearability & Season Profile</span>
+            </div>
+            <div class="form-row" style="margin-bottom: 0.75rem;">
+              <div class="form-group" style="width: 100%;">
+                <label style="margin-bottom: 0.4rem; display: block; font-size: 0.85rem;">Best Seasons (Select all that apply)</label>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; background: rgba(0,0,0,0.2); padding: 0.6rem 0.8rem; border-radius: 8px;">
+                  <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer;"><input type="checkbox" id="season-winter" value="winter"> ❄️ Winter</label>
+                  <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer;"><input type="checkbox" id="season-spring" value="spring"> 🌸 Spring</label>
+                  <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer;"><input type="checkbox" id="season-summer" value="summer"> ☀️ Summer</label>
+                  <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer;"><input type="checkbox" id="season-fall" value="fall"> 🍂 Fall</label>
+                </div>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group" style="width: 50%;">
+                <label style="margin-bottom: 0.4rem; display: block; font-size: 0.85rem;">Wearing Time</label>
+                <div style="display: flex; gap: 0.75rem; background: rgba(0,0,0,0.2); padding: 0.6rem 0.8rem; border-radius: 8px;">
+                  <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer;"><input type="checkbox" id="time-day" value="day"> ☀️ Day</label>
+                  <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; cursor: pointer;"><input type="checkbox" id="time-night" value="night"> 🌙 Night</label>
+                </div>
+              </div>
+              <div class="form-group" style="width: 50%;">
+                <label for="form-product-rating" style="font-size: 0.85rem;">Fragrantica Rating (out of 5)</label>
+                <input type="number" id="form-product-rating" step="0.1" min="0" max="5" placeholder="e.g. 4.2" />
+              </div>
             </div>
           </div>
 

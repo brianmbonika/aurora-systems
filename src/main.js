@@ -1860,19 +1860,37 @@ function renderProducts() {
       statusText = 'Low Stock';
     }
 
+    const seasonBadges = (p.seasons || []).map(s => {
+      if (s === 'winter') return '❄️';
+      if (s === 'spring') return '🌸';
+      if (s === 'summer') return '☀️';
+      if (s === 'fall') return '🍂';
+      return '';
+    }).join(' ');
+
+    const timeBadges = (p.timeOfDay || []).map(t => {
+      if (t === 'day') return '☀️';
+      if (t === 'night') return '🌙';
+      return '';
+    }).join(' ');
+
+    const avatarHTML = p.imageUrl 
+      ? `<img src="${p.imageUrl}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" onerror="this.onerror=null;this.parentNode.innerHTML='<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\' style=\'width:20px;height:20px;color:rgba(255,255,255,0.85);\'><path d=\'M9 3h6v3H9z\'/><path d=\'M12 6v4\'/><path d=\'M6 10a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v9a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3v-9z\'/></svg>';">`
+      : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;color:rgba(255,255,255,0.85);"><path d="M9 3h6v3H9z"/><path d="M12 6v4"/><path d="M6 10a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v9a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3v-9z"/></svg>`;
+
     return `
       <tr>
         <td data-label="Product Details">
           <div class="product-cell">
-            <div class="product-avatar" style="display:flex;align-items:center;justify-content:center;">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;color:rgba(255,255,255,0.85);"><path d="M9 3h6v3H9z"/><path d="M12 6v4"/><path d="M6 10a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v9a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3v-9z"/></svg>
+            <div class="product-avatar" style="display:flex;align-items:center;justify-content:center;overflow:hidden;width:40px;height:40px;background:rgba(255,255,255,0.05);border-radius:8px;">
+              ${avatarHTML}
             </div>
             <div class="product-meta">
-              <h4>${p.name}</h4>
-              <span>Collection: ${p.category} • Type: ${p.type || 'Full Bottle'}</span>
+              <h4>${p.name} ${p.rating ? `<span style="font-size:0.75rem; color: #f59e0b; margin-left:0.25rem;">★ ${p.rating}</span>` : ''}</h4>
+              <span>Collection: ${p.category} • Type: ${p.type || 'Full Bottle'} ${(seasonBadges || timeBadges) ? `• ${seasonBadges} ${timeBadges}` : ''}</span>
             </div>
           </div>
-        </td>
+        </td>`,StartLine:1863,TargetContent:
         <td data-label="SKU"><code>${p.sku}</code></td>
         <td data-label="Wholesale Cost" class="text-right font-medium">${formatCurrency(p.costPrice)}</td>
         <td data-label="Retail Price" class="text-right font-medium">${formatCurrency(p.sellingPrice)}</td>
@@ -3035,17 +3053,32 @@ function openProductModal(productId = null) {
     document.getElementById('form-product-name').value = prod.name;
     document.getElementById('form-product-sku').value = prod.sku;
     document.getElementById('form-product-notes').value = prod.notes || '';
+    document.getElementById('form-product-image').value = prod.imageUrl || '';
     document.getElementById('form-product-type').value = prod.type || 'Full Bottle';
     document.getElementById('form-product-gender').value = prod.gender || 'Unisex';
     document.getElementById('form-product-threshold').value = prod.minStockThreshold;
     document.getElementById('form-product-buying-cost').value = prod.buyingCost || '';
     document.getElementById('form-product-cost').value = prod.costPrice;
     document.getElementById('form-product-retail').value = prod.sellingPrice;
+    document.getElementById('form-product-rating').value = prod.rating || '';
+
+    // Checkboxes
+    const seasons = prod.seasons || [];
+    ['winter', 'spring', 'summer', 'fall'].forEach(s => {
+      const el = document.getElementById(`season-${s}`);
+      if (el) el.checked = seasons.includes(s);
+    });
+    const times = prod.timeOfDay || [];
+    ['day', 'night'].forEach(t => {
+      const el = document.getElementById(`time-${t}`);
+      if (el) el.checked = times.includes(t);
+    });
   } else {
     title.innerText = 'Add New Perfume';
     document.getElementById('form-product-id').value = '';
     document.getElementById('form-product-name').value = '';
     document.getElementById('form-product-sku').value = '';
+    document.getElementById('form-product-image').value = '';
     document.getElementById('form-product-notes').value = '';
     document.getElementById('form-product-type').value = 'Full Bottle';
     document.getElementById('form-product-gender').value = 'Unisex';
@@ -3053,6 +3086,16 @@ function openProductModal(productId = null) {
     document.getElementById('form-product-buying-cost').value = '';
     document.getElementById('form-product-cost').value = '';
     document.getElementById('form-product-retail').value = '';
+    document.getElementById('form-product-rating').value = '';
+
+    ['winter', 'spring', 'summer', 'fall'].forEach(s => {
+      const el = document.getElementById(`season-${s}`);
+      if (el) el.checked = false;
+    });
+    ['day', 'night'].forEach(t => {
+      const el = document.getElementById(`time-${t}`);
+      if (el) el.checked = false;
+    });
 
     // Hide delete button when adding new product
     const btnDelete = document.getElementById('btn-delete-product');
@@ -3995,12 +4038,30 @@ function setupEventListeners() {
       const cost = parseFloat(document.getElementById('form-product-cost').value);
       const retail = parseFloat(document.getElementById('form-product-retail').value);
 
+      const imageUrl = document.getElementById('form-product-image')?.value.trim() || '';
+      const rating = parseFloat(document.getElementById('form-product-rating')?.value) || null;
+
+      const seasons = [];
+      ['winter', 'spring', 'summer', 'fall'].forEach(s => {
+        if (document.getElementById(`season-${s}`)?.checked) seasons.push(s);
+      });
+      const timeOfDay = [];
+      ['day', 'night'].forEach(t => {
+        if (document.getElementById(`time-${t}`)?.checked) timeOfDay.push(t);
+      });
+
       const sku = skuVal.trim() || generateSKU(name);
 
       if (id) {
         const idx = state.products.findIndex(p => p.id === id);
         if (idx !== -1) {
-          state.products[idx] = { ...state.products[idx], name, notes, type, gender, sku, minStockThreshold: threshold, buyingCost, costPrice: cost, sellingPrice: retail };
+          state.products[idx] = { 
+            ...state.products[idx], 
+            name, notes, type, gender, sku, 
+            minStockThreshold: threshold, 
+            buyingCost, costPrice: cost, sellingPrice: retail,
+            imageUrl, seasons, timeOfDay, rating
+          };
         }
       } else {
         // ── DUPLICATE CHECK ──────────────────────────────────────────────
@@ -4025,7 +4086,11 @@ function setupEventListeners() {
           buyingCost,
           costPrice: cost,
           sellingPrice: retail,
-          minStockThreshold: threshold
+          minStockThreshold: threshold,
+          imageUrl,
+          seasons,
+          timeOfDay,
+          rating
         });
       }
 
