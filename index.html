@@ -790,10 +790,10 @@
                   <span class="input-helper">This updates the progress bar target on the main dashboard.</span>
                 </div>
 
-                <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem;">
+                <div id="settings-db-diagnostics" style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem;">
                   <label>Database Diagnostics</label>
-                  <button id="btn-reset-db-settings" class="btn btn-secondary" style="color: var(--danger); border-color: rgba(239, 68, 68, 0.2);">Reset Local Database to Seed Defaults</button>
-                  <span class="input-helper" style="color: var(--danger);">Warning: This will clear all transactions, custom customers, and logged expenses.</span>
+                  <button id="btn-reset-db-settings" class="btn btn-secondary" style="color: var(--danger); border-color: rgba(239, 68, 68, 0.2);">Reset Stock & History</button>
+                  <span class="input-helper" style="color: var(--danger);">Clears all transactions, customers, and expenses. Your product catalog is kept — stock levels reset to 0.</span>
 
                   <button id="btn-seed-firebase-products" class="btn btn-primary" style="margin-top: 1rem;">🌱 Seed Firebase Products Now</button>
                   <span class="input-helper">Manually trigger product database seeding from the server.</span>

@@ -574,7 +574,14 @@ async function checkAndSeedFirestore(force = false) {
       const batch = writeBatch(db);
 
       const seedProducts = createSeedProducts();
-      seedProducts.forEach(p => {
+      // Build a set of existing product names to avoid duplicates
+      const existingNames = new Set(
+        prodSnap.docs.map(d => (d.data().name || '').trim().toLowerCase())
+      );
+      const newProducts = force
+        ? seedProducts  // force=true: overwrite by ID (safe, won't create new docs)
+        : seedProducts.filter(p => !existingNames.has(p.name.trim().toLowerCase()));
+      newProducts.forEach(p => {
         batch.set(doc(db, 'products', p.id), p);
       });
 
@@ -1868,7 +1875,7 @@ function renderProducts() {
               Out
             </button>
             <button class="btn btn-outline btn-sm-action btn-edit-action" data-id="${p.id}" style="display: ${state.currentRole === 'Accountant' ? 'none' : 'block'};">Edit</button>
-            <button class="btn btn-danger btn-sm-action btn-delete-action" data-id="${p.id}" title="Delete Product" style="display: ${state.currentRole === 'Accountant' ? 'none' : 'inline-flex'}; align-items: center; gap: 0.25rem; background: none; border: 1px solid #ef4444; color: #ef4444; padding: 0.35rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">
+            <button type="button" class="btn btn-danger btn-sm-action btn-delete-action" data-id="${p.id}" title="Delete Product" style="display: ${state.currentRole === 'Accountant' ? 'none' : 'inline-flex'}; align-items: center; gap: 0.25rem; background: none; border: 1px solid #ef4444; color: #ef4444; padding: 0.35rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;color:#ef4444;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
               Delete
             </button>
@@ -2543,6 +2550,12 @@ function renderSettings() {
 
   // Populate Security Settings inputs
   populateSecuritySettings();
+
+  // ── USER MANAGEMENT: Admin-only ─────────────────────────────────────────
+  const usersGroup = document.getElementById('settings-users-group');
+  if (usersGroup) {
+    usersGroup.style.display = state.currentRole === 'Admin' ? 'flex' : 'none';
+  }
 
   // Populate Cloud Database Status
   const projectDisplay = document.getElementById('settings-project-id');
@@ -3608,45 +3621,61 @@ function setupEventListeners() {
     });
   }
 
-  // Settings Database Reset button - Admin only with password verification
+  // Settings Database Reset button - Admin only
+  // NOTE: We attach via the element directly so it works regardless of when role loads.
   const btnResetDbSettings = document.getElementById('btn-reset-db-settings');
   if (btnResetDbSettings) {
-    if (state.currentRole !== 'Admin') {
-      // Hide entire Database Diagnostics section for non-Admins
-      const dbDiagnosticsGroup = document.querySelector('[id$="db-diagnostics"]') || btnResetDbSettings.closest('div');
-      btnResetDbSettings.style.display = 'none';
-      if (dbDiagnosticsGroup) dbDiagnosticsGroup.style.display = 'none';
-    } else {
-      // SHOW for Admins
-      btnResetDbSettings.style.display = 'block';
-      btnResetDbSettings.addEventListener('click', async () => {
-        // First, ask for confirmation
-        if (await showConfirmDialog('Reset the database to seed defaults? This clears all sales, custom products, CRM customers, and logged expenses. You will need to enter your password to confirm.', 'Reset Database')) {
-          // Then ask for password verification
-          const password = prompt('Enter your password to confirm database reset:');
-          if (password !== null) {
-            const enteredPass = password.trim();
-            const storedPassword = localStorage.getItem('aurora_user_password') || '';
-            const validPasswords = ['admin123', 'ceo123', 'manager123', 'admin', storedPassword].filter(Boolean);
+    // Clone to wipe any previously attached listeners
+    const freshReset = btnResetDbSettings.cloneNode(true);
+    btnResetDbSettings.parentNode.replaceChild(freshReset, btnResetDbSettings);
 
-            if (enteredPass.length > 0 && (validPasswords.includes(enteredPass) || state.currentRole === 'Admin')) {
-              localStorage.removeItem('aurora_products');
-              localStorage.removeItem('aurora_transactions');
-              localStorage.removeItem('aurora_customers');
-              localStorage.removeItem('aurora_expenses');
-              localStorage.removeItem('aurora_target_amount');
-              localStorage.removeItem('aurora_current_role');
-              localStorage.removeItem('aurora_dismissed_alerts');
-              showToast('Database reset successfully. Reloading...', 'success');
-              setTimeout(() => location.reload(), 500);
-            } else {
-              showToast('Invalid password. Reset cancelled.', 'error');
+    freshReset.addEventListener('click', async () => {
+      if (state.currentRole !== 'Admin') {
+        showToast('Access Denied: Only Admins can reset the database.', 'error');
+        return;
+      }
+
+      const confirmed = await showConfirmDialog(
+        'Reset stock numbers? This clears all sales history, stock movements, expenses, and customers — but keeps your product catalog intact. Stock levels will reset to 0. This cannot be undone.',
+        'Reset Stock & History'
+      );
+      if (!confirmed) return;
+
+      try {
+        showToast('Resetting stock history...', 'info');
+
+        // 1. Clear localStorage (keep products, clear everything else)
+        ['aurora_transactions', 'aurora_customers',
+         'aurora_expenses', 'aurora_dismissed_alerts'].forEach(key => localStorage.removeItem(key));
+
+        // Update in-memory state immediately
+        state.transactions = [];
+        state.customers = [];
+        state.expenses = [];
+
+        // 2. Clear Firestore collections if connected (products are preserved)
+        if (isFirebaseInitialized) {
+          const colls = ['transactions', 'customers', 'expenses'];
+          for (const collName of colls) {
+            const snap = await getDocs(collection(db, collName));
+            if (!snap.empty) {
+              const batch = writeBatch(db);
+              snap.docs.forEach(d => batch.delete(d.ref));
+              await batch.commit();
             }
           }
         }
-      });
-    }
+
+        showToast('Stock history reset. Products kept intact. Reloading...', 'success');
+        setTimeout(() => location.reload(), 800);
+      } catch (err) {
+        console.error('Reset error:', err);
+        showToast(`Reset failed: ${err.message}`, 'error');
+      }
+    });
   }
+
+
 
   // Seed Firebase Products
   const btnSeedFirebase = document.getElementById('btn-seed-firebase-products');
@@ -3880,6 +3909,18 @@ function setupEventListeners() {
           state.products[idx] = { ...state.products[idx], name, notes, type, gender, sku, minStockThreshold: threshold, buyingCost, costPrice: cost, sellingPrice: retail };
         }
       } else {
+        // ── DUPLICATE CHECK ──────────────────────────────────────────────
+        const duplicate = state.products.find(
+          p => p.name.trim().toLowerCase() === name.trim().toLowerCase()
+        );
+        if (duplicate) {
+          showNotification(
+            `A product named "${duplicate.name}" already exists in inventory. Edit that product instead.`,
+            'error'
+          );
+          return;
+        }
+        // ─────────────────────────────────────────────────────────────────
         state.products.push({
           id: `prod-${uuid()}`,
           sku,
