@@ -188,7 +188,11 @@ function createSeedProducts() {
       wholesalePrice: p.wholesalePrice || 120000,
       sellingPrice: p.sellingPrice || 150000,
       minStockThreshold: p.minStockThreshold || 10,
-      notes: p.notes || ''
+      notes: p.notes || '',
+      imageUrl: p.imageUrl || '',
+      seasons: p.seasons || [],
+      timeOfDay: p.timeOfDay || [],
+      rating: p.rating || null
     });
 
     // 2. Tester version
@@ -204,7 +208,11 @@ function createSeedProducts() {
       wholesalePrice: 17000,
       sellingPrice: 20000,
       minStockThreshold: 5,
-      notes: `Official tester bottle for ${p.name}`
+      notes: `Official tester bottle for ${p.name}`,
+      imageUrl: p.imageUrl || '',
+      seasons: p.seasons || [],
+      timeOfDay: p.timeOfDay || [],
+      rating: p.rating || null
     });
   });
 
@@ -500,8 +508,8 @@ function initFirestoreSync() {
   const unsubProducts = onSnapshot(collection(db, 'products'), (snapshot) => {
     const items = [];
     snapshot.forEach(docSnap => items.push(docSnap.data()));
-    // Auto-fix any tester items that have legacy prices
-    let updatedTesters = false;
+    // Auto-fix tester prices and enrich missing Fragrantica metadata
+    let needsSave = false;
     items.forEach(p => {
       if (p.type === 'Tester' || (p.name && p.name.includes('(Tester)')) || (p.sku && p.sku.includes('TST'))) {
         if (p.costPrice !== 17000 || p.buyingCost !== 10000 || p.sellingPrice !== 20000) {
@@ -509,14 +517,25 @@ function initFirestoreSync() {
           p.costPrice = 17000;
           p.wholesalePrice = 17000;
           p.sellingPrice = 20000;
-          updatedTesters = true;
+          needsSave = true;
+        }
+      }
+
+      // Enrich missing Fragrantica profile / images from database
+      if (!p.imageUrl || !p.seasons || p.seasons.length === 0) {
+        const dbMatch = productDatabase.find(d => p.name.toLowerCase().includes(d.name.toLowerCase().replace(' (tester)', '').replace(' edp', '')));
+        if (dbMatch) {
+          if (!p.imageUrl && dbMatch.imageUrl) { p.imageUrl = dbMatch.imageUrl; needsSave = true; }
+          if ((!p.seasons || p.seasons.length === 0) && dbMatch.seasons) { p.seasons = dbMatch.seasons; needsSave = true; }
+          if ((!p.timeOfDay || p.timeOfDay.length === 0) && dbMatch.timeOfDay) { p.timeOfDay = dbMatch.timeOfDay; needsSave = true; }
+          if (!p.rating && dbMatch.rating) { p.rating = dbMatch.rating; needsSave = true; }
         }
       }
     });
 
     state.products = items;
     localStorage.setItem('aurora_products', JSON.stringify(state.products));
-    if (updatedTesters) {
+    if (needsSave) {
       saveProducts();
     }
     renderProducts();

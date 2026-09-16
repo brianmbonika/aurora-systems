@@ -3,247 +3,708 @@
     {
       "name": "AL FAKHER 67ML FOR MEN EDP",
       "gender": "Male",
-      "notes": "Top Notes: Cardamom, Saffron; Heart Notes: Oud, Incense; Base Notes: Cedar, Sandalwood, Musk"
+      "notes": "Top Notes: Cardamom, Saffron; Heart Notes: Oud, Incense; Base Notes: Cedar, Sandalwood, Musk",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/AlFakher.png",
+      "seasons": [
+        "winter",
+        "fall"
+      ],
+      "timeOfDay": [
+        "night"
+      ],
+      "rating": 4.2
     },
     {
       "name": "AURA Gold EDP for Women",
       "gender": "Female",
-      "notes": "Top Notes: Bergamot, Lemon; Heart Notes: Rose, Peony, Gold Accords; Base Notes: Amber, Sandalwood, Musk"
+      "notes": "Top Notes: Bergamot, Lemon; Heart Notes: Rose, Peony, Gold Accords; Base Notes: Amber, Sandalwood, Musk",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/AuraGold.png",
+      "seasons": [
+        "spring",
+        "summer"
+      ],
+      "timeOfDay": [
+        "day",
+        "night"
+      ],
+      "rating": 4.4
     },
     {
       "name": "AURA Silver EDP for men",
       "gender": "Male",
-      "notes": "Top Notes: Mint, Citrus; Heart Notes: Sage, Lavender; Base Notes: Cedar, Vetiver, Musk"
+      "notes": "Top Notes: Mint, Citrus; Heart Notes: Sage, Lavender; Base Notes: Cedar, Vetiver, Musk",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/AuraSilver.png",
+      "seasons": [
+        "spring",
+        "summer"
+      ],
+      "timeOfDay": [
+        "day"
+      ],
+      "rating": 4.1
     },
     {
       "name": "Aurora Amour EDP for Women",
       "gender": "Female",
-      "notes": "Top Notes: Mandarin, Passion Fruit; Heart Notes: Rose, Tuberose, Jasmine; Base Notes: Amber, Sandalwood, Vanilla"
+      "notes": "Top Notes: Mandarin, Passion Fruit; Heart Notes: Rose, Tuberose, Jasmine; Base Notes: Amber, Sandalwood, Vanilla",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/AuroraAmour.png",
+      "seasons": [
+        "spring",
+        "summer",
+        "fall"
+      ],
+      "timeOfDay": [
+        "day"
+      ],
+      "rating": 4.3
     },
     {
       "name": "Aurora Arabesque EDP Unisex",
       "gender": "Unisex",
-      "notes": "Top Notes: Bergamot, Ginger; Heart Notes: Oud, Rose; Base Notes: Sandalwood, Musk, Cedarwood"
+      "notes": "Top Notes: Bergamot, Ginger; Heart Notes: Oud, Rose; Base Notes: Sandalwood, Musk, Cedarwood",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/Arabesque.png",
+      "seasons": [
+        "fall",
+        "winter"
+      ],
+      "timeOfDay": [
+        "night"
+      ],
+      "rating": 4.5
     },
     {
       "name": "Aurora Arabesque Hayat EDP Unisex",
       "gender": "Unisex",
-      "notes": "Top Notes: Cardamom, Pepper; Heart Notes: Oud, Incense, Florals; Base Notes: Sandalwood, Amber, Musk"
+      "notes": "Top Notes: Cardamom, Pepper; Heart Notes: Oud, Incense, Florals; Base Notes: Sandalwood, Amber, Musk",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/Arabesque.png",
+      "seasons": [
+        "fall",
+        "winter"
+      ],
+      "timeOfDay": [
+        "night"
+      ],
+      "rating": 4.5
     },
     {
       "name": "Aurora Aroma II EDP for Men",
       "gender": "Male",
-      "notes": "Top Notes: Citrus, Spice; Heart Notes: Aromatic Herbs, Lavender; Base Notes: Cedarwood, Vetiver"
+      "notes": "Top Notes: Citrus, Spice; Heart Notes: Aromatic Herbs, Lavender; Base Notes: Cedarwood, Vetiver",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/AromaII.png",
+      "seasons": [
+        "spring",
+        "summer"
+      ],
+      "timeOfDay": [
+        "day"
+      ],
+      "rating": 4
     },
     {
       "name": "Aurora Aroma IV EDP for Men",
       "gender": "Male",
-      "notes": "Top Notes: Lemon, Pepper; Heart Notes: Sage, Aromatic Notes; Base Notes: Sandalwood, Woody Accords"
+      "notes": "Top Notes: Lemon, Pepper; Heart Notes: Sage, Aromatic Notes; Base Notes: Sandalwood, Woody Accords",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/AromaIV.png",
+      "seasons": [
+        "spring",
+        "fall"
+      ],
+      "timeOfDay": [
+        "day",
+        "night"
+      ],
+      "rating": 4.1
     },
     {
       "name": "Aurora Aroma IX EDP for Men",
       "gender": "Male",
-      "notes": "Top Notes: Bergamot, Ginger; Heart Notes: Aromatic Spices, Woods; Base Notes: Cedar, Vetiver, Musk"
+      "notes": "Top Notes: Bergamot, Ginger; Heart Notes: Aromatic Spices, Woods; Base Notes: Cedar, Vetiver, Musk",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/AromaIX.png",
+      "seasons": [
+        "fall",
+        "winter"
+      ],
+      "timeOfDay": [
+        "night"
+      ],
+      "rating": 4.2
     },
     {
       "name": "Aurora Aroma Senora I EDP for Women",
       "gender": "Female",
-      "notes": "Top Notes: Apple, Bergamot; Heart Notes: Rose, Geranium, Aromatic Florals; Base Notes: Sandalwood, Musk, Vanilla"
+      "notes": "Top Notes: Apple, Bergamot; Heart Notes: Rose, Geranium, Aromatic Florals; Base Notes: Sandalwood, Musk, Vanilla",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/AromaSenoraI.png",
+      "seasons": [
+        "spring",
+        "summer"
+      ],
+      "timeOfDay": [
+        "day"
+      ],
+      "rating": 4.1
     },
     {
       "name": "Aurora Aroma Senora III EDP For Women",
       "gender": "Female",
-      "notes": "Top Notes: Peach, Citrus; Heart Notes: Jasmine, Feminine Florals; Base Notes: Amber, Sandalwood, Musk"
+      "notes": "Top Notes: Peach, Citrus; Heart Notes: Jasmine, Feminine Florals; Base Notes: Amber, Sandalwood, Musk",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/AromaSenoraI.png",
+      "seasons": [
+        "spring",
+        "summer"
+      ],
+      "timeOfDay": [
+        "day"
+      ],
+      "rating": 4.1
     },
     {
       "name": "Aurora Aroma Senora VI EDP For Women",
       "gender": "Female",
-      "notes": "Top Notes: Mandarin, Bergamot; Heart Notes: Rose, Peony, Floral Accords; Base Notes: Vanilla, Sandalwood, Amber"
+      "notes": "Top Notes: Mandarin, Bergamot; Heart Notes: Rose, Peony, Floral Accords; Base Notes: Vanilla, Sandalwood, Amber",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/AromaSenoraVI.png",
+      "seasons": [
+        "spring",
+        "summer",
+        "fall"
+      ],
+      "timeOfDay": [
+        "day",
+        "night"
+      ],
+      "rating": 4.3
     },
     {
       "name": "Aurora Aroma Senora VIII EDP for Women",
       "gender": "Female",
-      "notes": "Top Notes: Orange Blossom, Lemon; Heart Notes: Sweet Florals, Tuberose; Base Notes: Vanilla, Amber, Musk"
+      "notes": "Top Notes: Orange Blossom, Lemon; Heart Notes: Sweet Florals, Tuberose; Base Notes: Vanilla, Amber, Musk",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/AromaSenoraVI.png",
+      "seasons": [
+        "spring",
+        "summer",
+        "fall"
+      ],
+      "timeOfDay": [
+        "day",
+        "night"
+      ],
+      "rating": 4.3
     },
     {
       "name": "Aurora Aroma V EDP for Men",
       "gender": "Male",
-      "notes": "Top Notes: Bergamot, Lavender; Heart Notes: Sage, Aromatic Woods; Base Notes: Cedar, Vetiver, Sandalwood"
+      "notes": "Top Notes: Bergamot, Lavender; Heart Notes: Sage, Aromatic Woods; Base Notes: Cedar, Vetiver, Sandalwood",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/AromaV.png",
+      "seasons": [
+        "spring",
+        "summer"
+      ],
+      "timeOfDay": [
+        "day"
+      ],
+      "rating": 4.2
     },
     {
       "name": "Aurora Aroma VII EDP for Men",
       "gender": "Male",
-      "notes": "Top Notes: Cardamom, Pepper; Heart Notes: Spiced Aromatics, Woods; Base Notes: Sandalwood, Amber, Musk"
+      "notes": "Top Notes: Cardamom, Pepper; Heart Notes: Spiced Aromatics, Woods; Base Notes: Sandalwood, Amber, Musk",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/AromaV.png",
+      "seasons": [
+        "spring",
+        "summer"
+      ],
+      "timeOfDay": [
+        "day"
+      ],
+      "rating": 4.2
     },
     {
       "name": "Aurora Black Elixir EDP for Men",
       "gender": "Male",
-      "notes": "Top Notes: Dark Spice, Oud; Heart Notes: Mystic Aromatics, Dark Woods; Base Notes: Oud, Sandalwood, Amber"
+      "notes": "Top Notes: Dark Spice, Oud; Heart Notes: Mystic Aromatics, Dark Woods; Base Notes: Oud, Sandalwood, Amber",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/BlackElixir.png",
+      "seasons": [
+        "fall",
+        "winter"
+      ],
+      "timeOfDay": [
+        "night"
+      ],
+      "rating": 4.6
     },
     {
       "name": "Aurora Black Potion EDP for Men",
       "gender": "Male",
-      "notes": "Top Notes: Cinnamon, Oud; Heart Notes: Dark Florals, Incense; Base Notes: Patchouli, Oud, Musk"
+      "notes": "Top Notes: Cinnamon, Oud; Heart Notes: Dark Florals, Incense; Base Notes: Patchouli, Oud, Musk",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/BlackPotion.png",
+      "seasons": [
+        "winter",
+        "fall"
+      ],
+      "timeOfDay": [
+        "night"
+      ],
+      "rating": 4.4
     },
     {
       "name": "Aurora Black Rouge EDP For Women",
       "gender": "Female",
-      "notes": "Top Notes: Red Berries, Black Currant; Heart Notes: Red Florals, Rose; Base Notes: Amber, Musk, Vetiver"
+      "notes": "Top Notes: Red Berries, Black Currant; Heart Notes: Red Florals, Rose; Base Notes: Amber, Musk, Vetiver",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/BlackRouge.png",
+      "seasons": [
+        "fall",
+        "winter"
+      ],
+      "timeOfDay": [
+        "night"
+      ],
+      "rating": 4.5
     },
     {
       "name": "Aurora Cafe Citadel EDP Unisex",
       "gender": "Unisex",
-      "notes": "Top Notes: Coffee, Cardamom; Heart Notes: Woody Accords, Spice; Base Notes: Cedar, Sandalwood, Leather"
+      "notes": "Top Notes: Coffee, Cardamom; Heart Notes: Woody Accords, Spice; Base Notes: Cedar, Sandalwood, Leather",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/CafeCitadel.png",
+      "seasons": [
+        "fall",
+        "winter"
+      ],
+      "timeOfDay": [
+        "day",
+        "night"
+      ],
+      "rating": 4.7
     },
     {
       "name": "Aurora Call Of The Wild EDP for Women",
       "gender": "Female",
-      "notes": "Top Notes: Mandarin, Galbanum; Heart Notes: Jasmine, White Florals; Base Notes: Cedarwood, Sandalwood, Musk"
+      "notes": "Top Notes: Mandarin, Galbanum; Heart Notes: Jasmine, White Florals; Base Notes: Cedarwood, Sandalwood, Musk",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/CallOfTheWild.png",
+      "seasons": [
+        "winter",
+        "spring",
+        "fall"
+      ],
+      "timeOfDay": [
+        "day",
+        "night"
+      ],
+      "rating": 4.2
     },
     {
       "name": "Aurora Celestial Collection | The Guardian of Heaven EDP for Men",
       "gender": "Male",
-      "notes": "Top Notes: Bergamot, Aldehydes; Heart Notes: Incense, Florals; Base Notes: Amber, Sandalwood, Oud"
+      "notes": "Top Notes: Bergamot, Aldehydes; Heart Notes: Incense, Florals; Base Notes: Amber, Sandalwood, Oud",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/GuardianOfHeaven.png",
+      "seasons": [
+        "spring",
+        "summer"
+      ],
+      "timeOfDay": [
+        "day"
+      ],
+      "rating": 4.5
     },
     {
       "name": "Aurora Celestial Collection In The Nowhere Land EDP Unisex",
       "gender": "Unisex",
-      "notes": "Top Notes: Pink Pepper, Bergamot; Heart Notes: Jasmine, Oud, Mysterious Notes; Base Notes: Sandalwood, Amber, Vetiver"
+      "notes": "Top Notes: Pink Pepper, Bergamot; Heart Notes: Jasmine, Oud, Mysterious Notes; Base Notes: Sandalwood, Amber, Vetiver",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/InTheNowhereLand.png",
+      "seasons": [
+        "fall",
+        "winter",
+        "spring"
+      ],
+      "timeOfDay": [
+        "day",
+        "night"
+      ],
+      "rating": 4.6
     },
     {
       "name": "Aurora Celestial Collection La Bête de Gevaudan EDP for Men",
       "gender": "Male",
-      "notes": "Top Notes: Dark Spice, Pepper; Heart Notes: Wild Oud, Dark Woods; Base Notes: Patchouli, Leather, Sandalwood"
+      "notes": "Top Notes: Dark Spice, Pepper; Heart Notes: Wild Oud, Dark Woods; Base Notes: Patchouli, Leather, Sandalwood",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/LaBete.png",
+      "seasons": [
+        "winter",
+        "fall"
+      ],
+      "timeOfDay": [
+        "night"
+      ],
+      "rating": 4.6
     },
     {
       "name": "Aurora Chevalier EDP for Men",
       "gender": "Male",
-      "notes": "Top Notes: Bergamot, Cardamom; Heart Notes: Geranium, Cedar, Noble Woods; Base Notes: Sandalwood, Vetiver, Musk"
+      "notes": "Top Notes: Bergamot, Cardamom; Heart Notes: Geranium, Cedar, Noble Woods; Base Notes: Sandalwood, Vetiver, Musk",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/Chevalier.png",
+      "seasons": [
+        "spring",
+        "fall"
+      ],
+      "timeOfDay": [
+        "day"
+      ],
+      "rating": 4.3
     },
     {
       "name": "Aurora Chrome EDP for Men",
       "gender": "Male",
-      "notes": "Top Notes: Citrus, Metallic Accords; Heart Notes: Aromatic Herbs, Modern Notes; Base Notes: Vetiver, Musk, Cedar"
+      "notes": "Top Notes: Citrus, Metallic Accords; Heart Notes: Aromatic Herbs, Modern Notes; Base Notes: Vetiver, Musk, Cedar",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/Chrome.png",
+      "seasons": [
+        "spring",
+        "summer"
+      ],
+      "timeOfDay": [
+        "day"
+      ],
+      "rating": 4
     },
     {
       "name": "Aurora Chrome Sport EDP for Men",
       "gender": "Male",
-      "notes": "Top Notes: Lemon, Ginger; Heart Notes: Fresh Aromatic, Sport Accords; Base Notes: Cedarwood, Musk, Sandalwood"
+      "notes": "Top Notes: Lemon, Ginger; Heart Notes: Fresh Aromatic, Sport Accords; Base Notes: Cedarwood, Musk, Sandalwood",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/Chrome.png",
+      "seasons": [
+        "spring",
+        "summer"
+      ],
+      "timeOfDay": [
+        "day"
+      ],
+      "rating": 4
     },
     {
       "name": "Aurora Cleopatra EDP for Women",
       "gender": "Female",
-      "notes": "Top Notes: Pear, Bergamot; Heart Notes: Rose, Osmanthus, Exotic Florals; Base Notes: Amber, Sandalwood, Musk"
+      "notes": "Top Notes: Pear, Bergamot; Heart Notes: Rose, Osmanthus, Exotic Florals; Base Notes: Amber, Sandalwood, Musk",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/Cleopatra.png",
+      "seasons": [
+        "spring",
+        "summer",
+        "fall"
+      ],
+      "timeOfDay": [
+        "day",
+        "night"
+      ],
+      "rating": 4.4
     },
     {
       "name": "Aurora Cuban Incense EDP for Men",
       "gender": "Male",
-      "notes": "Top Notes: Tobacco, Cinnamon; Heart Notes: Incense, Spiced Woods; Base Notes: Patchouli, Leather, Sandalwood"
+      "notes": "Top Notes: Tobacco, Cinnamon; Heart Notes: Incense, Spiced Woods; Base Notes: Patchouli, Leather, Sandalwood",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/CubanIncense.png",
+      "seasons": [
+        "fall",
+        "winter"
+      ],
+      "timeOfDay": [
+        "night"
+      ],
+      "rating": 4.7
     },
     {
       "name": "Aurora Cuban Wood EDP for Men",
       "gender": "Male",
-      "notes": "Top Notes: Tobacco Leaf, Pepper; Heart Notes: Woody Accords, Aromatic Spices; Base Notes: Cedar, Sandalwood, Vetiver"
+      "notes": "Top Notes: Tobacco Leaf, Pepper; Heart Notes: Woody Accords, Aromatic Spices; Base Notes: Cedar, Sandalwood, Vetiver",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/CubanWood.png",
+      "seasons": [
+        "fall",
+        "winter"
+      ],
+      "timeOfDay": [
+        "day",
+        "night"
+      ],
+      "rating": 4.5
     },
     {
       "name": "Aurora Deciduous Autumn EDP for Women",
       "gender": "Female",
-      "notes": "Top Notes: Cinnamon, Apple; Heart Notes: Floral Spice, Amber Notes; Base Notes: Sandalwood, Vanilla, Musk"
+      "notes": "Top Notes: Cinnamon, Apple; Heart Notes: Floral Spice, Amber Notes; Base Notes: Sandalwood, Vanilla, Musk",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/DeciduousAutumn.png",
+      "seasons": [
+        "fall"
+      ],
+      "timeOfDay": [
+        "day",
+        "night"
+      ],
+      "rating": 4.3
     },
     {
       "name": "Aurora Deciduous Spring EDP for Women",
       "gender": "Female",
-      "notes": "Top Notes: Bergamot, Green Notes; Heart Notes: Lily of the Valley, Fresh Florals; Base Notes: Sandalwood, Musk, Amber"
+      "notes": "Top Notes: Bergamot, Green Notes; Heart Notes: Lily of the Valley, Fresh Florals; Base Notes: Sandalwood, Musk, Amber",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/DeciduousSpring.png",
+      "seasons": [
+        "spring"
+      ],
+      "timeOfDay": [
+        "day"
+      ],
+      "rating": 4.4
     },
     {
       "name": "Aurora Deciduous Summer EDP For Women",
       "gender": "Female",
-      "notes": "Top Notes: Citrus, Peach; Heart Notes: Fruity Florals, White Flowers; Base Notes: Vanilla, Sandalwood, Musk"
+      "notes": "Top Notes: Citrus, Peach; Heart Notes: Fruity Florals, White Flowers; Base Notes: Vanilla, Sandalwood, Musk",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/DeciduousSummer.png",
+      "seasons": [
+        "summer"
+      ],
+      "timeOfDay": [
+        "day"
+      ],
+      "rating": 4.3
     },
     {
       "name": "Aurora Deciduous Winter EDP for Women",
       "gender": "Female",
-      "notes": "Top Notes: Icy Bergamot, Pepper; Heart Notes: Crisp Florals, Cool Spice; Base Notes: Cedarwood, Vetiver, Sandalwood"
+      "notes": "Top Notes: Icy Bergamot, Pepper; Heart Notes: Crisp Florals, Cool Spice; Base Notes: Cedarwood, Vetiver, Sandalwood",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/DeciduousWinter.png",
+      "seasons": [
+        "winter"
+      ],
+      "timeOfDay": [
+        "day",
+        "night"
+      ],
+      "rating": 4.4
     },
     {
       "name": "Aurora Delicate EDP for Women",
       "gender": "Female",
-      "notes": "Top Notes: Neroli, Lemon; Heart Notes: Soft Florals, Rose Petals; Base Notes: Musk, Sandalwood, Vanilla"
+      "notes": "Top Notes: Neroli, Lemon; Heart Notes: Soft Florals, Rose Petals; Base Notes: Musk, Sandalwood, Vanilla",
+      "imageUrl": "",
+      "seasons": [
+        "spring",
+        "fall"
+      ],
+      "timeOfDay": [
+        "day",
+        "night"
+      ],
+      "rating": 4.2
     },
     {
       "name": "Aurora Delicate Rose EDP for Women",
       "gender": "Female",
-      "notes": "Top Notes: Bergamot, Lemon; Heart Notes: Rose, Peony, Soft Florals; Base Notes: Musk, Sandalwood, Amber"
+      "notes": "Top Notes: Bergamot, Lemon; Heart Notes: Rose, Peony, Soft Florals; Base Notes: Musk, Sandalwood, Amber",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/DelicateRose.png",
+      "seasons": [
+        "spring",
+        "summer"
+      ],
+      "timeOfDay": [
+        "day"
+      ],
+      "rating": 4.2
     },
     {
       "name": "Aurora Eclat De Lune Pink EDP for Women",
       "gender": "Female",
-      "notes": "Top Notes: Pink Grapefruit, Bergamot; Heart Notes: Rose, Peony; Base Notes: Amber, Vanilla, Musk"
+      "notes": "Top Notes: Pink Grapefruit, Bergamot; Heart Notes: Rose, Peony; Base Notes: Amber, Vanilla, Musk",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/EclatDeLune.png",
+      "seasons": [
+        "spring",
+        "summer",
+        "fall"
+      ],
+      "timeOfDay": [
+        "night"
+      ],
+      "rating": 4.5
     },
     {
       "name": "Aurora Eclat De Lune Red EDP for Women",
       "gender": "Female",
-      "notes": "Top Notes: Red Berries, Ginger; Heart Notes: Red Florals, Rose; Base Notes: Amber, Sandalwood, Musk"
+      "notes": "Top Notes: Red Berries, Ginger; Heart Notes: Red Florals, Rose; Base Notes: Amber, Sandalwood, Musk",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/EclatDeLune.png",
+      "seasons": [
+        "spring",
+        "summer",
+        "fall"
+      ],
+      "timeOfDay": [
+        "night"
+      ],
+      "rating": 4.5
     },
     {
       "name": "Aurora Elixir EDP for Men",
       "gender": "Male",
-      "notes": "Top Notes: Saffron, Cardamom; Heart Notes: Oud, Exotic Florals; Base Notes: Sandalwood, Amber, Musk"
+      "notes": "Top Notes: Saffron, Cardamom; Heart Notes: Oud, Exotic Florals; Base Notes: Sandalwood, Amber, Musk",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/Elixir.png",
+      "seasons": [
+        "fall",
+        "winter"
+      ],
+      "timeOfDay": [
+        "night"
+      ],
+      "rating": 4.5
     },
     {
       "name": "Aurora Epic Oud EDP for Men",
       "gender": "Male",
-      "notes": "Top Notes: Bergamot, Pepper; Heart Notes: Oud, Incense; Base Notes: Sandalwood, Leather, Amber"
+      "notes": "Top Notes: Bergamot, Pepper; Heart Notes: Oud, Incense; Base Notes: Sandalwood, Leather, Amber",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/EpicOud.png",
+      "seasons": [
+        "winter",
+        "fall"
+      ],
+      "timeOfDay": [
+        "night"
+      ],
+      "rating": 4.6
     },
     {
       "name": "Aurora Explorer Black EDP for Men",
       "gender": "Male",
-      "notes": "Top Notes: Dark Spice, Ginger; Heart Notes: Dark Woods, Oud; Base Notes: Patchouli, Leather, Sandalwood"
+      "notes": "Top Notes: Dark Spice, Ginger; Heart Notes: Dark Woods, Oud; Base Notes: Patchouli, Leather, Sandalwood",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/ExplorerBlack.png",
+      "seasons": [
+        "fall",
+        "winter"
+      ],
+      "timeOfDay": [
+        "night"
+      ],
+      "rating": 4.3
     },
     {
       "name": "Aurora Explorer Gold EDP for Women",
       "gender": "Female",
-      "notes": "Top Notes: Golden Citrus, Bergamot; Heart Notes: Narcissus, Golden Florals; Base Notes: Amber, Sandalwood, Musk"
+      "notes": "Top Notes: Golden Citrus, Bergamot; Heart Notes: Narcissus, Golden Florals; Base Notes: Amber, Sandalwood, Musk",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/ExplorerGold.png",
+      "seasons": [
+        "spring",
+        "summer"
+      ],
+      "timeOfDay": [
+        "day"
+      ],
+      "rating": 4.2
     },
     {
       "name": "Aurora Explorer Silver EDP for Men",
       "gender": "Male",
-      "notes": "Top Notes: Icy Citrus, Aldehydes; Heart Notes: Cool Aromatic, Woods; Base Notes: Vetiver, Musk, Sandalwood"
+      "notes": "Top Notes: Icy Citrus, Aldehydes; Heart Notes: Cool Aromatic, Woods; Base Notes: Vetiver, Musk, Sandalwood",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/ExplorerSilver.png",
+      "seasons": [
+        "spring",
+        "summer"
+      ],
+      "timeOfDay": [
+        "day"
+      ],
+      "rating": 4.1
     },
     {
       "name": "Aurora Feminity Collection Bella EDP For Women",
       "gender": "Female",
-      "notes": "Top Notes: Bergamot, Mandarin; Heart Notes: Rose, Gardenia, Florals; Base Notes: Sandalwood, Musk, Vanilla"
+      "notes": "Top Notes: Bergamot, Mandarin; Heart Notes: Rose, Gardenia, Florals; Base Notes: Sandalwood, Musk, Vanilla",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/Bella.png",
+      "seasons": [
+        "spring",
+        "summer"
+      ],
+      "timeOfDay": [
+        "day"
+      ],
+      "rating": 4.4
     },
     {
       "name": "Aurora Feminity Collection Blush EDP For Women",
       "gender": "Female",
-      "notes": "Top Notes: Peach, Pink Grapefruit; Heart Notes: Peony, Rose, Pink Florals; Base Notes: Amber, Musk, Vanilla"
+      "notes": "Top Notes: Peach, Pink Grapefruit; Heart Notes: Peony, Rose, Pink Florals; Base Notes: Amber, Musk, Vanilla",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/Blush.png",
+      "seasons": [
+        "spring",
+        "summer"
+      ],
+      "timeOfDay": [
+        "day"
+      ],
+      "rating": 4.3
     },
     {
       "name": "Aurora Forbidden Love EDP for Women",
       "gender": "Female",
-      "notes": "Top Notes: Black Currant, Bergamot; Heart Notes: Red Florals, Sensual Jasmine; Base Notes: Amber, Sandalwood, Musk"
+      "notes": "Top Notes: Black Currant, Bergamot; Heart Notes: Red Florals, Sensual Jasmine; Base Notes: Amber, Sandalwood, Musk",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/ForbiddenLove.png",
+      "seasons": [
+        "fall",
+        "winter"
+      ],
+      "timeOfDay": [
+        "night"
+      ],
+      "rating": 4.5
     },
     {
       "name": "Aurora Habanera Black EDP for Men",
       "gender": "Male",
-      "notes": "Top Notes: Pepper, Dark Spice; Heart Notes: Oud, Dark Woods, Sensual Notes; Base Notes: Leather, Sandalwood, Musk"
+      "notes": "Top Notes: Pepper, Dark Spice; Heart Notes: Oud, Dark Woods, Sensual Notes; Base Notes: Leather, Sandalwood, Musk",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/HabaneraBlack.png",
+      "seasons": [
+        "winter",
+        "fall"
+      ],
+      "timeOfDay": [
+        "night"
+      ],
+      "rating": 4.6
     },
     {
       "name": "Aurora Scents Cherry in The Woods Extrait De Parfum Unisex",
       "gender": "Unisex",
-      "notes": "Top Notes: Mandarin, Ginger; Heart Notes: Cherry, Woody Florals; Base Notes: Sandalwood, Cedar, Vetiver"
+      "notes": "Top Notes: Mandarin, Ginger; Heart Notes: Cherry, Woody Florals; Base Notes: Sandalwood, Cedar, Vetiver",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/CherryInTheWoods.png",
+      "seasons": [
+        "fall",
+        "winter",
+        "spring"
+      ],
+      "timeOfDay": [
+        "day",
+        "night"
+      ],
+      "rating": 4.8
     },
     {
       "name": "Aurora Scents Atmosphere Extrait De Parfum Unisex",
       "gender": "Unisex",
-      "notes": "Top Notes: Ginger, Kumquat, Bergamot, Apple; Heart Notes: Laurel, Mint, Watery Melon; Base Notes: Amber, Musk, Cedar, Haitian Vetiver"
+      "notes": "Top Notes: Ginger, Kumquat, Bergamot, Apple; Heart Notes: Laurel, Mint, Watery Melon; Base Notes: Amber, Musk, Cedar, Haitian Vetiver",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/Atmosphere.png",
+      "seasons": [
+        "spring",
+        "summer",
+        "fall"
+      ],
+      "timeOfDay": [
+        "day"
+      ],
+      "rating": 4.6
     },
     {
       "name": "Aurora Vanilla Espresso EDP Unisex",
       "gender": "Unisex",
-      "notes": "Top Notes: Mandarin, Cognac; Heart Notes: Vanilla, Praline, Orange Blossom, White Floral; Base Notes: Caramel, Woody, Cedar"
+      "notes": "Top Notes: Mandarin, Cognac; Heart Notes: Vanilla, Praline, Orange Blossom, White Floral; Base Notes: Caramel, Woody, Cedar",
+      "imageUrl": "https://aurorascents.com/cdn/shop/files/VanillaEspresso.png",
+      "seasons": [
+        "fall",
+        "winter"
+      ],
+      "timeOfDay": [
+        "day",
+        "night"
+      ],
+      "rating": 4.7
     }
   ]
 }
