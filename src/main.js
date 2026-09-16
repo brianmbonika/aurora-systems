@@ -1149,11 +1149,11 @@ function renderDashboardStatsGrid() {
     state.transactions.forEach(tx => {
       const txTime = new Date(tx.timestamp).getTime();
       if (txTime >= now - 7 * oneDay && txTime < now) {
-        if (tx.type === 'OUT' && tx.reason.toLowerCase().includes('sale')) {
+        if (tx.type === 'OUT' && (tx.reason || '').toLowerCase().includes('sale')) {
           salesThisWeek += tx.quantity * tx.unitPrice;
         }
       } else if (txTime >= now - 14 * oneDay && txTime < now - 7 * oneDay) {
-        if (tx.type === 'OUT' && tx.reason.toLowerCase().includes('sale')) {
+        if (tx.type === 'OUT' && (tx.reason || '').toLowerCase().includes('sale')) {
           salesPrevWeek += tx.quantity * tx.unitPrice;
         }
       }
@@ -1741,9 +1741,9 @@ function renderProducts() {
   // Apply filters
   if (searchVal) {
     filtered = filtered.filter(p =>
-      p.name.toLowerCase().includes(searchVal) ||
-      p.sku.toLowerCase().includes(searchVal) ||
-      p.category.toLowerCase().includes(searchVal)
+      (p.name || '').toLowerCase().includes(searchVal) ||
+      (p.sku || '').toLowerCase().includes(searchVal) ||
+      (p.category || '').toLowerCase().includes(searchVal)
     );
   }
 
@@ -3729,7 +3729,7 @@ function setupEventListeners() {
 
       // Filter products from database
       const matches = productDatabase.filter(prod =>
-        prod.name.toLowerCase().includes(query)
+        (prod.name || '').toLowerCase().includes(query)
       ).slice(0, 8); // Show max 8 suggestions
 
       if (matches.length === 0) {
