@@ -200,7 +200,7 @@ function createSeedProducts() {
       gender: p.gender || p.category || 'Unisex',
       category: p.gender || p.category || 'Unisex',
       buyingCost: 10000,
-      costPrice: 10000,
+      costPrice: 17000,
       wholesalePrice: 17000,
       sellingPrice: 20000,
       minStockThreshold: 5,
@@ -500,9 +500,25 @@ function initFirestoreSync() {
   const unsubProducts = onSnapshot(collection(db, 'products'), (snapshot) => {
     const items = [];
     snapshot.forEach(docSnap => items.push(docSnap.data()));
-    console.log(`📦 Listener fired: ${items.length} products in Firestore`);
+    // Auto-fix any tester items that have legacy prices
+    let updatedTesters = false;
+    items.forEach(p => {
+      if (p.type === 'Tester' || (p.name && p.name.includes('(Tester)')) || (p.sku && p.sku.includes('TST'))) {
+        if (p.costPrice !== 17000 || p.buyingCost !== 10000 || p.sellingPrice !== 20000) {
+          p.buyingCost = 10000;
+          p.costPrice = 17000;
+          p.wholesalePrice = 17000;
+          p.sellingPrice = 20000;
+          updatedTesters = true;
+        }
+      }
+    });
+
     state.products = items;
     localStorage.setItem('aurora_products', JSON.stringify(state.products));
+    if (updatedTesters) {
+      saveProducts();
+    }
     renderProducts();
   }, (err) => handleSyncError('products', err));
 
@@ -2646,7 +2662,7 @@ window.updateAllTesterPrices = async function() {
 
   testers.forEach(p => {
     p.buyingCost = 10000;
-    p.costPrice = 10000;
+    p.costPrice = 17000;
     p.wholesalePrice = 17000;
     p.sellingPrice = 20000;
   });
