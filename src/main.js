@@ -4057,9 +4057,16 @@ function setupEventListeners() {
     });
   }
 
-  // Settings Database Reset button - Admin only
+  // Settings Database Reset button — Admin only
   // NOTE: We attach via the element directly so it works regardless of when role loads.
   const btnResetDbSettings = document.getElementById('btn-reset-db-settings');
+  const settingsDbDiagnostics = document.getElementById('settings-db-diagnostics');
+
+  // Hide the entire Database Diagnostics section for non-Admin roles
+  if (settingsDbDiagnostics) {
+    settingsDbDiagnostics.style.display = state.currentRole === 'Admin' ? '' : 'none';
+  }
+
   if (btnResetDbSettings) {
     // Clone to wipe any previously attached listeners
     const freshReset = btnResetDbSettings.cloneNode(true);
