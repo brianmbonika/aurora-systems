@@ -1909,7 +1909,7 @@ function renderProducts() {
               <span>Collection: ${p.category} • Type: ${p.type || 'Full Bottle'} ${(seasonBadges || timeBadges) ? `• ${seasonBadges} ${timeBadges}` : ''}</span>
             </div>
           </div>
-        </td>`,StartLine:1863,TargetContent:
+        </td>
         <td data-label="SKU"><code>${p.sku}</code></td>
         <td data-label="Wholesale Cost" class="text-right font-medium">${formatCurrency(p.costPrice)}</td>
         <td data-label="Retail Price" class="text-right font-medium">${formatCurrency(p.sellingPrice)}</td>
