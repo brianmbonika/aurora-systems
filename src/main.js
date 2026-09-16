@@ -3186,16 +3186,35 @@ function openProductViewModal(productId) {
         </div>
 
         <!-- Fragrance Notes -->
-        ${prod.notes ? `
-          <div style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:1rem;">
-            <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--accent); margin-bottom:0.4rem;">
-              🌿 Fragrance Notes Pyramid
+        ${prod.notes ? (() => {
+          const formattedNotes = prod.notes
+            .split(/;|\n/)
+            .map(n => n.trim())
+            .filter(Boolean)
+            .map(n => {
+              if (n.toLowerCase().startsWith('top notes')) {
+                return `<div style="margin-bottom:0.4rem;"><strong style="color:var(--accent);">Top Notes:</strong> ${n.replace(/^top notes:?/i, '').trim()}</div>`;
+              }
+              if (n.toLowerCase().startsWith('heart notes') || n.toLowerCase().startsWith('middle notes')) {
+                return `<div style="margin-bottom:0.4rem;"><strong style="color:var(--accent);">Heart Notes:</strong> ${n.replace(/^(heart|middle) notes:?/i, '').trim()}</div>`;
+              }
+              if (n.toLowerCase().startsWith('base notes')) {
+                return `<div style="margin-bottom:0.2rem;"><strong style="color:var(--accent);">Base Notes:</strong> ${n.replace(/^base notes:?/i, '').trim()}</div>`;
+              }
+              return `<div style="margin-bottom:0.3rem;">${n}</div>`;
+            }).join('');
+
+          return `
+            <div style="background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:1rem;">
+              <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--accent); margin-bottom:0.6rem; display:flex; align-items:center; gap:0.4rem;">
+                <span>🌿 Fragrance Notes Pyramid</span>
+              </div>
+              <div style="font-size:0.88rem; line-height:1.6; color:var(--text-primary);">
+                ${formattedNotes}
+              </div>
             </div>
-            <p style="margin:0; font-size:0.88rem; line-height:1.5; color:var(--text-secondary); white-space:pre-line;">
-              ${prod.notes}
-            </p>
-          </div>
-        ` : ''}
+          `;
+        })() : ''}
       </div>
     `;
   }
