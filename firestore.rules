@@ -97,8 +97,8 @@ service cloud.firestore {
     // Only Admin/CEO can modify catalog
     match /products/{productId} {
       allow read: if isSignedIn();
-      allow create: if isSignedIn() && (getRole() == 'Admin' || getRole() == 'admin' || getRole() == '');
-      allow update: if isSignedIn() && (getRole() == 'Admin' || getRole() == 'admin');
+      allow create: if isSignedIn() && (getRole() == 'Admin' || getRole() == 'admin' || getRole() == '' || getRole() == 'Manager');
+      allow update: if isSignedIn();
       allow delete: if isSignedIn() && (getRole() == 'Admin' || getRole() == 'admin');
     }
 

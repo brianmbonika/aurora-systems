@@ -561,9 +561,6 @@ function initFirestoreSync() {
 
     state.products = items;
     localStorage.setItem('aurora_products', JSON.stringify(state.products));
-    if (needsSave) {
-      saveProducts();
-    }
     renderProducts();
   }, (err) => handleSyncError('products', err));
 
