@@ -616,7 +616,8 @@ function initFirestoreSync() {
 }
 
 // Seed Database automatically in Firestore if empty or forced
-async function checkAndSeedFirestore(force = false) {
+// productsOnly=true → only writes product docs, never touches transactions/customers/expenses
+async function checkAndSeedFirestore(force = false, productsOnly = false) {
   if (!isFirebaseInitialized) return;
   try {
     // Ensure default target exists in config/target
@@ -645,53 +646,56 @@ async function checkAndSeedFirestore(force = false) {
         batch.set(doc(db, 'products', p.id), p);
       });
 
-      // Seed Customers
-      INITIAL_CUSTOMERS.forEach(c => {
-        batch.set(doc(db, 'customers', c.id), c);
-      });
+      if (!productsOnly) {
+        // Seed Customers
+        INITIAL_CUSTOMERS.forEach(c => {
+          batch.set(doc(db, 'customers', c.id), c);
+        });
 
-      // Seed Expenses
-      INITIAL_EXPENSES.forEach(e => {
-        batch.set(doc(db, 'expenses', e.id), e);
-      });
+        // Seed Expenses
+        INITIAL_EXPENSES.forEach(e => {
+          batch.set(doc(db, 'expenses', e.id), e);
+        });
 
-      // Seed Transactions
-      const now = Date.now();
-      const oneDay = 24 * 60 * 60 * 1000;
-      seedProducts.forEach((p, idx) => {
-        const qtyIn = 40 + (idx % 15);
-        const txIn = {
-          id: `tx-seed-in-${idx}`,
-          productId: p.id,
-          type: 'IN',
-          quantity: qtyIn,
-          unitPrice: p.costPrice,
-          reason: 'Initial Wholesale Stock In',
-          timestamp: new Date(now - 45 * oneDay).toISOString()
-        };
-        batch.set(doc(db, 'transactions', txIn.id), txIn);
-
-        const salesCount = 2 + (idx % 3);
-        for (let s = 0; s < salesCount; s++) {
-          const qtyOut = 1 + (idx % 3) + s;
-          const dayOffset = (idx % 30) + 1;
-          const customer = INITIAL_CUSTOMERS[idx % 2];
-          const txOut = {
-            id: `tx-seed-out-${idx}-${s}`,
+        // Seed Transactions (creates artificial stock numbers — skipped when productsOnly=true)
+        const now = Date.now();
+        const oneDay = 24 * 60 * 60 * 1000;
+        seedProducts.forEach((p, idx) => {
+          const qtyIn = 40 + (idx % 15);
+          const txIn = {
+            id: `tx-seed-in-${idx}`,
             productId: p.id,
-            type: 'OUT',
-            quantity: qtyOut,
-            unitPrice: p.sellingPrice,
-            reason: 'Retail Sale',
-            customerId: customer ? customer.id : null,
-            timestamp: new Date(now - dayOffset * oneDay).toISOString()
+            type: 'IN',
+            quantity: qtyIn,
+            unitPrice: p.costPrice,
+            reason: 'Initial Wholesale Stock In',
+            timestamp: new Date(now - 45 * oneDay).toISOString()
           };
-          batch.set(doc(db, 'transactions', txOut.id), txOut);
-        }
-      });
+          batch.set(doc(db, 'transactions', txIn.id), txIn);
+
+          const salesCount = 2 + (idx % 3);
+          for (let s = 0; s < salesCount; s++) {
+            const qtyOut = 1 + (idx % 3) + s;
+            const dayOffset = (idx % 30) + 1;
+            const customer = INITIAL_CUSTOMERS[idx % 2];
+            const txOut = {
+              id: `tx-seed-out-${idx}-${s}`,
+              productId: p.id,
+              type: 'OUT',
+              quantity: qtyOut,
+              unitPrice: p.sellingPrice,
+              reason: 'Retail Sale',
+              customerId: customer ? customer.id : null,
+              timestamp: new Date(now - dayOffset * oneDay).toISOString()
+            };
+            batch.set(doc(db, 'transactions', txOut.id), txOut);
+          }
+        });
+      }
 
       await batch.commit();
-      console.log("Firestore database seeded successfully with Full Bottles and Testers.");
+      console.log(`Firestore database seeded successfully (productsOnly=${productsOnly}).`);
+
     } else {
       // Check existing products in Firestore and update any missing/stale imageUrls or metadata
       const batch = writeBatch(db);
@@ -749,7 +753,7 @@ async function checkAndSeedFirestore(force = false) {
 
 // Expose force sync helper to window for manual recovery if needed
 window.forceSeedProducts = async function() {
-  await checkAndSeedFirestore(true);
+  await checkAndSeedFirestore(true, true); // productsOnly=true — never creates stock transactions
   showToast('Products database re-seeded successfully!', 'success');
 };
 
@@ -4131,7 +4135,7 @@ function setupEventListeners() {
         if (await showConfirmDialog('Seed Firebase with Aurora Scents products (Full Bottles & Testers)? This will populate the cloud database with full inventory data.', 'Seed Products')) {
           try {
             showToast('Seeding products...', 'info');
-            await checkAndSeedFirestore(true);
+            await checkAndSeedFirestore(true, true); // productsOnly=true — never touches stock/transactions
             showToast('✅ Products seeded successfully!', 'success');
             setTimeout(() => location.reload(), 1500);
           } catch (error) {
