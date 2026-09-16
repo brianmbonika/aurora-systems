@@ -522,21 +522,41 @@ function initFirestoreSync() {
       }
 
       // Enrich missing/stale Fragrantica profile and real Shopify CDN images from database
-      const cleanPName = p.name.toLowerCase().replace(/\s*\(tester\)/i, '').replace(/\s*edp.*/i, '').trim();
+      const cleanPName = p.name.toLowerCase()
+        .replace(/\s*\(tester\)/i, '')
+        .replace(/\s*edp.*/i, '')
+        .replace(/aurora\s*/i, '')
+        .replace(/&.*/i, '')
+        .trim();
+
       const dbMatch = productDatabase.find(d => {
-        const cleanDName = d.name.toLowerCase().replace(/\s*\(tester\)/i, '').replace(/\s*edp.*/i, '').trim();
-        return cleanPName.includes(cleanDName) || cleanDName.includes(cleanPName);
+        const cleanDName = d.name.toLowerCase()
+          .replace(/\s*\(tester\)/i, '')
+          .replace(/\s*edp.*/i, '')
+          .replace(/aurora\s*/i, '')
+          .replace(/&.*/i, '')
+          .trim();
+        return cleanPName.includes(cleanDName) || cleanDName.includes(cleanPName) || (cleanPName.split(' ')[0] && cleanDName.split(' ')[0] && cleanPName.split(' ')[0] === cleanDName.split(' ')[0] && cleanPName.split(' ')[0].length > 3);
       });
+
       if (dbMatch) {
-        // Update image if missing or using old broken URL pattern
         if (dbMatch.imageUrl && (!p.imageUrl || p.imageUrl.includes('aurorascents.com/cdn/shop/files/'))) { 
           p.imageUrl = dbMatch.imageUrl; 
           needsSave = true; 
         }
+        if ((!p.gender || p.gender === 'undefined') && dbMatch.gender) { p.gender = dbMatch.gender; needsSave = true; }
+        if ((!p.category || p.category === 'undefined') && dbMatch.gender) { p.category = dbMatch.gender; needsSave = true; }
         if ((!p.seasons || p.seasons.length === 0) && dbMatch.seasons) { p.seasons = dbMatch.seasons; needsSave = true; }
         if ((!p.timeOfDay || p.timeOfDay.length === 0) && dbMatch.timeOfDay) { p.timeOfDay = dbMatch.timeOfDay; needsSave = true; }
         if (!p.rating && dbMatch.rating) { p.rating = dbMatch.rating; needsSave = true; }
       }
+
+      // Hard fallback if still unassigned
+      if (!p.imageUrl) { p.imageUrl = "https://cdn.shopify.com/s/files/1/0706/2464/1274/files/AURAGOLD_3.jpg?v=1764331965"; needsSave = true; }
+      if (!p.gender || p.gender === 'undefined') { p.gender = "Unisex"; p.category = "Unisex"; needsSave = true; }
+      if (!p.seasons || p.seasons.length === 0) { p.seasons = ["spring", "fall"]; needsSave = true; }
+      if (!p.timeOfDay || p.timeOfDay.length === 0) { p.timeOfDay = ["day", "night"]; needsSave = true; }
+      if (!p.rating) { p.rating = 4.3; needsSave = true; }
     });
 
     state.products = items;
