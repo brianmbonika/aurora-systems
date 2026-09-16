@@ -2045,12 +2045,17 @@ function renderProducts() {
 
   // Image error handling via addEventListener (CSP compliant)
   document.querySelectorAll('.product-img-item').forEach(img => {
-    img.addEventListener('error', function() {
-      this.style.display = 'none';
-      if (this.nextElementSibling) {
-        this.nextElementSibling.style.display = 'flex';
+    const handleErr = function() {
+      img.style.display = 'none';
+      if (img.nextElementSibling) {
+        img.nextElementSibling.style.display = 'flex';
       }
-    });
+    };
+    if (img.complete && (img.naturalWidth === 0 || img.naturalHeight === 0)) {
+      handleErr();
+    } else {
+      img.addEventListener('error', handleErr);
+    }
   });
 
   // Click perfume cell to view Fragrance Profile Modal
@@ -3297,12 +3302,17 @@ function openProductViewModal(productId) {
   // Modal Image Error Handler (CSP Compliant)
   const modalImg = modalBody ? modalBody.querySelector('.modal-product-img') : null;
   if (modalImg) {
-    modalImg.addEventListener('error', function() {
-      this.style.display = 'none';
-      if (this.nextElementSibling) {
-        this.nextElementSibling.style.display = 'flex';
+    const handleModalErr = function() {
+      modalImg.style.display = 'none';
+      if (modalImg.nextElementSibling) {
+        modalImg.nextElementSibling.style.display = 'flex';
       }
-    });
+    };
+    if (modalImg.complete && (modalImg.naturalWidth === 0 || modalImg.naturalHeight === 0)) {
+      handleModalErr();
+    } else {
+      modalImg.addEventListener('error', handleModalErr);
+    }
   }
 
   // Setup Edit button inside view modal
