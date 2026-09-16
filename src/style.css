@@ -2414,6 +2414,20 @@ input:focus, select.large-select:focus {
 
   table.data-table .product-cell {
     justify-content: flex-end;
+    align-items: center;
+    gap: 0.75rem;
+    width: auto;
+  }
+
+  table.data-table .product-cell .product-avatar {
+    width: 42px !important;
+    height: 42px !important;
+    flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    border-radius: 8px !important;
   }
 
   /* Table Actions */
