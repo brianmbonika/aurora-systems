@@ -2595,7 +2595,7 @@ window.removeDuplicateProducts = async function() {
   const dupeGroups = Object.entries(groups).filter(([, g]) => g.length > 1);
   if (dupeGroups.length === 0) {
     console.log('✅ No duplicates found!');
-    showNotification('No duplicate products found — catalog is already clean!', 'success');
+    showToast('No duplicate products found — catalog is already clean!', 'success');
     return;
   }
 
@@ -2626,7 +2626,7 @@ window.removeDuplicateProducts = async function() {
     await deleteProductFromInventory(pid);
   }
   console.log(`✅ Removed ${toDelete.length} duplicate(s).`);
-  showNotification(`✅ Done! Removed ${toDelete.length} duplicate product(s).`, 'success');
+  showToast(`✅ Done! Removed ${toDelete.length} duplicate product(s). Catalog is now clean.`, 'success', 5000);
 };
 
 // Calculate dynamic alerts
