@@ -199,9 +199,9 @@ function createSeedProducts() {
       type: 'Tester',
       gender: p.gender || p.category || 'Unisex',
       category: p.gender || p.category || 'Unisex',
-      buyingCost: 20000,
-      costPrice: 20000,
-      wholesalePrice: 20000,
+      buyingCost: 10000,
+      costPrice: 10000,
+      wholesalePrice: 17000,
       sellingPrice: 20000,
       minStockThreshold: 5,
       notes: `Official tester bottle for ${p.name}`
@@ -2627,6 +2627,34 @@ window.removeDuplicateProducts = async function() {
   }
   console.log(`✅ Removed ${toDelete.length} duplicate(s).`);
   showToast(`✅ Done! Removed ${toDelete.length} duplicate product(s). Catalog is now clean.`, 'success', 5000);
+};
+
+// ── BATCH TESTER PRICE UPDATE ────────────────────────────────────────────────
+// Run from browser console or button: updateAllTesterPrices()
+window.updateAllTesterPrices = async function() {
+  const testers = state.products.filter(p => p.type === 'Tester' || p.name.includes('(Tester)') || p.sku.includes('TST'));
+  if (testers.length === 0) {
+    showToast('No tester products found in inventory.', 'info');
+    return;
+  }
+
+  const confirmed = await showConfirmDialog(
+    `Update ${testers.length} tester product(s) to:\n- Buying/Cost: 10,000 TSH\n- Wholesale: 17,000 TSH\n- Retail (Sell): 20,000 TSH?`,
+    'Update Tester Prices'
+  );
+  if (!confirmed) return;
+
+  testers.forEach(p => {
+    p.buyingCost = 10000;
+    p.costPrice = 10000;
+    p.wholesalePrice = 17000;
+    p.sellingPrice = 20000;
+  });
+
+  await saveProducts();
+  renderProductsTable();
+  console.log(`✅ Updated prices for ${testers.length} tester products.`);
+  showToast(`✅ Successfully updated prices for ${testers.length} tester product(s)!`, 'success', 5000);
 };
 
 // Calculate dynamic alerts
