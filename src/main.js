@@ -3932,25 +3932,29 @@ function setupEventListeners() {
 
   // User management button handlers (event delegation on document)
   document.addEventListener('click', async (e) => {
-    if (e.target.classList.contains('btn-remove-user')) {
-      const uid = e.target.getAttribute('data-uid');
-      const email = e.target.getAttribute('data-email');
+    const removeBtn = e.target.closest('.btn-remove-user');
+    if (removeBtn) {
+      const uid = removeBtn.getAttribute('data-uid');
+      const email = removeBtn.getAttribute('data-email');
       if (await showConfirmDialog(`Remove ${email} from the system?`, 'Remove User')) {
         const success = await removeUser(uid, email);
         if (success) {
-          // Refresh list inline without page reload
           const users = await getAllUsers();
           displayUsersList(users);
         }
       }
     }
-    if (e.target.classList.contains('btn-change-role')) {
-      const uid = e.target.getAttribute('data-uid');
-      const email = e.target.getAttribute('data-email');
-      const currentRole = e.target.getAttribute('data-current-role') || '';
+    const changeRoleBtn = e.target.closest('.btn-change-role');
+    if (changeRoleBtn) {
+      const uid = changeRoleBtn.getAttribute('data-uid');
+      const email = changeRoleBtn.getAttribute('data-email');
+      const currentRole = changeRoleBtn.getAttribute('data-current-role') || '';
       const result = await changeUserRolePrompt(uid, email, currentRole);
       if (result) {
-        // Refresh list inline
+        // If updating the currently logged-in user, switch role in real-time
+        if (state.currentUser && state.currentUser.uid === uid) {
+          switchRole(result);
+        }
         const users = await getAllUsers();
         displayUsersList(users);
         showToast(`Role updated to ${result}`, 'success');
@@ -5279,6 +5283,11 @@ window.addEventListener('DOMContentLoaded', () => {
               if (verifyUserDoc.exists()) {
                 const verifiedRole = verifyUserDoc.data().role;
                 console.log(`✓ User role verified in Firestore: ${verifiedRole}`);
+                if (verifiedRole && verifiedRole !== state.currentRole) {
+                  state.currentRole = verifiedRole;
+                  localStorage.setItem('aurora_current_role', verifiedRole);
+                  switchRole(verifiedRole);
+                }
               }
 
               await checkAndSeedFirestore();
