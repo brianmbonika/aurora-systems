@@ -3110,11 +3110,11 @@ async function updateUserRole(uid, newRole) {
   }
 
   try {
-    await updateDoc(doc(db, 'users', uid), {
+    await setDoc(doc(db, 'users', uid), {
       role: newRole,
       updatedAt: new Date().toISOString()
-    });
-    console.log('✅ User role updated:', uid);
+    }, { merge: true });
+    console.log('✅ User role updated:', uid, newRole);
     showNotification(`User role updated to "${newRole}"`, 'success');
     return true;
   } catch (error) {
