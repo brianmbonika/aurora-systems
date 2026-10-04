@@ -1253,7 +1253,7 @@ function renderDashboardStatsGrid() {
           <span class="subcard-title">Stock Worth (Cost)</span>
           <span class="subcard-trend">Asset</span>
         </div>
-        <h3 class="subcard-value">${formatCurrency(state.products.filter(p => p.type !== 'Tester').reduce((sum, p) => sum + getProductStock(p.id) * (p.buyingCost || p.costPrice || 0), 0))}</h3>
+        <h3 class="subcard-value">${formatCurrency(state.products.reduce((sum, p) => sum + getProductStock(p.id) * (p.buyingCost || p.costPrice || 0), 0))}</h3>
         <span class="subcard-date">Full Bottles value (at buying cost)</span>
       </div>
 
@@ -1397,7 +1397,7 @@ function renderDashboardStatsGrid() {
           <span class="subcard-trend">Asset</span>
         </div>
         <h3 class="subcard-value">${formatCurrency(state.products.filter(p => p.type !== 'Tester').reduce((sum, p) => sum + getProductStock(p.id) * (p.buyingCost || p.costPrice || 0), 0))}</h3>
-        <span class="subcard-date">Full Bottles value (at buying cost)</span>
+        <span class="subcard-date">Full Bottles + Testers value (at buying cost)</span>
       </div>
 
       <div class="kpi-subcard">
@@ -1906,7 +1906,7 @@ function renderProducts() {
 
   if (statusFilter !== 'all') {
     filtered = filtered.filter(p => {
-      if (statusFilter === 'instock') return p.stock >= p.minStockThreshold;
+      if (statusFilter === 'instock') return p.stock > 0;
       if (statusFilter === 'lowstock') return p.stock > 0 && p.stock < p.minStockThreshold;
       if (statusFilter === 'outofstock') return p.stock === 0;
       return true;
