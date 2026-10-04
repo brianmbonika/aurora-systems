@@ -1254,7 +1254,7 @@ function renderDashboardStatsGrid() {
           <span class="subcard-trend">Asset</span>
         </div>
         <h3 class="subcard-value">${formatCurrency(state.products.reduce((sum, p) => sum + getProductStock(p.id) * (p.buyingCost || p.costPrice || 0), 0))}</h3>
-        <span class="subcard-date">Full Bottles value (at buying cost)</span>
+        <span class="subcard-date">Full Bottles + Testers value (at buying cost)</span>
       </div>
 
       <div class="kpi-subcard">
@@ -1396,7 +1396,7 @@ function renderDashboardStatsGrid() {
           <span class="subcard-title">Stock Worth (Cost)</span>
           <span class="subcard-trend">Asset</span>
         </div>
-        <h3 class="subcard-value">${formatCurrency(state.products.filter(p => p.type !== 'Tester').reduce((sum, p) => sum + getProductStock(p.id) * (p.buyingCost || p.costPrice || 0), 0))}</h3>
+        <h3 class="subcard-value">${formatCurrency(state.products.reduce((sum, p) => sum + getProductStock(p.id) * (p.buyingCost || p.costPrice || 0), 0))}</h3>
         <span class="subcard-date">Full Bottles + Testers value (at buying cost)</span>
       </div>
 
@@ -2171,7 +2171,8 @@ function renderTransactions() {
   tableBody.innerHTML = paginatedItems.map(tx => {
     const product = state.products.find(p => p.id === tx.productId);
     const totalVal = tx.quantity * tx.unitPrice;
-    const isSale = tx.type === 'OUT';
+    const isWriteOff = tx.type === 'OUT' && (tx.reason || '').startsWith('Write-off');
+    const isSale = tx.type === 'OUT' && !isWriteOff;
     const isRestock = tx.type === 'IN';
     
     let labelClass = 'text-muted';
@@ -2201,7 +2202,7 @@ function renderTransactions() {
           </div>
         </td>
         <td data-label="Type">
-          <span class="font-bold ${labelClass}">${tx.type} ${labelSign}</span>
+          <span class="font-bold ${labelClass}">${isWriteOff ? 'OUT (Write-off)' : `${tx.type} ${labelSign}`}</span>
         </td>
         <td data-label="Quantity" class="text-center font-medium">${tx.quantity}</td>
         <td data-label="Unit Value" class="text-right">${formatCurrency(tx.unitPrice)}</td>
@@ -3617,12 +3618,17 @@ function openTransactionModal(type, preSelectedProdId = null, preSelectedCustId 
     if (el) el.value = '';
   });
 
+  const writeoffGroup = document.getElementById('form-tx-writeoff-group');
+  const writeoffBox = document.getElementById('form-tx-writeoff');
+  writeoffBox.checked = false;
+
   if (type === 'IN') {
     modalTitle.innerText = 'Stock In (Restock)';
     submitBtn.innerText = 'Add to Inventory';
     submitBtn.className = 'btn btn-primary';
     priceLabel.innerText = 'Unit Buying Cost (TZSH) *';
     customerGroup.style.display = 'none';
+    writeoffGroup.style.display = 'none';
     
     const updateCostPrice = () => {
       const p = state.products.find(prod => prod.id === prodSelect.value);
@@ -3639,6 +3645,14 @@ function openTransactionModal(type, preSelectedProdId = null, preSelectedCustId 
     submitBtn.className = 'btn btn-primary';
     priceLabel.innerText = 'Unit Retail Sell Price (TZSH) *';
     customerGroup.style.display = 'block';
+    writeoffGroup.style.display = 'block';
+    writeoffBox.onchange = () => {
+      const off = writeoffBox.checked;
+      customerGroup.style.display = off ? 'none' : 'block';
+      submitBtn.innerText = off ? 'Record Write-off' : 'Complete Sale';
+      if (off) document.getElementById('form-tx-price').value = 0;
+      else updateSellPrice();
+    };
 
     const updateSellPrice = () => {
       const p = state.products.find(prod => prod.id === prodSelect.value);
@@ -3653,7 +3667,7 @@ function openTransactionModal(type, preSelectedProdId = null, preSelectedCustId 
         document.getElementById('form-tx-price-helper').innerText = `Base Retail Price: ${formatCurrency(p.sellingPrice)}`;
       }
     };
-    prodSelect.onchange = updateSellPrice;
+    prodSelect.onchange = () => { if (!writeoffBox.checked) updateSellPrice(); };
     updateSellPrice();
   }
 
@@ -4490,9 +4504,12 @@ function setupEventListeners() {
       const custGroup = document.getElementById('form-tx-customer-group');
       const activeMode = custGroup?.dataset.currentMode || 'guest';
 
+      const isWriteOff = type === 'OUT' && document.getElementById('form-tx-writeoff')?.checked;
       let customerId = null;
 
-      if (activeMode === 'existing') {
+      if (isWriteOff) {
+        // write-off: no customer, never touch CRM
+      } else if (activeMode === 'existing') {
         customerId = document.getElementById('form-tx-customer').value || null;
       } else if (activeMode === 'new') {
         const newName = (document.getElementById('form-tx-new-cust-name')?.value || '').trim();
@@ -4528,12 +4545,12 @@ function setupEventListeners() {
       if (type === 'OUT') {
         const currentStock = getProductStock(prodId);
         if (qty > currentStock) {
-          showToast(`Insufficient Stock! Only ${currentStock} units on hand. Cannot sell ${qty} units.`, 'error');
+          showToast(`Insufficient Stock! Only ${currentStock} units on hand. Cannot remove ${qty} units.`, 'error');
           return;
         }
       }
 
-      const defaultNotes = type === 'IN' ? 'Supplier Restock' : 'Retail Sale';
+      const defaultNotes = type === 'IN' ? 'Supplier Restock' : isWriteOff ? 'Write-off (Damaged)' : 'Retail Sale';
       const prod = state.products.find(p => p.id === prodId);
 
       state.transactions.push({
@@ -4541,7 +4558,7 @@ function setupEventListeners() {
         productId: prodId,
         type,
         quantity: qty,
-        unitPrice: price,
+        unitPrice: isWriteOff ? 0 : price,
         costPrice: type === 'OUT' && prod ? prod.costPrice : undefined,
         reason: defaultNotes,
         customerId: customerId || null,
