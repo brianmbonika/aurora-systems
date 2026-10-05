@@ -6,6 +6,7 @@ import {
   activeConfig,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  createAuthUserKeepingSession,
   signOut,
   onAuthStateChanged,
   updateEmail,
@@ -3013,15 +3014,14 @@ async function addNewUser(email, password, role) {
   }
 
   try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const uid = userCredential.user.uid;
+    const uid = await createAuthUserKeepingSession(email, password);
 
     // Store user role in Firestore
     await setDoc(doc(db, 'users', uid), {
       email: email,
       role: role,
       createdAt: new Date().toISOString(),
-      createdBy: state.currentUser?.email
+      createdBy: auth.currentUser?.email || null
     });
 
     console.log('✅ User created:', email);

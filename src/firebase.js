@@ -1,4 +1,4 @@
-import { initializeApp } from 'firebase/app';
+import { initializeApp, deleteApp } from 'firebase/app';
 import {
   getAuth,
   signInWithEmailAndPassword,
@@ -65,7 +65,22 @@ if (isValidConfig(activeConfig)) {
   }
 }
 
+// Create a login account without signing the current (admin) user out: the default
+// auth instance switches to whoever it just created, so use a throwaway second app.
+async function createAuthUserKeepingSession(email, password) {
+  const secondary = initializeApp(activeConfig, 'user-create');
+  try {
+    const secondaryAuth = getAuth(secondary);
+    const cred = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+    await signOut(secondaryAuth);
+    return cred.user.uid;
+  } finally {
+    await deleteApp(secondary);
+  }
+}
+
 export {
+  createAuthUserKeepingSession,
   auth,
   db,
   isFirebaseInitialized,
