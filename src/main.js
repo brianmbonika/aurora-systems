@@ -243,6 +243,20 @@ let dismissedAlerts = JSON.parse(localStorage.getItem('aurora_dismissed_alerts')
 // Product database for lookup and auto-fill
 let productDatabase = [];
 
+// Match a stored product to its database entry. Exact cleaned name first; the fuzzy
+// fallback (substring / same first word) alone mismatched e.g. "Aroma V" -> "Aroma VII".
+function cleanProdName(n) {
+  return (n || '').toLowerCase().replace(/\s*\(tester\)/i, '').replace(/\s*edp.*/i, '')
+    .replace(/aurora\s*/i, '').replace(/&.*/i, '').trim();
+}
+function findDbMatch(name) {
+  const c = cleanProdName(name);
+  return productDatabase.find(d => cleanProdName(d.name) === c) || productDatabase.find(d => {
+    const dn = cleanProdName(d.name);
+    return c.includes(dn) || dn.includes(c);
+  });
+}
+
 // Load product database from JSON file
 async function loadProductDatabase() {
   try {
@@ -522,22 +536,8 @@ function initFirestoreSync() {
       }
 
       // Enrich missing/stale Fragrantica profile and real Shopify CDN images from database
-      const cleanPName = p.name.toLowerCase()
-        .replace(/\s*\(tester\)/i, '')
-        .replace(/\s*edp.*/i, '')
-        .replace(/aurora\s*/i, '')
-        .replace(/&.*/i, '')
-        .trim();
 
-      const dbMatch = productDatabase.find(d => {
-        const cleanDName = d.name.toLowerCase()
-          .replace(/\s*\(tester\)/i, '')
-          .replace(/\s*edp.*/i, '')
-          .replace(/aurora\s*/i, '')
-          .replace(/&.*/i, '')
-          .trim();
-        return cleanPName.includes(cleanDName) || cleanDName.includes(cleanPName) || (cleanPName.split(' ')[0] && cleanDName.split(' ')[0] && cleanPName.split(' ')[0] === cleanDName.split(' ')[0] && cleanPName.split(' ')[0].length > 3);
-      });
+      const dbMatch = findDbMatch(p.name);
 
       if (dbMatch) {
         if (dbMatch.imageUrl && p.imageUrl !== dbMatch.imageUrl) { 
@@ -705,22 +705,8 @@ async function checkAndSeedFirestore(force = false, productsOnly = false) {
         const p = docSnap.data();
         let updated = false;
 
-        const cleanPName = (p.name || '').toLowerCase()
-          .replace(/\s*\(tester\)/i, '')
-          .replace(/\s*edp.*/i, '')
-          .replace(/aurora\s*/i, '')
-          .replace(/&.*/i, '')
-          .trim();
 
-        const dbMatch = productDatabase.find(d => {
-          const cleanDName = d.name.toLowerCase()
-            .replace(/\s*\(tester\)/i, '')
-            .replace(/\s*edp.*/i, '')
-            .replace(/aurora\s*/i, '')
-            .replace(/&.*/i, '')
-            .trim();
-          return cleanPName.includes(cleanDName) || cleanDName.includes(cleanPName) || (cleanPName.split(' ')[0] && cleanDName.split(' ')[0] && cleanPName.split(' ')[0] === cleanDName.split(' ')[0] && cleanPName.split(' ')[0].length > 3);
-        });
+        const dbMatch = findDbMatch(p.name);
 
         const targetImage = dbMatch ? dbMatch.imageUrl : "/images/products/AURAGOLD_3.jpg";
         
