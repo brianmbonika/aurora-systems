@@ -4492,6 +4492,10 @@ function setupEventListeners() {
   // 2. Submit Transaction (Sale / Restock)
   const txForm = document.getElementById('tx-form');
   if (txForm) {
+    // Enter / keyboard "OK" in a field must not record the sale — only the Submit button does
+    txForm.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && e.target.tagName === 'INPUT') e.preventDefault();
+    });
     txForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const type = document.getElementById('form-tx-type').value;
