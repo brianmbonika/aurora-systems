@@ -34,6 +34,7 @@
           </div>
 
           <button type="submit" class="btn btn-primary btn-block">Sign In to Dashboard</button>
+          <div id="login-status" style="margin-top:0.75rem;font-size:0.8rem;color:#64748b;text-align:center;min-height:1.2em;word-break:break-word;"></div>
         </form>
       </div>
     </div>
@@ -1308,6 +1309,16 @@
     </div>
 
     <!-- Injecting script module -->
+    <script>
+      // Login diagnostics: independent of main.js so a broken bundle still reports itself.
+      (function () {
+        function say(m) { var el = document.getElementById('login-status'); if (el) el.textContent = m; }
+        window.__loginSay = say;
+        window.addEventListener('error', function (e) { say('Page error: ' + e.message); });
+        window.addEventListener('unhandledrejection', function (e) { say('Error: ' + ((e.reason && (e.reason.code || e.reason.message)) || e.reason)); });
+        document.addEventListener('submit', function (e) { if (e.target && e.target.id === 'login-form') say('Button pressed...'); }, true);
+      })();
+    </script>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

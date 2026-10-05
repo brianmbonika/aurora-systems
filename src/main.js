@@ -4765,6 +4765,7 @@ function setupEventListeners() {
     // exposing internal auth flow details to anyone with devtools open.
     // Real, user-facing errors still surface via showToast() below.
     function loginLog(_msg, _color) {}
+    const loginSay = (msg) => { if (window.__loginSay) window.__loginSay(msg); };
 
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -4806,6 +4807,7 @@ function setupEventListeners() {
       const submitBtn = loginForm.querySelector('button[type="submit"]');
       if (submitBtn) submitBtn.disabled = true;
 
+      loginSay('Signing in...');
       loginLog('Button clicked. Email: ' + email);
       loginLog('Firebase initialized: ' + isFirebaseInitialized);
 
@@ -4817,6 +4819,7 @@ function setupEventListeners() {
           try {
             userCredential = await signInWithEmailAndPassword(auth, email, pass);
             loginLog('Auth sign-in SUCCESS ✓');
+            loginSay('Signed in. Loading your profile...');
           } catch (signInError) {
             // No auto-registration fallback. This used to check the typed
             // email/password against a hardcoded seed-credential list and,
@@ -4838,7 +4841,11 @@ function setupEventListeners() {
           loginLog('Auth OK. Reading role from Firestore...');
           // Try to read/write the user role from Firestore (best-effort; won't block login)
           try {
-            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            // time-limited: a blocked/slow Firestore connection must not strand the login
+            const userDoc = await Promise.race([
+              getDoc(doc(db, 'users', user.uid)),
+              new Promise((_, rej) => setTimeout(() => rej(new Error('profile lookup timed out')), 6000))
+            ]);
             if (userDoc.exists()) {
               role = userDoc.data().role;
               loginLog('Role from Firestore: ' + role);
@@ -4871,6 +4878,7 @@ function setupEventListeners() {
           if (roleSelect) roleSelect.value = role;
 
           switchRole(role);
+          loginSay('');
           loginLog('Login complete! Role: ' + role);
 
           // Reset inputs
@@ -4934,6 +4942,7 @@ function setupEventListeners() {
           })();
         } catch (error) {
           loginLog('FATAL login error: ' + error.code + ' — ' + error.message, '#ff5555');
+          loginSay('Login failed: ' + (error.code || error.message));
           console.error("Firebase Auth Error:", error);
 
           // Remove loading spinner
