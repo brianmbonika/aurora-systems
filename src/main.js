@@ -563,6 +563,7 @@ function initFirestoreSync() {
     state.products = items;
     localStorage.setItem('aurora_products', JSON.stringify(state.products));
     renderProducts();
+    document.getElementById('login-loading-spinner')?.remove(); // data is in: dashboard is ready
   }, (err) => handleSyncError('products', err));
 
   // Sync Transactions
@@ -4838,27 +4839,32 @@ function setupEventListeners() {
           // with an email containing "ceo" or "admin".
           let role = 'Manager';
 
-          loginLog('Auth OK. Reading role from Firestore...');
-          // Try to read/write the user role from Firestore (best-effort; won't block login)
-          try {
+          // Role lookup: use this user's last-known role so the dashboard opens at once,
+          // then confirm against Firestore in the background (applied below if it differs).
+          const roleKey = 'aurora_role_' + user.uid;
+          const cachedRole = localStorage.getItem(roleKey);
+          const lookupRole = async () => {
             // time-limited: a blocked/slow Firestore connection must not strand the login
             const userDoc = await Promise.race([
               getDoc(doc(db, 'users', user.uid)),
               new Promise((_, rej) => setTimeout(() => rej(new Error('profile lookup timed out')), 6000))
             ]);
-            if (userDoc.exists()) {
-              role = userDoc.data().role;
-              loginLog('Role from Firestore: ' + role);
-            } else {
-              loginLog('No profile doc — seeding with email-derived role: ' + role);
-              await setDoc(doc(db, 'users', user.uid), {
-                email: email,
-                role: role
-              });
+            if (userDoc.exists()) return userDoc.data().role;
+            await setDoc(doc(db, 'users', user.uid), { email: email, role: 'Manager' });
+            return 'Manager';
+          };
+          let roleCheck = null;
+          if (cachedRole) {
+            role = cachedRole;
+            roleCheck = lookupRole();
+          } else {
+            try {
+              role = await lookupRole();
+            } catch (dbError) {
+              loginLog('Firestore read BLOCKED: ' + dbError.message + ' — using fallback role: ' + role, '#ffaa00');
+              showToast('⚠️ Firestore rules need updating — logged in with default role.', 'warning', 6000);
             }
-          } catch (dbError) {
-            loginLog('Firestore read BLOCKED: ' + dbError.message + ' — using fallback role: ' + role, '#ffaa00');
-            showToast('⚠️ Firestore rules need updating — logged in with default role.', 'warning', 6000);
+            localStorage.setItem(roleKey, role);
           }
           
           state.isAuthenticated = true;
@@ -4923,14 +4929,17 @@ function setupEventListeners() {
 
           (async () => {
             try {
-              // Race Firestore sync against 3-second timeout
-              await Promise.race([
-                Promise.all([
-                  checkAndSeedFirestore(),
-                  initFirestoreSync()
-                ]),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('Sync timeout')), 3000))
-              ]);
+              initFirestoreSync(); // listeners first; seeding check must not delay them
+              checkAndSeedFirestore();
+              if (roleCheck) {
+                const confirmed = await roleCheck;
+                localStorage.setItem(roleKey, confirmed);
+                if (confirmed !== state.currentRole) {
+                  const sel = document.getElementById('user-role-select');
+                  if (sel) sel.value = confirmed;
+                  switchRole(confirmed);
+                }
+              }
               loginLog('Background sync complete ✓');
             } catch (syncErr) {
               loginLog('Background sync skipped or timed out: ' + syncErr.message, '#ffaa00');
