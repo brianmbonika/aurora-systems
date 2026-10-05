@@ -10,7 +10,7 @@ import {
   updatePassword
 } from 'firebase/auth';
 import { 
-  getFirestore, 
+  initializeFirestore,
   collection, 
   doc, 
   setDoc, 
@@ -57,7 +57,9 @@ if (isValidConfig(activeConfig)) {
   try {
     app = initializeApp(activeConfig);
     auth = getAuth(app);
-    db = getFirestore(app);
+    // Auto-detect long polling: networks/VPNs/firewalls that block Firestore's default
+    // streaming connection otherwise leave getDoc/onSnapshot hanging (login + empty inventory).
+    db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
     isFirebaseInitialized = true;
     console.log("Firebase initialized successfully.");
   } catch (e) {
