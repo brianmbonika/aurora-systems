@@ -2963,3 +2963,24 @@ input:focus, select.large-select:focus {
   }
 }
 
+
+/* ==========================================
+   SELLER ROLE — inventory, movements, CRM, basic settings only
+   (body[data-role] is set by switchRole in main.js)
+   ========================================== */
+body[data-role="Seller"] #nav-dashboard,
+body[data-role="Seller"] #nav-cashflow,
+body[data-role="Seller"] #btn-add-product,
+body[data-role="Seller"] #btn-clear-tx-history,
+body[data-role="Seller"] #qa-log-expense,
+body[data-role="Seller"] #qa-add-product,
+body[data-role="Seller"] .btn-edit-action,
+body[data-role="Seller"] .btn-delete-action,
+body[data-role="Seller"] #settings-target-group,
+body[data-role="Seller"] #settings-db-diagnostics,
+body[data-role="Seller"] #settings-users-group,
+body[data-role="Seller"] #settings-cloud-group,
+body[data-role="Seller"] #products-table th:nth-child(3),
+body[data-role="Seller"] #products-table td:nth-child(3) {
+  display: none !important;
+}

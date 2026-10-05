@@ -5,6 +5,7 @@
 // - Admin: Full access to all data
 // - CEO: Full access, can edit config targets, view all reports
 // - Manager: Limited access (products, customers, own inventory)
+// - Seller: Same data access as Manager; UI limited to inventory, movements, CRM, settings
 // - Authenticated Users: Limited to own data
 // - Unauthenticated: No access
 //

@@ -2566,6 +2566,10 @@ function showView(viewName) {
   if (viewName === 'cashflow' && state.currentRole === 'Manager') {
     viewName = 'dashboard';
   }
+  // Seller only sees inventory, movements, CRM, help and settings
+  if (state.currentRole === 'Seller' && (viewName === 'dashboard' || viewName === 'cashflow')) {
+    viewName = 'inventory';
+  }
 
   document.querySelectorAll('.content-view').forEach(view => {
     view.classList.toggle('active', view.id === `view-${viewName}`);
@@ -2619,6 +2623,7 @@ function switchRole(role) {
   const headerAvatar = document.getElementById('header-avatar-initials');
   const headerLabel = document.getElementById('header-role-label');
   const navCashflow = document.getElementById('nav-cashflow');
+  document.body.dataset.role = role; // role-scoped hiding lives in style.css
 
   if (role === 'Admin') {
     headerAvatar.innerText = 'AD';
@@ -2631,6 +2636,10 @@ function switchRole(role) {
   } else if (role === 'Manager') {
     headerAvatar.innerText = 'MA';
     headerLabel.innerText = 'Store Manager';
+    navCashflow.style.display = 'none';
+  } else if (role === 'Seller') {
+    headerAvatar.innerText = 'SE';
+    headerLabel.innerText = 'Seller';
     navCashflow.style.display = 'none';
   } else if (role === 'Accountant') {
     headerAvatar.innerText = 'AC';
@@ -2677,6 +2686,8 @@ function renderSettings() {
       roleTitle.innerText = 'CEO Profile';
     } else if (state.currentRole === 'Manager') {
       roleTitle.innerText = 'Store Manager Profile';
+    } else if (state.currentRole === 'Seller') {
+      roleTitle.innerText = 'Seller Profile';
     } else if (state.currentRole === 'Accountant') {
       roleTitle.innerText = 'Accountant Profile';
     }
@@ -2807,7 +2818,7 @@ window.updateAllTesterPrices = async function() {
 // Calculate dynamic alerts
 function getSystemAlerts() {
   const alerts = [];
-  const isManager = state.currentRole === 'Manager';
+  const isManager = state.currentRole === 'Manager' || state.currentRole === 'Seller';
   
   // 1. Low Stock Alerts (all roles see these)
   state.products.forEach(p => {
@@ -2938,7 +2949,7 @@ function closeModal(modalId) {
 
 function openModal(modalId) {
   // Prevent Managers from accessing Admin-only modals
-  if (state.currentRole === 'Manager') {
+  if (state.currentRole === 'Manager' || state.currentRole === 'Seller') {
     const adminOnlyModals = ['modal-expense-form', 'firebase-wizard', 'modal-settings'];
     if (adminOnlyModals.includes(modalId)) {
       showNotification('You do not have permission to access this function.', 'error');
@@ -3135,7 +3146,7 @@ function displayUsersList(users) {
   `).join('');
 }
 
-// Change user role — custom UI dialog (all 4 roles: Admin, CEO, Accountant, Manager)
+// Change user role — custom UI dialog (Admin, CEO, Accountant, Manager, Seller)
 function changeUserRolePrompt(uid, email, currentRole) {
   return new Promise((resolve) => {
     const existingOverlay = document.getElementById('role-picker-overlay');
@@ -3146,6 +3157,7 @@ function changeUserRolePrompt(uid, email, currentRole) {
       { value: 'CEO',        desc: 'Full financial visibility' },
       { value: 'Accountant', desc: 'Finance & reports, no stock ops' },
       { value: 'Manager',    desc: 'Sell & restock only' },
+      { value: 'Seller',     desc: 'Inventory, movements & CRM only' },
     ];
     const overlay = document.createElement('div');
     overlay.id = 'role-picker-overlay';
@@ -5097,9 +5109,9 @@ function setupEventListeners() {
           const password = prompt('Enter password:');
           if (!password) return;
 
-          const role = prompt('Enter role:\nType one of: Admin, CEO, Accountant, Manager');
-          if (!role || !['Admin', 'CEO', 'Accountant', 'Manager'].includes(role)) {
-            showNotification('Invalid role. Must be Admin, CEO, Accountant, or Manager.', 'error');
+          const role = prompt('Enter role:\nType one of: Admin, CEO, Accountant, Manager, Seller');
+          if (!role || !['Admin', 'CEO', 'Accountant', 'Manager', 'Seller'].includes(role)) {
+            showNotification('Invalid role. Must be Admin, CEO, Accountant, Manager, or Seller.', 'error');
             return;
           }
 
