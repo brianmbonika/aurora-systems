@@ -4879,6 +4879,7 @@ function setupEventListeners() {
 
           switchRole(role);
           loginSay('');
+          if (submitBtn) submitBtn.disabled = false; // else the form is dead after the next logout
           loginLog('Login complete! Role: ' + role);
 
           // Reset inputs
@@ -5008,7 +5009,7 @@ function setupEventListeners() {
           }
 
           switchRole(role);
-          
+          if (submitBtn) submitBtn.disabled = false;
           // Reset inputs
           if (emailInput) emailInput.value = '';
           if (passInput) passInput.value = '';
