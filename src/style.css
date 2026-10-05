@@ -2984,3 +2984,19 @@ body[data-role="Seller"] #products-table th:nth-child(3),
 body[data-role="Seller"] #products-table td:nth-child(3) {
   display: none !important;
 }
+
+/* Dashboard loading skeleton: shimmer over the cards until Firestore data arrives */
+body.skeleton-loading #view-dashboard .kpi-gradient-card,
+body.skeleton-loading #view-dashboard .kpi-subcards-grid > *,
+body.skeleton-loading #view-dashboard .dashboard-panel { position: relative; overflow: hidden; }
+body.skeleton-loading #view-dashboard .kpi-gradient-card > *,
+body.skeleton-loading #view-dashboard .kpi-subcards-grid > * > *,
+body.skeleton-loading #view-dashboard .dashboard-panel > * { visibility: hidden; }
+body.skeleton-loading #view-dashboard .kpi-gradient-card::after,
+body.skeleton-loading #view-dashboard .kpi-subcards-grid > *::after,
+body.skeleton-loading #view-dashboard .dashboard-panel::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  background: linear-gradient(100deg, rgba(148,163,184,0.14) 30%, rgba(148,163,184,0.32) 50%, rgba(148,163,184,0.14) 70%);
+  background-size: 200% 100%; animation: skeleton-shimmer 1.2s linear infinite;
+}
+@keyframes skeleton-shimmer { to { background-position: -200% 0; } }
