@@ -638,9 +638,9 @@ async function checkAndSeedFirestore(force = false, productsOnly = false) {
       const existingNames = new Set(
         prodSnap.docs.map(d => (d.data().name || '').trim().toLowerCase())
       );
-      const newProducts = force
-        ? seedProducts  // force=true: overwrite by ID
-        : seedProducts.filter(p => !existingNames.has(p.name.trim().toLowerCase()));
+      // Seed IDs are random, so "overwrite by ID" never overwrote anything and force-seeding
+      // created a duplicate of every product. Always skip names that already exist.
+      const newProducts = seedProducts.filter(p => !existingNames.has(p.name.trim().toLowerCase()));
 
       newProducts.forEach(p => {
         batch.set(doc(db, 'products', p.id), p);
