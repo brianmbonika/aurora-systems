@@ -3000,3 +3000,6 @@ body.skeleton-loading #view-dashboard .dashboard-panel::after {
   background-size: 200% 100%; animation: skeleton-shimmer 1.2s linear infinite;
 }
 @keyframes skeleton-shimmer { to { background-position: -200% 0; } }
+
+/* Destructive DB tools (reset/seed) are not for Admin */
+body[data-role="Admin"] #settings-db-diagnostics { display: none !important; }
