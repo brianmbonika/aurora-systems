@@ -708,7 +708,9 @@ async function checkAndSeedFirestore(force = false, productsOnly = false) {
 
         const dbMatch = findDbMatch(p.name);
 
-        const targetImage = dbMatch ? dbMatch.imageUrl : "/images/products/AURAGOLD_3.jpg";
+        // Products not in the database keep their own self-hosted image; fallback only if none/external
+        const hasLocalImg = p.imageUrl && p.imageUrl.startsWith('/images/');
+        const targetImage = dbMatch ? dbMatch.imageUrl : (hasLocalImg ? p.imageUrl : "/images/products/AURAGOLD_3.jpg");
         
         if (!p.imageUrl || p.imageUrl !== targetImage || p.imageUrl.includes('aurorascents.com') || p.imageUrl.includes('cdn.shopify.com')) {
           p.imageUrl = targetImage;
