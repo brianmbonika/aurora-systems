@@ -562,6 +562,7 @@
                   <div class="search-box">
                     <input type="text" id="crm-search" name="crm-search" autocomplete="off" placeholder="Search name, phone, favourite perfume..." />
                   </div>
+                  <label style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.8rem;white-space:nowrap;cursor:pointer;"><input type="checkbox" id="crm-owing-only" /> Owing only</label>
                   <button id="btn-add-customer" class="btn btn-secondary">+ Add Customer</button>
                 </div>
                 
@@ -603,6 +604,19 @@
                       <span class="label">Lifetime Value</span>
                       <h4 id="cust-stat-ltv" class="text-success">0 TZSH</h4>
                     </div>
+                  </div>
+
+                  <!-- Credit -->
+                  <div class="customer-contact-info" style="margin-bottom:0.75rem;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                      <h3 style="margin:0;">Credit Balance</h3>
+                      <strong id="cust-credit-balance">No balance</strong>
+                    </div>
+                    <div id="cust-pay-row" style="display:none;gap:0.5rem;margin-top:0.5rem;">
+                      <input type="number" id="cust-pay-amount" min="1" placeholder="Amount received (TZSH)" style="flex:1;" />
+                      <button type="button" id="btn-record-payment" class="btn btn-primary" style="padding:0.35rem 0.9rem;font-size:0.8rem;">Record payment</button>
+                    </div>
+                    <div id="cust-payments-list" style="margin-top:0.4rem;"></div>
                   </div>
 
                   <!-- Contact Info with inline editing -->
@@ -1101,6 +1115,17 @@
                 <input type="email" id="form-tx-new-cust-email" placeholder="e.g. amina@email.com" style="width:100%;box-sizing:border-box;" />
               </div>
               <p style="font-size:0.72rem;color:var(--text-secondary);margin:0.4rem 0 0;">Customer will be saved to CRM automatically.</p>
+            </div>
+
+            <!-- Credit -->
+            <div style="margin-top:0.75rem;border-top:1px dashed var(--border-color);padding-top:0.6rem;">
+              <label style="display:flex;gap:0.5rem;align-items:center;cursor:pointer;font-size:0.85rem;font-weight:600;">
+                <input type="checkbox" id="form-tx-credit" /> Sell on credit (customer pays later)
+              </label>
+              <div id="form-tx-deposit-wrap" style="display:none;margin-top:0.5rem;">
+                <label for="form-tx-deposit" style="font-size:0.75rem;color:var(--text-secondary);display:block;margin-bottom:0.25rem;">Amount paid now (TZSH) — the rest is owed</label>
+                <input type="number" id="form-tx-deposit" min="0" value="0" style="width:100%;box-sizing:border-box;" />
+              </div>
             </div>
           </div>
 

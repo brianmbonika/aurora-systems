@@ -910,6 +910,24 @@ function getProfitForPeriod(startDaysOffset, endDaysOffset, role) {
   return grossProfit - opsExpenses;
 }
 
+// ── CREDIT ───────────────────────────────────────────────────────────────
+// Balance = credit sales (minus any deposit paid at sale) minus payments recorded later.
+function getCustomerBalance(customerId) {
+  let owed = 0;
+  state.transactions.forEach(tx => {
+    if (tx.customerId === customerId && tx.type === 'OUT' && tx.onCredit) {
+      owed += tx.quantity * tx.unitPrice - (tx.amountPaid || 0);
+    }
+  });
+  const c = state.customers.find(x => x.id === customerId);
+  const paid = ((c && c.payments) || []).reduce((sum, pay) => sum + pay.amount, 0);
+  return owed - paid;
+}
+
+function getTotalOutstanding() {
+  return state.customers.reduce((sum, c) => sum + Math.max(0, getCustomerBalance(c.id)), 0);
+}
+
 // Get customer stats (LTV, order count, etc.)
 function getCustomerStats(customerId) {
   let totalLTV = 0;
@@ -1480,6 +1498,21 @@ function renderDashboardStatsGrid() {
       </div>
     `;
   }
+
+  // Money customers still owe us (credit sales not yet paid)
+  const outstanding = getTotalOutstanding();
+  if (outstanding > 0) {
+    grid.insertAdjacentHTML('beforeend', `
+      <div class="kpi-subcard">
+        <div class="kpi-subcard-header">
+          ${iconWrap(ICONS.wallet, 'orange')}
+          <span class="subcard-title">Outstanding Credit</span>
+          <span class="subcard-trend">Owed</span>
+        </div>
+        <h3 class="subcard-value" style="color:#dc2626">${formatCurrency(outstanding)}</h3>
+        <span class="subcard-date">${state.customers.filter(c => getCustomerBalance(c.id) > 0).length} customer(s) owing</span>
+      </div>`);
+  }
 }
 
 
@@ -1741,7 +1774,7 @@ function renderCashFlow() {
   });
   const totalOpsExpenses = state.expenses.reduce((sum, e) => sum + e.amount, 0);
   const totalExpenses = totalRestockCost + totalOpsExpenses;
-  const cumulativeBalance = kpis.totalRevenue - totalExpenses;
+  const cumulativeBalance = kpis.totalRevenue - getTotalOutstanding() - totalExpenses; // unpaid credit isn't cash yet
 
   // 1. Update summary stats
   document.getElementById('cf-val-sales').innerText = formatCurrency(kpis.totalRevenue);
@@ -2272,6 +2305,7 @@ function renderCRM() {
   const searchVal = document.getElementById('crm-search').value.toLowerCase();
 
   let filtered = [...state.customers];
+  if (document.getElementById('crm-owing-only')?.checked) filtered = filtered.filter(c => getCustomerBalance(c.id) > 0);
 
   if (searchVal) {
     filtered = filtered.filter(c => 
@@ -2293,6 +2327,7 @@ function renderCRM() {
           <div class="customer-meta">
             <h4>${c.name}</h4>
             <span>${c.phone}</span>
+            ${getCustomerBalance(c.id) > 0 ? `<span style="display:block;font-size:0.75rem;font-weight:700;color:#dc2626;">Owes ${formatCurrency(getCustomerBalance(c.id))}</span>` : ''}
             ${getCustomerFavs(c).length ? `<span style="display:block;font-size:0.75rem;color:var(--text-secondary);">♥ ${getCustomerFavs(c).join(', ')}</span>` : ''}
           </div>
         </div>
@@ -2576,6 +2611,32 @@ function selectCustomer(id) {
   }
 
 
+  // Credit block
+  const balance = getCustomerBalance(id);
+  const balEl = document.getElementById('cust-credit-balance');
+  balEl.innerText = balance > 0 ? formatCurrency(balance) : 'No balance';
+  balEl.style.color = balance > 0 ? '#dc2626' : 'var(--text-secondary)';
+  document.getElementById('cust-pay-row').style.display = balance > 0 ? 'flex' : 'none';
+  const payInput = document.getElementById('cust-pay-amount');
+  payInput.value = '';
+  payInput.max = balance;
+  document.getElementById('btn-record-payment').onclick = () => {
+    const amount = Math.round(Number(payInput.value));
+    if (!(amount > 0)) { showToast('Enter the amount received.', 'warning'); return; }
+    if (amount > balance) { showToast(`Customer only owes ${formatCurrency(balance)}.`, 'warning'); return; }
+    customer.payments = [...(customer.payments || []), { id: `pay-${uuid()}`, amount, date: new Date().toISOString() }];
+    saveCustomers();
+    showToast(`✓ Payment of ${formatCurrency(amount)} recorded.`, 'success');
+    renderCRM();
+    selectCustomer(id);
+    renderDashboardStatsGrid();
+    renderCashFlow();
+  };
+  const payments = [...(customer.payments || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
+  document.getElementById('cust-payments-list').innerHTML = payments.length
+    ? payments.map(pay => `<div style="display:flex;justify-content:space-between;font-size:0.8rem;padding:0.15rem 0;"><span class="text-muted">${new Date(pay.date).toLocaleDateString()}</span><span class="text-success font-bold">+${formatCurrency(pay.amount)}</span></div>`).join('')
+    : '';
+
   const tbody = document.getElementById('customer-purchase-table-body');
   const custTx = state.transactions
     .filter(tx => tx.customerId === id && tx.type === 'OUT')
@@ -2591,7 +2652,7 @@ function selectCustomer(id) {
           <td data-label="Date" class="text-muted">${new Date(tx.timestamp).toLocaleDateString()}</td>
           <td data-label="Item Purchased">${prod ? prod.name : 'Unknown Product'}</td>
           <td data-label="Qty" class="text-center font-medium">${tx.quantity}</td>
-          <td data-label="Paid" class="text-right font-bold text-success">${formatCurrency(tx.quantity * tx.unitPrice)}</td>
+          <td data-label="Paid" class="text-right font-bold text-success">${formatCurrency(tx.quantity * tx.unitPrice)}${tx.onCredit ? `<div style="font-size:0.7rem;color:#dc2626;font-weight:600;">On credit${tx.amountPaid ? ` · ${formatCurrency(tx.amountPaid)} paid` : ''}</div>` : ''}</td>
         </tr>
       `;
     }).join('');
@@ -3655,6 +3716,12 @@ function openTransactionModal(type, preSelectedProdId = null, preSelectedCustId 
     if (el) el.value = '';
   });
 
+  const creditBox = document.getElementById('form-tx-credit');
+  const depositWrap = document.getElementById('form-tx-deposit-wrap');
+  creditBox.checked = false;
+  depositWrap.style.display = 'none';
+  creditBox.onchange = () => { depositWrap.style.display = creditBox.checked ? 'block' : 'none'; };
+
   const writeoffGroup = document.getElementById('form-tx-writeoff-group');
   const writeoffBox = document.getElementById('form-tx-writeoff');
   writeoffBox.checked = false;
@@ -4327,6 +4394,7 @@ function setupEventListeners() {
   }
   
   document.getElementById('crm-search').addEventListener('input', () => renderCRM());
+  document.getElementById('crm-owing-only')?.addEventListener('change', () => renderCRM());
 
   // Form Submissions
 
@@ -4547,6 +4615,11 @@ function setupEventListeners() {
 
       const isWriteOff = type === 'OUT' && document.getElementById('form-tx-writeoff')?.checked;
       let customerId = null;
+      const onCredit = type === 'OUT' && !isWriteOff && document.getElementById('form-tx-credit').checked;
+      if (onCredit && (activeMode === 'guest' || (activeMode === 'existing' && !document.getElementById('form-tx-customer').value))) {
+        showToast('Credit sales need a customer — pick an existing one or add a new one.', 'warning');
+        return;
+      }
 
       if (isWriteOff) {
         // write-off: no customer, never touch CRM
@@ -4610,6 +4683,7 @@ function setupEventListeners() {
         costPrice: type === 'OUT' && prod ? prod.costPrice : undefined,
         reason: defaultNotes,
         customerId: customerId || null,
+        ...(onCredit ? { onCredit: true, amountPaid: Math.min(qty * price, Math.max(0, Math.round(Number(document.getElementById('form-tx-deposit').value) || 0))) } : {}),
         timestamp: new Date().toISOString()
       });
 
