@@ -3498,19 +3498,25 @@ function openProductModal(productId = null) {
 
 // Helper: Build a single favourite perfume select row
 function buildFavPerfumeRow(selectedValue = '') {
-  const productOptions = state.products.map(p =>
-    `<option value="${p.name}" ${p.name === selectedValue ? 'selected' : ''}>${p.name}</option>`
-  ).join('');
+  // One shared <datalist> of product names gives a native type-to-search box
+  let dl = document.getElementById('fav-perfume-options');
+  if (!dl) { dl = document.createElement('datalist'); dl.id = 'fav-perfume-options'; document.body.appendChild(dl); }
+  dl.innerHTML = state.products.map(p => `<option value="${p.name.replace(/"/g, '&quot;')}"></option>`).join('');
   const row = document.createElement('div');
   row.className = 'fav-perfume-row';
   row.style.cssText = 'display:flex;gap:0.5rem;align-items:center;margin-bottom:0.4rem;';
   row.innerHTML = `
-    <select class="fav-perfume-select" style="flex:1;">
-      <option value="">-- None / Auto --</option>
-      ${productOptions}
-    </select>
-    <button type="button" class="btn-remove-fav" title="Remove" style="background:none;border:1px solid var(--error,#e74c3c);color:var(--error,#e74c3c);border-radius:6px;padding:0.2rem 0.5rem;cursor:pointer;font-size:0.9rem;line-height:1;">✕</button>
+    <input type="text" class="fav-perfume-select" list="fav-perfume-options" placeholder="Type to search perfumes..." autocomplete="off" style="flex:1;" />
+    <button type="button" class="btn-remove-fav" title="Remove" style="background:none;border:1px solid var(--error,#e74c3c);color:var(--error,#e74c3c);border-radius:6px;padding:0.2rem 0.5rem;cursor:pointer;">✕</button>
   `;
+  const input = row.querySelector('.fav-perfume-select');
+  input.value = selectedValue;
+  input.addEventListener('change', () => {
+    const v = input.value.trim().toLowerCase();
+    const match = state.products.find(p => p.name.toLowerCase() === v);
+    if (input.value && !match) { showToast('Pick a perfume from the list.', 'warning'); input.value = ''; }
+    else if (match) input.value = match.name;
+  });
   row.querySelector('.btn-remove-fav').addEventListener('click', () => {
     if (document.querySelectorAll('.fav-perfume-row').length > 1) {
       row.remove();
