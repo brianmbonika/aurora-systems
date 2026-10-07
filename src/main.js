@@ -1,4 +1,5 @@
 import './style.css';
+import imageOverrides from './data/image-overrides.json';
 import {
   db,
   auth,
@@ -256,6 +257,13 @@ function findDbMatch(name) {
     const dn = cleanProdName(d.name);
     return c.includes(dn) || dn.includes(c);
   });
+}
+
+// Hand-checked photos for products that are not in products-database.json (or that its fuzzy match gets wrong,
+// like "Eclat" -> Eclat De Lune Pink). Keys are cleanProdName() output. Without an entry such a product used to get
+// one shared fallback photo.
+function findImageOverride(name) {
+  return imageOverrides[cleanProdName(name)] || null;
 }
 
 // Load product database from JSON file
@@ -570,6 +578,9 @@ function initFirestoreSync() {
         if (!p.rating && dbMatch.rating) { p.rating = dbMatch.rating; needsSave = true; }
       }
 
+      const imageOverride = findImageOverride(p.name);
+      if (imageOverride && p.imageUrl !== imageOverride) { p.imageUrl = imageOverride; needsSave = true; }
+
       // Hard fallback if still unassigned or empty
       if (!p.imageUrl || p.imageUrl.includes('aurorascents.com') || p.imageUrl.includes('cdn.shopify.com')) { p.imageUrl = "/images/products/AURAGOLD_3.jpg"; needsSave = true; }
       if (!p.gender || p.gender === 'undefined') { p.gender = "Unisex"; p.category = "Unisex"; needsSave = true; }
@@ -732,7 +743,7 @@ async function checkAndSeedFirestore(force = false, productsOnly = false) {
 
         // Products not in the database keep their own self-hosted image; fallback only if none/external
         const hasLocalImg = p.imageUrl && p.imageUrl.startsWith('/images/');
-        const targetImage = dbMatch ? dbMatch.imageUrl : (hasLocalImg ? p.imageUrl : "/images/products/AURAGOLD_3.jpg");
+        const targetImage = findImageOverride(p.name) || (dbMatch ? dbMatch.imageUrl : (hasLocalImg ? p.imageUrl : "/images/products/AURAGOLD_3.jpg"));
         
         if (!p.imageUrl || p.imageUrl !== targetImage || p.imageUrl.includes('aurorascents.com') || p.imageUrl.includes('cdn.shopify.com')) {
           p.imageUrl = targetImage;
