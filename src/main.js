@@ -152,6 +152,13 @@ const INITIAL_EXPENSES = [
 ];
 
 // Helper to validate phone numbers (minimum 7 digits, only allows +, spaces, dashes, parentheses, and digits)
+// Same number however it's typed (+255 712.., 0712.., 712..): compare the last 9 digits.
+function findCustomerByPhone(phone, excludeId = null) {
+  const key = d => { const x = String(d || '').replace(/\D/g, ''); return x.length > 9 ? x.slice(-9) : x; };
+  const k = key(phone);
+  return state.customers.find(c => c.id !== excludeId && key(c.phone) === k);
+}
+
 function isValidPhone(phone) {
   const clean = phone.trim();
   const digitCount = (clean.match(/\d/g) || []).length;
@@ -2256,6 +2263,10 @@ function renderTransactions() {
 }
 
 // Render CRM View
+function getCustomerFavs(c) {
+  return c.favoritePerfumes && c.favoritePerfumes.length ? c.favoritePerfumes : (c.favoritePerfume ? [c.favoritePerfume] : []);
+}
+
 function renderCRM() {
   const listContainer = document.getElementById('customer-list');
   const searchVal = document.getElementById('crm-search').value.toLowerCase();
@@ -2266,7 +2277,8 @@ function renderCRM() {
     filtered = filtered.filter(c => 
       c.name.toLowerCase().includes(searchVal) ||
       c.phone.toLowerCase().includes(searchVal) ||
-      (c.email && c.email.toLowerCase().includes(searchVal))
+      (c.email && c.email.toLowerCase().includes(searchVal)) ||
+      getCustomerFavs(c).some(f => f.toLowerCase().includes(searchVal))
     );
   }
 
@@ -2281,6 +2293,7 @@ function renderCRM() {
           <div class="customer-meta">
             <h4>${c.name}</h4>
             <span>${c.phone}</span>
+            ${getCustomerFavs(c).length ? `<span style="display:block;font-size:0.75rem;color:var(--text-secondary);">♥ ${getCustomerFavs(c).join(', ')}</span>` : ''}
           </div>
         </div>
         <div class="customer-financials">
@@ -2471,11 +2484,7 @@ function selectCustomer(id) {
       const freshAdd = addInlineBtn.cloneNode(true);
       addInlineBtn.parentNode.replaceChild(freshAdd, addInlineBtn);
       freshAdd.addEventListener('click', () => {
-        if (inlineFavList.querySelectorAll('.fav-perfume-row').length < 3) {
-          inlineFavList.appendChild(buildFavPerfumeRow());
-        } else {
-          freshAdd.title = 'Max 3 preferences';
-        }
+        inlineFavList.appendChild(buildFavPerfumeRow());
       });
     }
 
@@ -3546,13 +3555,7 @@ function openCustomerModal(customerId = null) {
   const addBtn = document.getElementById('btn-add-fav-perfume');
   if (addBtn) {
     addBtn.onclick = () => {
-      const rows = document.querySelectorAll('.fav-perfume-row');
-      if (rows.length < 3) {
-        if (favList) favList.appendChild(buildFavPerfumeRow());
-      } else {
-        addBtn.disabled = true;
-        addBtn.title = 'Maximum 3 preferences';
-      }
+      if (favList) favList.appendChild(buildFavPerfumeRow());
     };
   }
 
@@ -4557,6 +4560,12 @@ function setupEventListeners() {
           return;
         }
 
+        const dup = findCustomerByPhone(newPhone);
+        if (dup) {
+          // already in CRM: attach this sale to them instead of creating a second record
+          customerId = dup.id;
+          showToast(`${dup.name} already has this number — sale linked to their record.`, 'info', 5000);
+        } else {
         // Create and save the new customer immediately
         const newId = `cust-${uuid()}`;
         state.customers.push({
@@ -4571,6 +4580,7 @@ function setupEventListeners() {
         saveCustomers();
         customerId = newId;
         showToast(`✓ New customer "${newName}" saved to CRM.`, 'success');
+        }
       }
       // guest mode → customerId stays null
 
@@ -4618,6 +4628,11 @@ function setupEventListeners() {
 
       if (!isValidPhone(phone)) {
         showToast('Please enter a valid phone number (at least 7 digits).', 'warning');
+        return;
+      }
+      const dup = findCustomerByPhone(phone, id || null);
+      if (dup) {
+        showToast(`This number already belongs to ${dup.name}. Edit that customer instead.`, 'error', 5000);
         return;
       }
       // Collect all favourite perfume selects
