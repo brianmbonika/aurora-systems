@@ -20,7 +20,10 @@ import {
   deleteDoc, 
   onSnapshot, 
   getDocs,
-  writeBatch
+  writeBatch,
+  query,
+  orderBy,
+  limit
 } from 'firebase/firestore';
 import { firebaseConfig } from './firebase-config';
 
@@ -105,5 +108,8 @@ export {
   deleteDoc,
   onSnapshot,
   getDocs,
-  writeBatch
+  writeBatch,
+  query,
+  orderBy,
+  limit
 };

@@ -22,7 +22,10 @@ import {
   deleteDoc,
   onSnapshot,
   getDocs,
-  writeBatch
+  writeBatch,
+  query,
+  orderBy,
+  limit
 } from './firebase';
 
 // ==========================================
@@ -380,6 +383,52 @@ function initStorage() {
   }
 }
 
+// ── ACTIVITY LOG (Admin-only view in Settings) ───────────────────────────────
+// Append-only /activity_log. Product/movement/customer/expense changes are diffed against the
+// remote copy inside syncCollectionToFirestore, so no individual save site needs touching.
+const ACTIVITY_ENTITY = { products: 'Product', transactions: 'Movement', customers: 'Customer', expenses: 'Expense' };
+
+async function logActivity(entries) {
+  if (!isFirebaseInitialized || !entries.length) return;
+  try {
+    const batch = writeBatch(db);
+    const who = { by: auth?.currentUser?.email || 'unknown', role: state.currentRole, at: new Date().toISOString() };
+    entries.slice(0, 400).forEach(e => batch.set(doc(collection(db, 'activity_log')), { ...who, ...e }));
+    await batch.commit();
+  } catch (e) {
+    console.warn('Activity log write failed:', e.message); // never block the real save
+  }
+}
+
+function diffForActivity(collectionName, localArray, remoteDocs) {
+  const entity = ACTIVITY_ENTITY[collectionName] || collectionName;
+  const label = (item) => {
+    if (collectionName === 'transactions') {
+      const prod = state.products.find(p => p.id === item.productId);
+      return `${item.type} ${item.quantity}× ${prod ? prod.name : item.productId}`;
+    }
+    return item.name || item.description || item.id;
+  };
+  const show = (v) => { const t = v === undefined || v === null ? '—' : typeof v === 'object' ? JSON.stringify(v) : String(v); return t.length > 40 ? t.slice(0, 37) + '…' : t; };
+  const remote = new Map(remoteDocs.map(d => [d.id, d.data()]));
+  const local = new Map(localArray.filter(i => i.id).map(i => [i.id, i]));
+  const out = [];
+  local.forEach((item, id) => {
+    const old = remote.get(id);
+    if (!old) { out.push({ action: 'added', entity, target: label(item) }); return; }
+    const changes = Object.keys(item)
+      .filter(k => item[k] !== undefined && JSON.stringify(item[k]) !== JSON.stringify(old[k]))
+      .map(k => `${k}: ${show(old[k])} → ${show(item[k])}`);
+    if (changes.length) out.push({ action: 'edited', entity, target: label(item), detail: changes.join('; ') });
+  });
+  remote.forEach((old, id) => { if (!local.has(id)) out.push({ action: 'deleted', entity, target: label(old) }); });
+  if (out.length > 25) { // bulk import/seed/clear: one summary row instead of hundreds
+    const n = a => out.filter(o => o.action === a).length;
+    return [{ action: 'bulk', entity, target: `${out.length} changes in one save`, detail: `${n('added')} added, ${n('edited')} edited, ${n('deleted')} deleted` }];
+  }
+  return out;
+}
+
 // Persistence helpers
 async function syncCollectionToFirestore(collectionName, localArray) {
   if (!isFirebaseInitialized) return;
@@ -419,6 +468,7 @@ async function syncCollectionToFirestore(collectionName, localArray) {
     
     await batch.commit();
     console.log(`Synced ${collectionName} to Firestore.`);
+    logActivity(diffForActivity(collectionName, localArray, querySnapshot.docs));
   } catch (e) {
     console.error(`Error syncing ${collectionName}:`, e);
     showToast(`Failed to sync changes to cloud database: ${e.message}`, 'error');
@@ -2778,6 +2828,64 @@ function switchRole(role) {
 }
 
 // Render Settings View
+let activityRows = [];
+
+async function loadActivityLog() {
+  const list = document.getElementById('activity-log-list');
+  if (!list) return;
+  list.textContent = 'Loading…';
+  try {
+    const snap = await getDocs(query(collection(db, 'activity_log'), orderBy('at', 'desc'), limit(300)));
+    activityRows = snap.docs.map(d => d.data());
+    renderActivityLog();
+  } catch (e) {
+    list.textContent = `Could not load activity log: ${e.message}`;
+  }
+}
+
+function renderActivityLog() {
+  const list = document.getElementById('activity-log-list');
+  const filter = document.getElementById('activity-filter').value;
+  const rows = activityRows.filter(r => !filter || r.action === filter);
+  list.textContent = '';
+  if (!rows.length) { list.textContent = 'No activity recorded yet.'; return; }
+  rows.forEach(r => {
+    const row = document.createElement('div');
+    row.style.cssText = 'padding: 0.6rem 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.85rem;';
+    const head = document.createElement('div');
+    head.style.fontWeight = '600';
+    head.textContent = `${r.entity} ${r.action}: ${r.target}`;
+    const meta = document.createElement('div');
+    meta.style.cssText = 'color: var(--text-secondary); font-size: 0.75rem;';
+    meta.textContent = `${new Date(r.at).toLocaleString()} · ${r.by} (${r.role})`;
+    row.append(head, meta);
+    if (r.detail) {
+      const det = document.createElement('div');
+      det.style.cssText = 'color: var(--text-secondary); font-size: 0.78rem; margin-top: 0.2rem; word-break: break-word;';
+      det.textContent = r.detail;
+      row.append(det);
+    }
+    list.append(row);
+  });
+}
+
+function downloadActivityCsv() {
+  const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const lines = [['When', 'Who', 'Role', 'Action', 'Type', 'Target', 'Detail'].join(',')]
+    .concat(activityRows.map(r => [r.at, r.by, r.role, r.action, r.entity, r.target, r.detail].map(q).join(',')));
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/csv' }));
+  a.download = `aurora-activity-log-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function wireActivityLog() {
+  document.getElementById('activity-filter')?.addEventListener('change', renderActivityLog);
+  document.getElementById('btn-activity-refresh')?.addEventListener('click', loadActivityLog);
+  document.getElementById('btn-activity-csv')?.addEventListener('click', downloadActivityCsv);
+}
+
 function renderSettings() {
   const roleTitle = document.getElementById('settings-role-title');
   if (roleTitle) {
@@ -2814,6 +2922,14 @@ function renderSettings() {
   const usersGroup = document.getElementById('settings-users-group');
   if (usersGroup) {
     usersGroup.style.display = state.currentRole === 'Admin' ? 'flex' : 'none';
+  }
+
+  // ── ACTIVITY LOG: Admin-only ────────────────────────────────────────────
+  const activityGroup = document.getElementById('settings-activity-group');
+  if (activityGroup) {
+    const isAdmin = state.currentRole === 'Admin' && isFirebaseInitialized;
+    activityGroup.style.display = isAdmin ? 'flex' : 'none';
+    if (isAdmin) loadActivityLog();
   }
 
   // Populate Cloud Database Status
@@ -3069,6 +3185,7 @@ async function deleteProductFromInventory(productId) {
     console.log(`Attempting to delete product: ${productId}`);
 
     // 1. Remove from local state array
+    const deletedProductName = (state.products.find(p => p.id === productId) || {}).name || productId;
     state.products = state.products.filter(p => p.id !== productId);
 
     // 2. Persist to localStorage
@@ -3080,6 +3197,7 @@ async function deleteProductFromInventory(productId) {
         const docRef = doc(db, 'products', productId);
         await deleteDoc(docRef);
         console.log(`✅ Product deleted from Firestore: ${productId}`);
+        logActivity([{ action: 'deleted', entity: 'Product', target: deletedProductName }]);
       } catch (fbErr) {
         console.warn('Firestore delete notice:', fbErr);
       }
@@ -3123,6 +3241,7 @@ async function addNewUser(email, password, role) {
     });
 
     console.log('✅ User created:', email);
+    logActivity([{ action: 'added', entity: 'User', target: email, detail: `role: ${role}` }]);
     showNotification(`User "${email}" created with role "${role}"`, 'success');
     return true;
   } catch (error) {
@@ -3143,6 +3262,7 @@ async function removeUser(uid, email) {
     // Delete user document
     await deleteDoc(doc(db, 'users', uid));
     console.log('✅ User deleted:', email);
+    logActivity([{ action: 'deleted', entity: 'User', target: email }]);
     showNotification(`User "${email}" has been removed`, 'success');
     return true;
   } catch (error) {
@@ -3213,6 +3333,7 @@ async function updateUserRole(uid, newRole) {
       updatedAt: new Date().toISOString()
     }, { merge: true });
     console.log('✅ User role updated:', uid, newRole);
+    logActivity([{ action: 'edited', entity: 'User', target: uid, detail: `role → ${newRole}` }]);
     showNotification(`User role updated to "${newRole}"`, 'success');
     return true;
   } catch (error) {
@@ -4296,6 +4417,7 @@ function setupEventListeners() {
           }
         }
 
+        await logActivity([{ action: 'reset', entity: 'System', target: 'Stock & history reset', detail: 'transactions, customers, expenses cleared' }]);
         showToast('Stock history reset. Products kept intact. Reloading...', 'success');
         setTimeout(() => location.reload(), 800);
       } catch (err) {
@@ -5361,6 +5483,7 @@ function setupEventListeners() {
 
 window.addEventListener('DOMContentLoaded', () => {
   initStorage();
+  wireActivityLog();
   loadProductDatabase(); // Load product lookup database
   updateConnectionStatusUI();
 

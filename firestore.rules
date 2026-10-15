@@ -116,6 +116,17 @@ service cloud.firestore {
     }
 
     // ============================================================
+    // /activity_log - Who changed what (append-only)
+    // ============================================================
+    // Any signed-in user's app writes entries; only Admin can read; nobody edits or deletes.
+    match /activity_log/{entryId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn();
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // ============================================================
     // /customers - CRM customer profiles
     // ============================================================
     // All can read customers (shared database view)
