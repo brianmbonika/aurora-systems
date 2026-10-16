@@ -854,6 +854,19 @@ function getProductStock(productId) {
   return stock;
 }
 
+// Inventory -> CSV (name,type,gender,stock,sellingPrice); used to build the shop catalogue
+function downloadStockCsv() {
+  const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const lines = ['name,type,gender,stock,sellingPrice'].concat(
+    state.products.map(p => [p.name, p.type, p.gender, getProductStock(p.id), p.sellingPrice].map(q).join(','))
+  );
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/csv' }));
+  a.download = `aurora-stock-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
 // Get total units sold of a product
 function getProductSoldUnits(productId, period = 'alltime') {
   let totalSold = 0;
@@ -4167,6 +4180,7 @@ function setupEventListeners() {
   }
   
   safeAddListener('btn-add-product', 'click', () => openProductModal());
+  safeAddListener('btn-stock-csv', 'click', downloadStockCsv);
   safeAddListener('btn-add-customer', 'click', () => openCustomerModal());
 
   // User management button handlers (event delegation on document)
