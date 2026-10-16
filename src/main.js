@@ -1,5 +1,6 @@
 import './style.css';
 import imageOverrides from './data/image-overrides.json';
+import notesOverrides from './data/notes-overrides.json';
 import {
   db,
   auth,
@@ -274,6 +275,11 @@ function findDbMatch(name) {
 // one shared fallback photo.
 function findImageOverride(name) {
   return imageOverrides[cleanProdName(name)] || null;
+}
+
+// Fragrance notes for products the database has none for (only fills notes that are empty)
+function findNotesOverride(name) {
+  return notesOverrides[cleanProdName(name)] || null;
 }
 
 // Load product database from JSON file
@@ -637,6 +643,9 @@ function initFirestoreSync() {
 
       const imageOverride = findImageOverride(p.name);
       if (imageOverride && p.imageUrl !== imageOverride) { p.imageUrl = imageOverride; needsSave = true; }
+
+      const notesOverride = findNotesOverride(p.name);
+      if (notesOverride && !p.notes) { p.notes = notesOverride; needsSave = true; }
 
       // Hard fallback if still unassigned or empty
       if (!p.imageUrl || p.imageUrl.includes('aurorascents.com') || p.imageUrl.includes('cdn.shopify.com')) { p.imageUrl = "/images/products/AURAGOLD_3.jpg"; needsSave = true; }
