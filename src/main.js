@@ -2342,6 +2342,11 @@ function renderTransactions() {
           <div>${tx.reason || ''}</div>
           ${custName ? `<span class="badge-pill instock" style="font-size:0.65rem; margin-top:0.25rem; display:inline-flex; align-items:center; gap:0.2rem;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${custName}</span>` : ''}
         </td>
+        <td data-label="Actions">
+          ${['Admin', 'CEO'].includes(state.currentRole)
+            ? `<button class="btn-delete-row" onclick="deleteTransaction('${tx.id}')" title="Delete this movement (e.g. a wrongly-selected sale) — restores the stock and reverses the money" style="background:none;border:none;cursor:pointer;font-size:0.95rem;">🗑️</button>`
+            : ''}
+        </td>
       </tr>
     `;
   }).join('');
@@ -4188,6 +4193,26 @@ async function deleteExpense(id) {
 window.editExpense = editExpense;
 window.deleteExpense = deleteExpense;
 window.cancelExpenseEdit = cancelExpenseEdit;
+
+// Remove one wrongly-recorded movement (e.g. a sale picked for the wrong product). This
+// reverses BOTH effects in one step: stock is recalculated from the remaining movements
+// (so an OUT/sale coming out gives the unit back), and money figures (Total Sales, Net
+// Profit) are computed from state.transactions too, so removing it removes its amount.
+// Logged and undoable like any other delete (see diffForActivity/syncCollectionToFirestore).
+async function deleteTransaction(id) {
+  if (!['Admin', 'CEO'].includes(state.currentRole)) return;
+  const tx = state.transactions.find(t => t.id === id);
+  if (!tx) { showToast('Movement not found.', 'error'); return; }
+  const product = state.products.find(p => p.id === tx.productId);
+  const label = `${tx.type} ${tx.quantity}× ${product ? product.name : tx.productId} (${formatCurrency(tx.quantity * tx.unitPrice)})`;
+  if (await showConfirmDialog(`Delete this movement?\n${label}\n\nStock and money figures will be recalculated without it.`, 'Delete Movement')) {
+    state.transactions = state.transactions.filter(t => t.id !== id);
+    await saveTransactions();
+    renderTransactions();
+    showToast('Movement deleted.', 'success');
+  }
+}
+window.deleteTransaction = deleteTransaction;
 
 function setupEventListeners() {
   // Helper for safe element listener bindings
