@@ -402,9 +402,30 @@ async function logActivity(entries) {
     const who = { by: auth?.currentUser?.email || 'unknown', role: state.currentRole, at: new Date().toISOString() };
     entries.slice(0, 400).forEach(e => batch.set(doc(collection(db, 'activity_log')), { ...who, ...e }));
     await batch.commit();
+    notifyActivity(entries, who);
   } catch (e) {
     console.warn('Activity log write failed:', e.message); // never block the real save
   }
+}
+
+// Best-effort push notification to Admin/CEO devices for the first entry in this batch
+// (a bulk save of many changes still sends one notification, not hundreds). Never blocks
+// or fails the actual save — logActivity's own try/catch already covers that.
+async function notifyActivity(entries, who) {
+  try {
+    const e = entries[0];
+    const token = await auth?.currentUser?.getIdToken();
+    if (!token) return;
+    await fetch('/api/send-push', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        title: `${e.entity} ${e.action}`,
+        body: `${e.target || ''} — ${who.by} (${who.role})`,
+        url: '/',
+      }),
+    });
+  } catch (_) { /* notification is a convenience, never worth surfacing an error for */ }
 }
 
 function diffForActivity(collectionName, localArray, remoteDocs) {
@@ -2956,6 +2977,7 @@ function wireActivityLog() {
   document.getElementById('activity-filter')?.addEventListener('change', renderActivityLog);
   document.getElementById('btn-activity-refresh')?.addEventListener('click', loadActivityLog);
   document.getElementById('btn-activity-csv')?.addEventListener('click', downloadActivityCsv);
+  document.getElementById('btn-enable-push')?.addEventListener('click', enablePushNotifications);
 }
 
 function renderSettings() {
@@ -3459,6 +3481,35 @@ async function resetUserPassword(uid, email) {
     `, [{ label: 'Copy', onClick: () => navigator.clipboard?.writeText(out.password).then(() => showToast('Copied', 'success')) }, { label: 'Done', primary: true, close: true }]);
   } catch (e) {
     showToast(`Could not reset password: ${e.message}`, 'error');
+  }
+}
+
+// Push notifications: one subscription per user per device (ponytail: a user with
+// several devices only gets pushes on whichever one enabled it last — add a
+// per-device id if multi-device delivery is needed later).
+const PUSH_VAPID_PUBLIC_KEY = 'BE8CEVyjd_oV8IMCBZbyKPRR5ZzNA5PptJaJRtrG6zsqcKXVVzhLJD_4dR2Xab-v1ijNRb1PRekiTj5WjA0LKYQ';
+function urlBase64ToUint8Array(base64) {
+  const padded = (base64 + '='.repeat((4 - (base64.length % 4)) % 4)).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(padded);
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}
+async function enablePushNotifications() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    showToast('Push notifications are not supported in this browser.', 'warning');
+    return;
+  }
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') { showToast('Notifications permission was not granted.', 'warning'); return; }
+    const reg = await navigator.serviceWorker.register('/sw.js');
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(PUSH_VAPID_PUBLIC_KEY),
+    });
+    await setDoc(doc(db, 'push_subscriptions', auth.currentUser.uid), { subscription: sub.toJSON() });
+    showToast('Push notifications enabled on this device.', 'success');
+  } catch (e) {
+    showToast(`Could not enable notifications: ${e.message}`, 'error');
   }
 }
 

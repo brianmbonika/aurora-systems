@@ -72,6 +72,12 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // /push_subscriptions - one browser-push subscription per user, written by that user only.
+    // Read by nothing client-side; the send-push server function uses the Admin SDK (bypasses rules).
+    match /push_subscriptions/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
