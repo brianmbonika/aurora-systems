@@ -14,6 +14,7 @@ import {
   updateEmail,
   verifyBeforeUpdateEmail,
   updatePassword,
+  sendPasswordResetEmail,
   collection,
   doc,
   setDoc,
@@ -421,13 +422,14 @@ function diffForActivity(collectionName, localArray, remoteDocs) {
   const out = [];
   local.forEach((item, id) => {
     const old = remote.get(id);
-    if (!old) { out.push({ action: 'added', entity, target: label(item) }); return; }
+    const ref = { col: collectionName, docId: id };
+    if (!old) { out.push({ action: 'added', entity, target: label(item), ...ref }); return; }
     const changes = Object.keys(item)
       .filter(k => item[k] !== undefined && JSON.stringify(item[k]) !== JSON.stringify(old[k]))
       .map(k => `${k}: ${show(old[k])} → ${show(item[k])}`);
-    if (changes.length) out.push({ action: 'edited', entity, target: label(item), detail: changes.join('; ') });
+    if (changes.length) out.push({ action: 'edited', entity, target: label(item), detail: changes.join('; '), ...ref, before: JSON.stringify(old) });
   });
-  remote.forEach((old, id) => { if (!local.has(id)) out.push({ action: 'deleted', entity, target: label(old) }); });
+  remote.forEach((old, id) => { if (!local.has(id)) out.push({ action: 'deleted', entity, target: label(old), col: collectionName, docId: id, before: JSON.stringify(old) }); });
   if (out.length > 25) { // bulk import/seed/clear: one summary row instead of hundreds
     const n = a => out.filter(o => o.action === a).length;
     return [{ action: 'bulk', entity, target: `${out.length} changes in one save`, detail: `${n('added')} added, ${n('edited')} edited, ${n('deleted')} deleted` }];
@@ -2858,7 +2860,7 @@ async function loadActivityLog() {
   list.textContent = 'Loading…';
   try {
     const snap = await getDocs(query(collection(db, 'activity_log'), orderBy('at', 'desc'), limit(300)));
-    activityRows = snap.docs.map(d => d.data());
+    activityRows = snap.docs.map(d => ({ ...d.data(), _id: d.id }));
     renderActivityLog();
   } catch (e) {
     list.textContent = `Could not load activity log: ${e.message}`;
@@ -2869,6 +2871,7 @@ function renderActivityLog() {
   const list = document.getElementById('activity-log-list');
   const filter = document.getElementById('activity-filter').value;
   const rows = activityRows.filter(r => !filter || r.action === filter);
+  const undone = new Set(activityRows.filter(r => r.undoes).map(r => r.undoes));
   list.textContent = '';
   if (!rows.length) { list.textContent = 'No activity recorded yet.'; return; }
   rows.forEach(r => {
@@ -2887,8 +2890,50 @@ function renderActivityLog() {
       det.textContent = r.detail;
       row.append(det);
     }
+    if (r.undoes) {
+      // an undo entry itself; nothing to add
+    } else if (undone.has(r._id)) {
+      const tag = document.createElement('div');
+      tag.style.cssText = 'color: var(--text-secondary); font-size: 0.75rem; margin-top: 0.3rem; font-style: italic;';
+      tag.textContent = 'Undone';
+      row.append(tag);
+    } else if (r.col && r.docId && ['added', 'edited', 'deleted'].includes(r.action)) {
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-secondary';
+      btn.style.cssText = 'margin-top: 0.4rem; padding: 0.25rem 0.8rem; font-size: 0.78rem;';
+      btn.textContent = 'Undo';
+      btn.onclick = () => undoActivity(r);
+      row.append(btn);
+    }
     list.append(row);
   });
+}
+
+// Reverse one logged change by writing straight to Firestore; the live listeners refresh the app.
+async function undoActivity(r) {
+  if (!['Admin', 'CEO'].includes(state.currentRole)) return;
+  const ref = doc(db, r.col, r.docId);
+  const before = r.before ? JSON.parse(r.before) : null;
+  let warn = '';
+  if (r.col === 'transactions') {
+    // stock is derived from movements: undoing an add or restoring an OUT lowers stock
+    const tx = before || (await getDoc(ref)).data();
+    if (tx) {
+      const lowers = (r.action === 'added' && tx.type === 'IN') || (r.action === 'deleted' && tx.type === 'OUT');
+      if (lowers && getProductStock(tx.productId) - tx.quantity < 0) warn = '\n\nWarning: this will push that product\'s stock below zero.';
+    }
+  }
+  const verb = { added: 'Remove this added record', edited: 'Restore the previous values', deleted: 'Restore this deleted record' }[r.action];
+  if (!await showConfirmDialog(`${verb}?\n${r.entity}: ${r.target}${warn}`, 'Undo change')) return;
+  try {
+    if (r.action === 'added') await deleteDoc(ref);
+    else await setDoc(ref, before);
+    await logActivity([{ action: 'undone', entity: r.entity, target: r.target, detail: `undid ${r.action}`, undoes: r._id }]);
+    showToast('Change undone.', 'success');
+    loadActivityLog();
+  } catch (e) {
+    showToast(`Undo failed: ${e.message}`, 'error');
+  }
 }
 
 function downloadActivityCsv() {
@@ -2946,12 +2991,12 @@ function renderSettings() {
     usersGroup.style.display = state.currentRole === 'Admin' ? 'flex' : 'none';
   }
 
-  // ── ACTIVITY LOG: Admin-only ────────────────────────────────────────────
+  // ── ACTIVITY LOG: Admin + CEO ───────────────────────────────────────────
   const activityGroup = document.getElementById('settings-activity-group');
   if (activityGroup) {
-    const isAdmin = state.currentRole === 'Admin' && isFirebaseInitialized;
-    activityGroup.style.display = isAdmin ? 'flex' : 'none';
-    if (isAdmin) loadActivityLog();
+    const canSee = ['Admin', 'CEO'].includes(state.currentRole) && isFirebaseInitialized;
+    activityGroup.style.display = canSee ? 'flex' : 'none';
+    if (canSee) loadActivityLog();
   }
 
   // Populate Cloud Database Status
@@ -3207,7 +3252,8 @@ async function deleteProductFromInventory(productId) {
     console.log(`Attempting to delete product: ${productId}`);
 
     // 1. Remove from local state array
-    const deletedProductName = (state.products.find(p => p.id === productId) || {}).name || productId;
+    const deletedProduct = state.products.find(p => p.id === productId) || {};
+    const deletedProductName = deletedProduct.name || productId;
     state.products = state.products.filter(p => p.id !== productId);
 
     // 2. Persist to localStorage
@@ -3219,7 +3265,7 @@ async function deleteProductFromInventory(productId) {
         const docRef = doc(db, 'products', productId);
         await deleteDoc(docRef);
         console.log(`✅ Product deleted from Firestore: ${productId}`);
-        logActivity([{ action: 'deleted', entity: 'Product', target: deletedProductName }]);
+        logActivity([{ action: 'deleted', entity: 'Product', target: deletedProductName, col: 'products', docId: productId, before: JSON.stringify(deletedProduct) }]);
       } catch (fbErr) {
         console.warn('Firestore delete notice:', fbErr);
       }
@@ -3383,10 +3429,82 @@ function displayUsersList(users) {
       </div>
       <div style="display: flex; gap: 0.25rem;">
         <button class="btn btn-sm-action btn-change-role" style="padding: 0.35rem 0.6rem; font-size: 0.75rem;" data-uid="${user.uid}" data-email="${user.email}" data-current-role="${user.role}">Change Role</button>
+        <button class="btn btn-sm-action btn-reset-user-pw" style="padding: 0.35rem 0.6rem; font-size: 0.75rem;" data-uid="${user.uid}" data-email="${user.email}">Reset Password</button>
         <button class="btn btn-sm-action btn-remove-user" style="padding: 0.35rem 0.6rem; font-size: 0.75rem; color: var(--danger);" data-uid="${user.uid}" data-email="${user.email}">Remove</button>
       </div>
     </div>
   `).join('');
+}
+
+// Admin: issue a one-time password (shown once, never stored) via the /api/reset-password function
+async function resetUserPassword(uid, email) {
+  try {
+    const token = await auth.currentUser.getIdToken();
+    const res = await fetch('/api/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ uid })
+    });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(out.error || `HTTP ${res.status}`);
+    showOverlayCard(`
+      <h3 style="margin:0 0 0.25rem;font-size:1rem;font-weight:700;">One-time password</h3>
+      <p style="margin:0 0 0.75rem;font-size:0.82rem;color:var(--text-secondary,#aaa);">For <strong>${escapeHtml(email)}</strong>. Shown only once. They must choose their own password when they sign in.</p>
+      <div style="font-family:monospace;font-size:1.3rem;letter-spacing:0.05em;padding:0.75rem;border-radius:10px;border:1px dashed var(--border-color,#888);text-align:center;user-select:all;margin-bottom:1rem;">${escapeHtml(out.password)}</div>
+    `, [{ label: 'Copy', onClick: () => navigator.clipboard?.writeText(out.password).then(() => showToast('Copied', 'success')) }, { label: 'Done', primary: true, close: true }]);
+  } catch (e) {
+    showToast(`Could not reset password: ${e.message}`, 'error');
+  }
+}
+
+function escapeHtml(v) {
+  return String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// Small modal helper: html body + buttons. Returns the overlay element.
+function showOverlayCard(html, buttons) {
+  document.getElementById('overlay-card')?.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'overlay-card';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;';
+  overlay.innerHTML = `<div style="background:var(--bg-card,#1e1e2e);border:1px solid var(--border-color,rgba(255,255,255,0.1));border-radius:16px;padding:1.5rem;min-width:300px;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,0.5);">${html}<div class="oc-actions" style="display:flex;gap:0.5rem;justify-content:flex-end;"></div></div>`;
+  const actions = overlay.querySelector('.oc-actions');
+  buttons.forEach(b => {
+    const btn = document.createElement('button');
+    btn.className = `btn ${b.primary ? 'btn-primary' : 'btn-secondary'}`;
+    btn.style.cssText = 'padding:0.45rem 1rem;font-size:0.85rem;';
+    btn.textContent = b.label;
+    btn.onclick = () => { b.onClick?.(btn); if (b.close) overlay.remove(); };
+    actions.append(btn);
+  });
+  document.body.appendChild(overlay);
+  return overlay;
+}
+
+// Shown after sign-in when an Admin issued a one-time password: cannot be dismissed until a new one is set.
+function forcePasswordChange(user) {
+  const overlay = showOverlayCard(`
+    <h3 style="margin:0 0 0.25rem;font-size:1rem;font-weight:700;">Choose a new password</h3>
+    <p style="margin:0 0 0.75rem;font-size:0.82rem;color:var(--text-secondary,#aaa);">You signed in with a one-time password. Set your own to continue.</p>
+    <input type="password" id="force-pw-1" placeholder="New password (min 8 characters)" autocomplete="new-password" style="width:100%;box-sizing:border-box;padding:0.5rem 0.75rem;border-radius:8px;margin-bottom:0.5rem;border:1px solid var(--border-color);background:var(--bg-base);color:var(--text-primary);">
+    <input type="password" id="force-pw-2" placeholder="Repeat new password" autocomplete="new-password" style="width:100%;box-sizing:border-box;padding:0.5rem 0.75rem;border-radius:8px;margin-bottom:1rem;border:1px solid var(--border-color);background:var(--bg-base);color:var(--text-primary);">
+  `, [
+    { label: 'Sign out', onClick: () => document.getElementById('btn-logout')?.click() },
+    { label: 'Save password', primary: true, onClick: async () => {
+      const p1 = document.getElementById('force-pw-1').value;
+      const p2 = document.getElementById('force-pw-2').value;
+      if (p1.length < 8) return showToast('Password must be at least 8 characters.', 'warning');
+      if (p1 !== p2) return showToast('Passwords do not match.', 'warning');
+      try {
+        await updatePassword(user, p1);
+        await updateDoc(doc(db, 'users', user.uid), { mustChangePassword: false });
+        overlay.remove();
+        showToast('Password updated.', 'success');
+      } catch (e) {
+        showToast(`Could not update password: ${e.message}`, 'error');
+      }
+    } }
+  ]);
 }
 
 // Change user role — custom UI dialog (Admin, CEO, Accountant, Manager, Seller)
@@ -4204,6 +4322,14 @@ function setupEventListeners() {
           const users = await getAllUsers();
           displayUsersList(users);
         }
+      }
+    }
+    const resetPwBtn = e.target.closest('.btn-reset-user-pw');
+    if (resetPwBtn) {
+      const uid = resetPwBtn.getAttribute('data-uid');
+      const email = resetPwBtn.getAttribute('data-email');
+      if (await showConfirmDialog(`Reset the password for ${email}? Their current password stops working and they must choose a new one at next login.`, 'Reset Password')) {
+        resetUserPassword(uid, email);
       }
     }
     const changeRoleBtn = e.target.closest('.btn-change-role');
@@ -5026,6 +5152,14 @@ function setupEventListeners() {
 
   // Simulated Login Screen listener
   const loginForm = document.getElementById('login-form');
+  document.getElementById('login-forgot')?.addEventListener('click', async (e) => {
+    e.preventDefault();
+    const status = document.getElementById('login-status');
+    const email = document.getElementById('login-email').value.trim();
+    if (!email) { status.textContent = 'Type your email above first.'; return; }
+    try { if (isFirebaseInitialized) await sendPasswordResetEmail(auth, email); } catch (_) { /* never reveal whether the account exists */ }
+    status.textContent = 'If that email has an account, a reset link was sent. No inbox? Ask your Admin for a one-time password.';
+  });
   if (loginForm) {
     // Internal login-flow step tracker — a no-op in production. This used
     // to render a live debug panel under the login form and mirror every
@@ -5276,6 +5410,7 @@ function setupEventListeners() {
   const btnLogout = document.getElementById('btn-logout');
   if (btnLogout) {
     btnLogout.addEventListener('click', async () => {
+      document.getElementById('filter-stock-status').value = 'instock'; // next login starts on In Stock
       if (isFirebaseInitialized) {
         try {
           await signOut(auth);
@@ -5348,45 +5483,40 @@ function setupEventListeners() {
   }
 
   // Save Settings Credentials Submit Handler
-  // User Management - Show for Admins only
-  const usersGroup = document.getElementById('settings-users-group');
-  if (usersGroup) {
-    if (state.currentRole !== 'Admin') {
-      usersGroup.style.display = 'none';
-    } else {
-      // SHOW for Admins
-      usersGroup.style.display = 'flex';
+  // User Management - Show/hide is re-checked on every renderSettings() call (see there),
+  // but these listeners are attached once here, at a point before Firebase has confirmed the
+  // real role (state.currentRole may still be a stale cached value). Gating attachment itself
+  // on state.currentRole left these buttons permanently dead for a session that started as a
+  // non-Admin role and was corrected to Admin afterward — always attach; check role at click time.
+  const btnAddUser = document.getElementById('btn-add-user');
+  const btnManageUsers = document.getElementById('btn-manage-users');
 
-      // Setup user management handlers for Admins
-      const btnAddUser = document.getElementById('btn-add-user');
-      const btnManageUsers = document.getElementById('btn-manage-users');
+  if (btnAddUser) {
+    btnAddUser.addEventListener('click', async () => {
+      if (state.currentRole !== 'Admin') return;
+      const email = prompt('Enter new user email:');
+      if (!email) return;
 
-      if (btnAddUser) {
-        btnAddUser.addEventListener('click', async () => {
-          const email = prompt('Enter new user email:');
-          if (!email) return;
+      const password = prompt('Enter password:');
+      if (!password) return;
 
-          const password = prompt('Enter password:');
-          if (!password) return;
-
-          const role = prompt('Enter role:\nType one of: Admin, CEO, Accountant, Manager, Seller');
-          if (!role || !['Admin', 'CEO', 'Accountant', 'Manager', 'Seller'].includes(role)) {
-            showNotification('Invalid role. Must be Admin, CEO, Accountant, Manager, or Seller.', 'error');
-            return;
-          }
-
-          await addNewUser(email, password, role);
-        });
+      const role = prompt('Enter role:\nType one of: Admin, CEO, Accountant, Manager, Seller');
+      if (!role || !['Admin', 'CEO', 'Accountant', 'Manager', 'Seller'].includes(role)) {
+        showNotification('Invalid role. Must be Admin, CEO, Accountant, Manager, or Seller.', 'error');
+        return;
       }
 
-      if (btnManageUsers) {
-        btnManageUsers.addEventListener('click', async () => {
-          const users = await getAllUsers();
-          displayUsersList(users);
-          document.getElementById('users-list-container').style.display = 'block';
-        });
-      }
-    }
+      await addNewUser(email, password, role);
+    });
+  }
+
+  if (btnManageUsers) {
+    btnManageUsers.addEventListener('click', async () => {
+      if (state.currentRole !== 'Admin') return;
+      const users = await getAllUsers();
+      displayUsersList(users);
+      document.getElementById('users-list-container').style.display = 'block';
+    });
   }
 
   const btnSaveCreds = document.getElementById('btn-save-credentials');
@@ -5442,7 +5572,9 @@ function setupEventListeners() {
           } catch (e) {
             console.error("Error updating password:", e);
             passwordOk = false;
-            showToast('Could not update password: ' + e.message, 'error');
+            showToast(e.code === 'auth/requires-recent-login'
+              ? 'For security, please sign out and sign in again, then change your password.'
+              : 'Could not update password: ' + e.message, 'error');
           }
         }
 
@@ -5522,12 +5654,14 @@ window.addEventListener('DOMContentLoaded', () => {
           // one below. Never derived from the email address (see the login
           // handler above for why).
           let role = 'Manager';
+          let mustChangePassword = false;
 
           // Best-effort: try to read the stored role from Firestore
           try {
             const userDoc = await getDoc(doc(db, 'users', user.uid));
             if (userDoc.exists()) {
               role = userDoc.data().role;
+              mustChangePassword = userDoc.data().mustChangePassword === true;
             } else {
               // Attempt to seed it — silently skip if permissions block it
               try {
@@ -5546,6 +5680,7 @@ window.addEventListener('DOMContentLoaded', () => {
           // Hide login screen immediately — never block on Firestore
           if (loginScreen) loginScreen.classList.add('hidden');
           switchRole(role);
+          if (mustChangePassword) forcePasswordChange(user);
 
           // Background sync — non-blocking, but with delay to ensure user doc is synced
           (async () => {

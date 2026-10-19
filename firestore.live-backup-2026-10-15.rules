@@ -1,0 +1,126 @@
+// BACKUP of the LIVE Firestore rules as they were on 2026-10-15, BEFORE hardening.
+// (Copied from the Firebase Console paste.) Note the catch-all at the bottom: it makes everything open.
+// To roll back: Firebase Console -> Firestore -> Rules -> History, or paste this file and Publish.
+
+// Aurora Systems Firestore Security Rules
+// Project: aurora-system-b3203
+//
+// Role Hierarchy:
+// - Admin: Full access to all data
+// - CEO: Full access, can edit config targets, view all reports
+// - Manager: Limited access (products, customers, own inventory)
+// - Authenticated Users: Limited to own data
+// - Unauthenticated: No access
+//
+// Last Updated: 2026-09-13
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getRole() {
+      // Get the role from the user's document in /users collection
+      // Return empty string if document doesn't exist yet (handles race conditions)
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role
+        : '';
+    }
+
+    function isAdmin() {
+      let role = getRole();
+      return isSignedIn() && (role == 'Admin' || role == 'admin');
+    }
+
+    function isCEO() {
+      let role = getRole();
+      return isSignedIn() && (role == 'CEO' || role == 'ceo');
+    }
+
+    function isManager() {
+      return isSignedIn() && (getRole() == 'Manager' || getRole() == 'manager');
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function canManageUsers() {
+      return isAdmin() || isCEO();
+    }
+
+    function canViewFinancials() {
+      return isAdmin() || isCEO();
+    }
+
+    function canModifyProducts() {
+      return isAdmin() || isCEO();
+    }
+
+    match /users/{userId} {
+      allow read: if isAdmin() || isCEO() || isOwner(userId);
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isAdmin() || isCEO();
+      allow delete: if isAdmin();
+    }
+
+    match /config/{doc} {
+      match /{document=**} {
+        allow read: if isSignedIn();
+        allow write: if isSignedIn();
+      }
+    }
+
+    match /products/{productId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && (getRole() == 'Admin' || getRole() == 'admin' || getRole() == '');
+      allow update: if isSignedIn() && (getRole() == 'Admin' || getRole() == 'admin');
+      allow delete: if isSignedIn() && (getRole() == 'Admin' || getRole() == 'admin');
+    }
+
+    match /transactions/{transactionId} {
+      allow read: if isSignedIn();
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    match /customers/{customerId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.createdBy == request.auth.uid;
+      allow update: if isSignedIn() && (
+        request.auth.uid == resource.data.createdBy ||
+        isAdmin() ||
+        isCEO()
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /expenses/{expenseId} {
+      allow read: if canViewFinancials();
+      allow create: if canViewFinancials() && request.resource.data.createdBy == request.auth.uid;
+      allow update: if canViewFinancials();
+      allow delete: if isAdmin();
+    }
+
+    match /inventory/{inventoryId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.createdBy == request.auth.uid;
+      allow update: if isSignedIn() && (
+        request.auth.uid == resource.data.createdBy ||
+        isAdmin() ||
+        isCEO()
+      );
+      allow delete: if isAdmin();
+    }
+
+    // The line that makes everything above irrelevant:
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

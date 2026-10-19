@@ -1,0 +1,79 @@
+// Aurora Systems - HARDENED Firestore rules (proposal, NOT yet live)
+// Project: aurora-system-b3203
+//
+// Replaces the live catch-all `match /{document=**} { allow read, write: if true; }`.
+// Written from what src/main.js actually reads/writes, so the app keeps working:
+//   - every signed-in role reads all of products/transactions/customers/expenses (onSnapshot)
+//   - every role saves via full-collection rewrite (syncCollectionToFirestore), so those
+//     collections are staff-wide read/write; per-role limits are enforced in the UI only
+//   - users: Admin manages everyone; a user may seed/update only their OWN doc and never raise their role
+//   - activity_log: Admin + CEO read, append-only
+// Anything not listed is denied.
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function role() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role
+        : '';
+    }
+
+    function isStaff() {
+      return isSignedIn() && role() in [
+        'Admin', 'admin', 'CEO', 'ceo', 'Manager', 'manager',
+        'Seller', 'seller', 'Accountant', 'accountant'
+      ];
+    }
+
+    function isAdmin() {
+      return isSignedIn() && role() in ['Admin', 'admin'];
+    }
+
+    function isCEO() {
+      return isSignedIn() && role() in ['CEO', 'ceo'];
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // /users - profiles and roles
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin() || isCEO();
+      // Admin creates accounts for others; the app seeds a user's own doc as Manager on first login.
+      allow create: if isAdmin() || (isOwner(userId) && request.resource.data.role == 'Manager');
+      // Only Admin changes roles. Own doc may be updated but never with a different role (no self-promotion).
+      allow update: if isAdmin() ||
+        (isOwner(userId) && request.resource.data.role == resource.data.role);
+      allow delete: if isAdmin();
+    }
+
+    // /config - annual target etc.
+    match /config/{docId} {
+      allow read, write: if isStaff();
+    }
+
+    // Business data
+    match /products/{id}     { allow read, write: if isStaff(); }
+    match /transactions/{id} { allow read, write: if isStaff(); }
+    match /customers/{id}    { allow read, write: if isStaff(); }
+    match /expenses/{id}     { allow read, write: if isStaff(); }
+
+    // /activity_log - who changed what (append-only, Admin + CEO read)
+    match /activity_log/{id} {
+      allow read: if isAdmin() || isCEO();
+      allow create: if isStaff() && request.resource.data.by == request.auth.token.email;
+      allow update, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
