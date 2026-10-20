@@ -3162,7 +3162,7 @@ window.applyRetailPriceUpdates = async function(updates) {
   if (!changed.length) { console.log('Nothing to change.'); return; }
   console.log(`Updating ${changed.length} product(s):\n` + changed.join('\n'));
   await saveProducts();
-  renderProductsTable();
+  renderProducts();
   console.log(`✅ Applied ${changed.length} retail price update(s).`);
 };
 
