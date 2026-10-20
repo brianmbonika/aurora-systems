@@ -11,15 +11,25 @@
   body {
     margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
     background: radial-gradient(ellipse 120% 70% at 50% -10%, rgba(201,162,75,.16), transparent 60%), #111;
-    color: #f3f3f0; font-family: Inter, sans-serif; padding: 24px;
+    color: #f3f3f0; font-family: Inter, sans-serif; padding: 24px; overflow-x: hidden;
   }
   .card { width: 100%; max-width: 380px; text-align: center; }
-  .hero { position: relative; height: 150px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; }
+  .hero { position: relative; height: 130px; display: flex; align-items: center; justify-content: center; margin-bottom: 4px; }
   .hero::before { content: ""; position: absolute; inset: -20px; background: radial-gradient(closest-side, rgba(255,255,255,.12), transparent); }
-  .hero img { position: relative; max-height: 100%; transform: rotate(-4deg); filter: drop-shadow(0 10px 16px rgba(0,0,0,.55)); }
+  .hero img { position: relative; max-height: 100%; filter: drop-shadow(0 10px 16px rgba(0,0,0,.55)); transition: transform .4s ease; }
+  .hero img.idle { transform: rotate(-4deg); animation: bob 3s ease-in-out infinite; }
+  .hero img.sad { animation: shake .5s ease; }
+  .hero img.happy { animation: dance .7s ease-in-out 2; }
+  @keyframes bob { 0%,100% { transform: rotate(-4deg) translateY(0) } 50% { transform: rotate(-4deg) translateY(-6px) } }
+  @keyframes shake { 0%,100% { transform: translateX(0) rotate(-4deg) } 20% { transform: translateX(-8px) rotate(-8deg) } 40% { transform: translateX(8px) rotate(0deg) } 60% { transform: translateX(-6px) rotate(-6deg) } 80% { transform: translateX(6px) rotate(-2deg) } }
+  @keyframes dance { 0%,100% { transform: rotate(-4deg) translateY(0) } 25% { transform: rotate(10deg) translateY(-10px) } 50% { transform: rotate(-4deg) translateY(0) } 75% { transform: rotate(-14deg) translateY(-10px) } }
+  .face { font-size: 34px; margin-top: -6px; transition: transform .2s; }
+  .face.sad { animation: shake .5s ease; }
+  .face.happy { animation: dance .7s ease-in-out 2; }
+  .bubble { margin: 10px 0 24px; }
   .rule { width: 48px; height: 1px; background: var(--gold); margin: 0 auto 18px; opacity: .7; }
-  h1 { font-family: "Cormorant Garamond", serif; font-weight: 500; font-style: italic; font-size: 30px; margin: 0 0 8px; }
-  p.sub { color: var(--muted); font-size: 14px; line-height: 1.5; margin: 0 0 28px; }
+  h1 { font-family: "Cormorant Garamond", serif; font-weight: 500; font-style: italic; font-size: 26px; margin: 0 0 8px; min-height: 34px; }
+  p.sub { color: var(--muted); font-size: 14px; line-height: 1.5; margin: 0 0 22px; min-height: 20px; }
   label { display: block; text-align: left; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--gold); margin: 16px 0 6px; }
   input {
     width: 100%; padding: 12px 14px; background: #1b1b1b; border: 1px solid #333; border-radius: 6px;
@@ -28,16 +38,20 @@
   input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,162,75,.15); }
   .hp { position: absolute; left: -9999px; }
   button {
-    width: 100%; margin-top: 26px; padding: 14px; background: linear-gradient(135deg, #e3c478, var(--gold));
+    width: 100%; margin-top: 14px; padding: 14px; background: linear-gradient(135deg, #e3c478, var(--gold));
     color: #171310; border: none; border-radius: 6px; font: 600 15px Inter; letter-spacing: .02em;
     cursor: pointer; transition: transform .15s, opacity .15s;
   }
+  button.ghost { background: transparent; color: var(--muted); border: 1px solid #333; }
   button:active { transform: scale(.98); }
   button:disabled { opacity: .55; cursor: default; transform: none; }
+  .choices { display: flex; gap: 10px; }
+  .choices button { margin-top: 0; }
   .msg { margin-top: 14px; font-size: 13px; min-height: 16px; }
   .msg.err { color: #e08a8a; }
   .fine { margin-top: 18px; font-size: 11px; color: #6b6b6b; line-height: 1.5; }
-  #done-step { display: none; animation: rise .5s ease both; }
+  .step { display: none; animation: rise .4s ease both; }
+  .step.active { display: block; }
   @keyframes rise { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: translateY(0) } }
   .done a {
     display: inline-block; margin-top: 10px; padding: 14px 24px; background: linear-gradient(135deg, #e3c478, var(--gold));
@@ -48,38 +62,108 @@
 </head>
 <body>
   <div class="card">
-    <div class="hero"><img src="/images/join-hero.png" alt="Aurora Scents"></div>
+    <div class="hero"><img id="heroImg" class="idle" src="/images/join-hero.png" alt="Aurora"></div>
+    <div class="bubble"><div class="face" id="face"></div></div>
     <div class="rule"></div>
-    <div id="form-step">
-      <h1>You found us.</h1>
-      <p class="sub">Join the inner circle for early access to new arrivals, private previews, and scent pairings picked just for you.</p>
-      <form id="leadForm">
-        <label for="name">Name</label>
-        <input id="name" name="name" autocomplete="name" required>
-        <label for="phone">Phone number</label>
-        <input id="phone" name="phone" type="tel" autocomplete="tel" required>
-        <label for="email">Email (optional)</label>
-        <input id="email" name="email" type="email" autocomplete="email">
-        <input class="hp" name="company" tabindex="-1" autocomplete="off">
-        <button type="submit">Unlock access</button>
-        <div class="msg" id="msg"></div>
-      </form>
-      <p class="fine">No spam, ever. Just the occasional scent worth knowing about.</p>
+
+    <div class="step active" id="step-name">
+      <h1>Hi, I'm Aurora. What's your name?</h1>
+      <p class="sub">Tell me who I'm talking to.</p>
+      <input id="nameInput" placeholder="Your name" autocomplete="name">
+      <button id="nameNext">Continue</button>
     </div>
-    <div id="done-step">
-      <h1>Welcome in.</h1>
-      <p class="sub">You're one of us now. Save our contact so WhatsApp &amp; Instagram are one tap away.</p>
+
+    <div class="step" id="step-save">
+      <h1 id="saveTitle">This is my contact.</h1>
+      <p class="sub" id="saveSub">Can you save it, please?</p>
+      <div class="choices">
+        <button id="saveNo" class="ghost">No</button>
+        <button id="saveYes">Yes</button>
+      </div>
+      <p class="fine" id="saveFine"></p>
+    </div>
+
+    <div class="step" id="step-phone">
+      <h1>One last thing.</h1>
+      <p class="sub" id="phoneSub">What's your number, so I can reach you too?</p>
+      <input id="phoneInput" type="tel" placeholder="Phone number" autocomplete="tel">
+      <input id="emailInput" type="email" placeholder="Email (optional)" autocomplete="email" style="margin-top:10px">
+      <input class="hp" id="hpInput" tabindex="-1" autocomplete="off">
+      <button id="phoneNext">Finish</button>
+      <div class="msg" id="msg"></div>
+    </div>
+
+    <div class="step" id="step-done">
+      <h1>You're one of us now.</h1>
+      <p class="sub">Save my contact so WhatsApp &amp; Instagram are one tap away.</p>
       <a id="vcardLink" download="Aurora Scents.vcf">Save our contact</a>
-      <div><span class="badge">Aurora Scents · Dar es Salaam</span></div>
+      <div><span class="badge">Aurora Scents &middot; Dar es Salaam</span></div>
     </div>
   </div>
 <script>
   const VCARD = "BEGIN:VCARD\nVERSION:3.0\nFN:Aurora Scents\nORG:Aurora Scents\nPHOTO;ENCODING=b;TYPE=JPEG:/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBAUEBAYFBQUG\n BgYHCQ4JCQgICRINDQoOFRIWFhUSFBQXGiEcFxgfGRQUHScdHyIjJSUlFhwpLCgkKyEkJST/2w\n BDAQYGBgkICREJCREkGBQYJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQk\n JCQkJCQkJCQkJCT/wAARCADwAPADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAw\n QFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0Kx\n wRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3\n R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW\n 19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQ\n oL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAV\n YnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eH\n l6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna\n 4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD5rooooAKKKKACiiigAooooAKKKKACii\n igAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKK\n KKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAo\n oooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAC\n iiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooA\n 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\n eRPkOcE/PjPHSsOreoXwvvsuIzH5FukHXO7bnn261ThqrbEqWjuB1AHGbGyOOACjcf+PVrXkY0\n zToJ5bWwL3KJKifZpNjK2ej78EjHI9656taTW4hor6ZbwTospjeTzZ96Ky9Si4+UsevPtU1IO6\n 5Rxktblc6mhPGm6aP+2Tf/ABVJ/aS5z/Z2nf8Afk//ABVUqK15ERzMuf2inP8AxLtP5/6ZN/8A\n FVTooppWC4Vvax4Tk0jRbTVGu0lW5KDywhBXcpbrnnpWD2NeieNU8vwBoZP8Rh/9FGuetVcJwi\n ur/Q0pxTjJvocl4Rs/7Q8U6TbEZD3UeR7A7j+grpvjPd+f4sihB/1FogP1Ys39RXK+GtdPhvWr\n bVUgjuWt9xWN32gkqR1H1o8Ta/J4m1u51WaJIWn2/u0bcFAUADJ+lZyozli41H8Ki/vb/wAgU0\n qbj1bMyijI9RRkeortMgruvh8RdaVqtg3Ift/vIV/pXC5HqK1/DniSTw5cTSxwRziVQpVmK4wc\n g8VhiabnTcY7mtGSjNN7GRgrweo4Ndvd/wDJNLf/AHk/9GGuLmlE08kgAXe5baD0yc4rs7vn4Z\n 2/+8n/AKMNRid4f4kVR+16HE0UUV1GAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFAB\n RRRQAHpXp1h8TvDkek2Vhf6Fc3n2aJE+dYmXcq4JAY15jRXPiMLTrpKfTzsaU6sofCerr8TvBC\n jnwfn/ALd4KbJ8S/BDjjwcB/27wV5VRXIspoef/gT/AMzT6zPy+5HpM/xA8ISD5PCoX/thDVKT\n xr4Yf7vh0D/tjFXB0VtHAUo7X+9i+sT8vuR258YeG/8AoAD/AL9RUf8ACYeHP+gCP+/UVcRRWn\n 1Sn5/ew+sT8vuO3/4TDw5/0Af/ACFFVTX/ABdp+p6K2nWdlLbgurLkKFABz0FcnRQsLTTT7eYn\n Xm1YKKKK6TEKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAoooo\n AKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiii\n gAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKK\n KACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAoo\n ooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACi\n iigAooooA//9k=\nTEL;TYPE=CELL:+255748488283\nURL:https://wa.me/255748488283\nURL:https://instagram.com/aurorascents_tz\nNOTE:Follow us on Instagram @aurorascents_tz\nEND:VCARD";
   document.getElementById('vcardLink').href = "data:text/vcard;charset=utf-8," + encodeURIComponent(VCARD);
 
-  document.getElementById('leadForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = e.target.querySelector('button');
+  const heroImg = document.getElementById('heroImg');
+  const face = document.getElementById('face');
+  const steps = { name: document.getElementById('step-name'), save: document.getElementById('step-save'), phone: document.getElementById('step-phone'), done: document.getElementById('step-done') };
+  let visitorName = '';
+  let noCount = 0;
+
+  function goTo(step) {
+    Object.values(steps).forEach(s => s.classList.remove('active'));
+    steps[step].classList.add('active');
+  }
+  function react(mood) {
+    heroImg.className = mood;
+    face.className = 'face ' + mood;
+    setTimeout(() => { heroImg.className = 'idle'; face.className = 'face'; face.textContent = ''; }, 1400);
+  }
+
+  document.getElementById('nameNext').addEventListener('click', () => {
+    const v = document.getElementById('nameInput').value.trim();
+    if (!v) { document.getElementById('nameInput').focus(); return; }
+    visitorName = v;
+    document.getElementById('saveTitle').textContent = 'Nice to meet you, ' + visitorName + '.';
+    document.getElementById('saveSub').textContent = 'This is my contact \u{1F4C7} \u2014 can you save it, please?';
+    goTo('save');
+  });
+  document.getElementById('nameInput').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('nameNext').click(); });
+
+  document.getElementById('saveNo').addEventListener('click', () => {
+    noCount++;
+    face.textContent = '\u{1F622}';
+    react('sad');
+    if (noCount === 1) {
+      document.getElementById('saveTitle').textContent = 'Oh no... really?';
+      document.getElementById('saveSub').textContent = "Please? I promise I'm worth it \u{1F97A}";
+      document.getElementById('saveFine').textContent = '';
+    } else {
+      document.getElementById('saveTitle').textContent = 'Okay... I understand.';
+      document.getElementById('saveSub').textContent = "Maybe next time. Let's keep going anyway.";
+      setTimeout(() => {
+        document.getElementById('phoneSub').textContent = "What's your number, " + visitorName + "?";
+        goTo('phone');
+      }, 1300);
+    }
+  });
+
+  document.getElementById('saveYes').addEventListener('click', () => {
+    face.textContent = '\u{1F483}';
+    react('happy');
+    document.getElementById('saveTitle').textContent = 'Yay! Thank you!';
+    document.getElementById('saveSub').textContent = '\u{1F389} You just made my day.';
+    const a = document.getElementById('vcardLink');
+    const tmp = document.createElement('a');
+    tmp.href = a.href; tmp.download = a.download; document.body.appendChild(tmp); tmp.click(); tmp.remove();
+    setTimeout(() => {
+      document.getElementById('phoneSub').textContent = "Now, what's your number, " + visitorName + "?";
+      goTo('phone');
+    }, 1300);
+  });
+
+  document.getElementById('phoneNext').addEventListener('click', async () => {
+    const btn = document.getElementById('phoneNext');
     const msg = document.getElementById('msg');
     btn.disabled = true;
     msg.className = 'msg';
@@ -89,22 +173,22 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: document.getElementById('name').value,
-          phone: document.getElementById('phone').value,
-          email: document.getElementById('email').value,
-          hp: document.querySelector('input[name="company"]').value,
+          name: visitorName,
+          phone: document.getElementById('phoneInput').value,
+          email: document.getElementById('emailInput').value,
+          hp: document.getElementById('hpInput').value,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Something went wrong.');
-      document.getElementById('form-step').style.display = 'none';
-      document.getElementById('done-step').style.display = 'block';
+      goTo('done');
     } catch (err) {
       msg.className = 'msg err';
       msg.textContent = err.message;
       btn.disabled = false;
     }
   });
+  document.getElementById('phoneInput').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('phoneNext').click(); });
 </script>
 </body>
 </html>
