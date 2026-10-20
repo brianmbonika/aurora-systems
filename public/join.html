@@ -15,36 +15,17 @@
   }
   .card { width: 100%; max-width: 380px; text-align: center; }
 
-  .foxstage { position: relative; height: 150px; display: flex; align-items: center; justify-content: center; margin-bottom: 4px; }
-  .foxstage::before { content: ""; position: absolute; inset: -16px; background: radial-gradient(closest-side, rgba(255,255,255,.1), transparent); }
-  .fox { position: relative; width: 128px; overflow: visible; }
-  .fox .stroke { fill: none; stroke: var(--gold-light); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
-  .fox .fill { fill: var(--gold-light); }
-  .fox .mouth { opacity: 0; transform-box: fill-box; transform-origin: center; }
-  .fox.idle .mouthNeutral, .fox.happy .mouthSmile, .fox.sad .mouthFrown { opacity: 1; }
-  .fox.talking .mouthNeutral, .fox.talking .mouthSmile, .fox.talking .mouthFrown { opacity: 0 !important; }
-  .fox.talking .mouthTalk { opacity: 1; animation: talk .22s ease-in-out infinite alternate; }
-  @keyframes talk { from { transform: scaleY(.35); } to { transform: scaleY(1); } }
-  .fox .brow { transform-box: fill-box; transform-origin: center; transition: transform .3s; }
-  .fox.sad .browL { transform: rotate(16deg) translateY(2px); }
-  .fox.sad .browR { transform: rotate(-16deg) translateY(2px); }
-  .fox.happy .browL { transform: translateY(-3px); }
-  .fox.happy .browR { transform: translateY(-3px); }
-  .fox .ear { transform-box: fill-box; transform-origin: bottom center; transition: transform .3s; }
-  .fox.sad .earL { transform: rotate(-20deg); }
-  .fox.sad .earR { transform: rotate(20deg); }
-  .fox.happy .ear { animation: perk 2.2s ease-in-out infinite; }
-  .fox.happy .earR { animation-delay: .15s; }
-  @keyframes perk { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(7deg); } }
-  .fox .blink { animation: blink 4.5s infinite; }
-  @keyframes blink { 0%, 92%, 100% { opacity: 0; } 95% { opacity: 1; } }
-  .fox .tear { opacity: 0; }
-  .fox.sad .tear { opacity: 1; animation: cry 1.6s ease-in infinite; }
-  @keyframes cry { 0% { opacity: 0; transform: translateY(0); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(18px); } }
-  .fox .blush { opacity: 0; transition: opacity .3s; }
-  .fox.happy .blush { opacity: .35; }
-  .fox.happy .head { animation: bop .5s ease-in-out 2; }
-  @keyframes bop { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-6px) rotate(-3deg); } }
+  .foxstage { position: relative; height: 170px; display: flex; align-items: center; justify-content: center; margin-bottom: 4px; }
+  .foxstage::before { content: ""; position: absolute; inset: -10px; background: radial-gradient(closest-side, rgba(255,255,255,.1), transparent); }
+  #fox { position: relative; max-height: 170px; border-radius: 12px; transition: transform .25s; }
+  #fox.idle { animation: bob 3.2s ease-in-out infinite; }
+  #fox.talking { animation: talkpulse .3s ease-in-out infinite alternate; }
+  #fox.sad { animation: shake .5s ease; filter: saturate(.7) brightness(.85); }
+  #fox.happy { animation: dance .6s ease-in-out 3; }
+  @keyframes bob { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-6px) rotate(-1.5deg); } }
+  @keyframes talkpulse { from { transform: scaleY(1); } to { transform: scaleY(1.03) scaleX(.985); } }
+  @keyframes shake { 0%, 100% { transform: translateX(0) rotate(0deg); } 20% { transform: translateX(-8px) rotate(-6deg); } 40% { transform: translateX(8px) rotate(4deg); } 60% { transform: translateX(-6px) rotate(-4deg); } 80% { transform: translateX(6px) rotate(2deg); } }
+  @keyframes dance { 0%, 100% { transform: rotate(0deg) translateY(0); } 25% { transform: rotate(8deg) translateY(-10px); } 50% { transform: rotate(0deg) translateY(0); } 75% { transform: rotate(-8deg) translateY(-10px); } }
 
   .rule { width: 48px; height: 1px; background: var(--gold); margin: 0 auto 18px; opacity: .7; }
   h1 { font-family: "Cormorant Garamond", serif; font-weight: 500; font-style: italic; font-size: 26px; margin: 0 0 8px; min-height: 34px; }
@@ -67,7 +48,6 @@
   .choices button { margin-top: 0; }
   .msg { margin-top: 14px; font-size: 13px; min-height: 16px; }
   .msg.err { color: #e08a8a; }
-  .fine { margin-top: 18px; font-size: 11px; color: #6b6b6b; line-height: 1.5; }
   .step { display: none; animation: rise .4s ease both; }
   .step.active { display: block; }
   @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -80,31 +60,7 @@
 </head>
 <body>
   <div class="card">
-    <div class="foxstage"><svg viewBox="0 0 200 226" class="fox idle" id="fox">
-        <path class="stroke" d="M58,178 C40,196 42,214 70,219 L130,219 C158,214 160,196 142,178 Z"/>
-        <path class="stroke" d="M148,198 C182,196 196,162 172,138 C190,164 182,196 152,206"/>
-        <g class="head">
-          <path class="stroke ear earL" d="M68,62 L38,8 L84,46 Z"/>
-          <path class="stroke ear earR" d="M132,62 L162,8 L116,46 Z"/>
-          <path class="stroke" d="M100,58 C130,58 150,82 148,112 C146,138 134,158 112,170 C106,174 94,174 88,170 C66,158 54,138 52,112 C50,82 70,58 100,58 Z"/>
-          <path class="stroke" d="M52,108 L30,118 L54,120 Z"/>
-          <path class="stroke" d="M148,108 L170,118 L146,120 Z"/>
-          <circle class="fill blush" cx="62" cy="128" r="9"/>
-          <circle class="fill blush" cx="138" cy="128" r="9"/>
-          <path class="stroke brow browL" d="M68,92 L94,86"/>
-          <path class="stroke brow browR" d="M132,92 L106,86"/>
-          <ellipse class="fill" cx="82" cy="108" rx="6" ry="8"/>
-          <ellipse class="fill" cx="118" cy="108" rx="6" ry="8"/>
-          <rect class="fill blink" x="75" y="106" width="14" height="3.5" rx="1.75"/>
-          <rect class="fill blink" x="111" y="106" width="14" height="3.5" rx="1.75"/>
-          <path class="fill tear" d="M78,120 q-4,9 0,15 q4,-2 4,-7 q0,-5 -4,-8" fill="#9fc9e0"/>
-          <path class="fill" d="M93,142 L107,142 L100,153 Z"/>
-          <path class="stroke mouth mouthNeutral" d="M80,160 Q100,163 120,160"/>
-          <path class="stroke mouth mouthSmile" d="M74,157 Q100,174 126,157"/>
-          <path class="stroke mouth mouthFrown" d="M74,167 Q100,152 126,167"/>
-          <ellipse class="fill mouth mouthTalk" cx="100" cy="162" rx="11" ry="7"/>
-        </g>
-      </svg></div>
+    <div class="foxstage"><img id="fox" class="idle" src="/images/join-hero.png" alt="Aurora's puppy"></div>
     <div class="rule"></div>
 
     <div class="step active" id="step-name">
