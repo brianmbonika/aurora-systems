@@ -3126,6 +3126,16 @@ window.updateAllTesterPrices = async function() {
   showToast(`✅ Successfully updated prices for ${testers.length} tester product(s)!`, 'success', 5000);
 };
 
+// ── ONE-OFF: how many transactions reference a product (duplicate-merge safety check) ──
+// Run from browser console: getProductTransactionCount('<productId>')
+window.getProductTransactionCount = function(productId) {
+  return state.transactions.filter(t => t.productId === productId).length;
+};
+
+// Expose the existing, fully-logged/undoable delete so a specific duplicate can be
+// removed from the console the same way the Inventory UI's delete button does.
+window.deleteProductFromInventory = deleteProductFromInventory;
+
 // ── ONE-OFF: read-only snapshot for matching names before a bulk price update ──
 // Run from browser console: getLiveInventorySnapshot()
 window.getLiveInventorySnapshot = function() {
