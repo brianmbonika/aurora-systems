@@ -3126,6 +3126,36 @@ window.updateAllTesterPrices = async function() {
   showToast(`✅ Successfully updated prices for ${testers.length} tester product(s)!`, 'success', 5000);
 };
 
+// ── ONE-OFF: read-only snapshot for matching names before a bulk price update ──
+// Run from browser console: getLiveInventorySnapshot()
+window.getLiveInventorySnapshot = function() {
+  return state.products
+    .filter(p => p.type !== 'Tester')
+    .map(p => ({ id: p.id, name: p.name, sellingPrice: p.sellingPrice, stock: getProductStock(p.id) }));
+};
+
+// ── ONE-OFF: apply a {productId: newSellingPrice} map, Full Bottles only ──────
+// Run from browser console: applyRetailPriceUpdates({ "<id>": 180000, ... })
+window.applyRetailPriceUpdates = async function(updates) {
+  if (!['Admin', 'CEO'].includes(state.currentRole)) { console.error('Admin/CEO only'); return; }
+  const ids = Object.keys(updates || {});
+  if (!ids.length) { console.error('No updates given'); return; }
+  const changed = [];
+  ids.forEach(id => {
+    const p = state.products.find(pp => pp.id === id);
+    if (!p) { console.warn(`No product with id ${id}`); return; }
+    if (p.sellingPrice !== updates[id]) {
+      changed.push(`${p.name}: ${p.sellingPrice} -> ${updates[id]}`);
+      p.sellingPrice = updates[id];
+    }
+  });
+  if (!changed.length) { console.log('Nothing to change.'); return; }
+  console.log(`Updating ${changed.length} product(s):\n` + changed.join('\n'));
+  await saveProducts();
+  renderProductsTable();
+  console.log(`✅ Applied ${changed.length} retail price update(s).`);
+};
+
 // Calculate dynamic alerts
 function getSystemAlerts() {
   const alerts = [];
