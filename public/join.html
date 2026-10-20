@@ -8,28 +8,51 @@
 <style>
   :root { --gold: #c9a24b; --muted: #9a9a9a; }
   * { box-sizing: border-box; }
-  body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #111; color: #f3f3f0; font-family: Inter, sans-serif; padding: 24px; }
+  body {
+    margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(ellipse 120% 70% at 50% -10%, rgba(201,162,75,.16), transparent 60%), #111;
+    color: #f3f3f0; font-family: Inter, sans-serif; padding: 24px;
+  }
   .card { width: 100%; max-width: 380px; text-align: center; }
-  h1 { font-family: "Cormorant Garamond", serif; font-weight: 500; font-size: 28px; margin: 0 0 6px; }
-  p.sub { color: var(--muted); font-size: 14px; margin: 0 0 28px; }
+  .hero { position: relative; height: 150px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; }
+  .hero::before { content: ""; position: absolute; inset: -20px; background: radial-gradient(closest-side, rgba(255,255,255,.12), transparent); }
+  .hero img { position: relative; max-height: 100%; transform: rotate(-4deg); filter: drop-shadow(0 10px 16px rgba(0,0,0,.55)); }
+  .rule { width: 48px; height: 1px; background: var(--gold); margin: 0 auto 18px; opacity: .7; }
+  h1 { font-family: "Cormorant Garamond", serif; font-weight: 500; font-style: italic; font-size: 30px; margin: 0 0 8px; }
+  p.sub { color: var(--muted); font-size: 14px; line-height: 1.5; margin: 0 0 28px; }
   label { display: block; text-align: left; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--gold); margin: 16px 0 6px; }
-  input { width: 100%; padding: 12px 14px; background: #1b1b1b; border: 1px solid #333; border-radius: 6px; color: #f3f3f0; font: 400 15px Inter; }
-  input:focus { outline: none; border-color: var(--gold); }
+  input {
+    width: 100%; padding: 12px 14px; background: #1b1b1b; border: 1px solid #333; border-radius: 6px;
+    color: #f3f3f0; font: 400 15px Inter; transition: border-color .2s, box-shadow .2s;
+  }
+  input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,162,75,.15); }
   .hp { position: absolute; left: -9999px; }
-  button { width: 100%; margin-top: 24px; padding: 13px; background: var(--gold); color: #111; border: none; border-radius: 6px; font: 500 15px Inter; cursor: pointer; }
-  button:disabled { opacity: .6; cursor: default; }
+  button {
+    width: 100%; margin-top: 26px; padding: 14px; background: linear-gradient(135deg, #e3c478, var(--gold));
+    color: #171310; border: none; border-radius: 6px; font: 600 15px Inter; letter-spacing: .02em;
+    cursor: pointer; transition: transform .15s, opacity .15s;
+  }
+  button:active { transform: scale(.98); }
+  button:disabled { opacity: .55; cursor: default; transform: none; }
   .msg { margin-top: 14px; font-size: 13px; min-height: 16px; }
   .msg.err { color: #e08a8a; }
-  .done { display: none; }
-  .done a { display: inline-block; margin-top: 8px; padding: 13px 20px; background: var(--gold); color: #111; text-decoration: none; border-radius: 6px; font-weight: 500; }
+  .fine { margin-top: 18px; font-size: 11px; color: #6b6b6b; line-height: 1.5; }
+  #done-step { display: none; animation: rise .5s ease both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: translateY(0) } }
+  .done a {
+    display: inline-block; margin-top: 10px; padding: 14px 24px; background: linear-gradient(135deg, #e3c478, var(--gold));
+    color: #171310; text-decoration: none; border-radius: 6px; font-weight: 600;
+  }
+  .badge { display: inline-block; margin-top: 18px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--gold); border: 1px solid rgba(201,162,75,.4); border-radius: 100px; padding: 5px 14px; }
 </style>
 </head>
 <body>
   <div class="card">
-    <img src="/logo.webp" alt="Aurora Scents" style="height:40px;margin-bottom:20px">
+    <div class="hero"><img src="/images/join-hero.png" alt="Aurora Scents"></div>
+    <div class="rule"></div>
     <div id="form-step">
-      <h1>Join Aurora Scents</h1>
-      <p class="sub">Leave your details and save our contact.</p>
+      <h1>You found us.</h1>
+      <p class="sub">Join the inner circle for early access to new arrivals, private previews, and scent pairings picked just for you.</p>
       <form id="leadForm">
         <label for="name">Name</label>
         <input id="name" name="name" autocomplete="name" required>
@@ -38,14 +61,16 @@
         <label for="email">Email (optional)</label>
         <input id="email" name="email" type="email" autocomplete="email">
         <input class="hp" name="company" tabindex="-1" autocomplete="off">
-        <button type="submit">Continue</button>
+        <button type="submit">Unlock access</button>
         <div class="msg" id="msg"></div>
       </form>
+      <p class="fine">No spam, ever. Just the occasional scent worth knowing about.</p>
     </div>
-    <div id="done-step" class="done">
-      <h1>You're on the list</h1>
-      <p class="sub">Save our contact to reach us on WhatsApp &amp; Instagram.</p>
+    <div id="done-step">
+      <h1>Welcome in.</h1>
+      <p class="sub">You're one of us now. Save our contact so WhatsApp &amp; Instagram are one tap away.</p>
       <a id="vcardLink" download="Aurora Scents.vcf">Save our contact</a>
+      <div><span class="badge">Aurora Scents · Dar es Salaam</span></div>
     </div>
   </div>
 <script>
