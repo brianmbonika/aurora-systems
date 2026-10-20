@@ -887,17 +887,22 @@ function getProductStock(productId) {
 }
 
 // Inventory -> CSV (name,type,gender,stock,sellingPrice); used to build the shop catalogue
-function downloadStockCsv() {
+function stockCsvText() {
   const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
   const lines = ['name,type,gender,stock,sellingPrice'].concat(
     state.products.map(p => [p.name, p.type, p.gender, getProductStock(p.id), p.sellingPrice].map(q).join(','))
   );
+  return lines.join('\n');
+}
+function downloadStockCsv() {
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/csv' }));
+  a.href = URL.createObjectURL(new Blob([stockCsvText()], { type: 'text/csv' }));
   a.download = `aurora-stock-${new Date().toISOString().slice(0, 10)}.csv`;
   a.click();
   URL.revokeObjectURL(a.href);
 }
+// Run from browser console: copy(getStockCsvText()) — paste straight into stock.csv
+window.getStockCsvText = stockCsvText;
 
 // Get total units sold of a product
 function getProductSoldUnits(productId, period = 'alltime') {
