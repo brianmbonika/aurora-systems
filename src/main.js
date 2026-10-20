@@ -3371,7 +3371,11 @@ async function addNewUser(email, password, role) {
     return true;
   } catch (error) {
     console.error('Error creating user:', error);
-    showNotification(`Error: ${error.message}`, 'error');
+    let friendly = error.message;
+    if (error.code === 'auth/invalid-email') friendly = `"${email}" is not a valid email address.`;
+    else if (error.code === 'auth/email-already-in-use') friendly = `"${email}" is already registered to a user.`;
+    else if (error.code === 'auth/weak-password') friendly = 'Password must be at least 6 characters.';
+    showNotification(`Could not create user: ${friendly}`, 'error');
     return false;
   }
 }
@@ -5602,6 +5606,10 @@ function setupEventListeners() {
       if (state.currentRole !== 'Admin') return;
       const email = prompt('Enter new user email:');
       if (!email) return;
+      if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
+        showNotification(`"${email}" is not a valid email address.`, 'error');
+        return;
+      }
 
       const password = prompt('Enter password:');
       if (!password) return;
