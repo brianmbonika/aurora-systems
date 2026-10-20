@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aurora Scents</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root { --gold: #c9a24b; --muted: #9a9a9a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #111; color: #f3f3f0; font-family: Inter, sans-serif; padding: 24px; }
+  .card { width: 100%; max-width: 380px; text-align: center; }
+  h1 { font-family: "Cormorant Garamond", serif; font-weight: 500; font-size: 28px; margin: 0 0 6px; }
+  p.sub { color: var(--muted); font-size: 14px; margin: 0 0 28px; }
+  label { display: block; text-align: left; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--gold); margin: 16px 0 6px; }
+  input { width: 100%; padding: 12px 14px; background: #1b1b1b; border: 1px solid #333; border-radius: 6px; color: #f3f3f0; font: 400 15px Inter; }
+  input:focus { outline: none; border-color: var(--gold); }
+  .hp { position: absolute; left: -9999px; }
+  button { width: 100%; margin-top: 24px; padding: 13px; background: var(--gold); color: #111; border: none; border-radius: 6px; font: 500 15px Inter; cursor: pointer; }
+  button:disabled { opacity: .6; cursor: default; }
+  .msg { margin-top: 14px; font-size: 13px; min-height: 16px; }
+  .msg.err { color: #e08a8a; }
+  .done { display: none; }
+  .done a { display: inline-block; margin-top: 8px; padding: 13px 20px; background: var(--gold); color: #111; text-decoration: none; border-radius: 6px; font-weight: 500; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <img src="/logo.webp" alt="Aurora Scents" style="height:40px;margin-bottom:20px">
+    <div id="form-step">
+      <h1>Join Aurora Scents</h1>
+      <p class="sub">Leave your details and save our contact.</p>
+      <form id="leadForm">
+        <label for="name">Name</label>
+        <input id="name" name="name" autocomplete="name" required>
+        <label for="phone">Phone number</label>
+        <input id="phone" name="phone" type="tel" autocomplete="tel" required>
+        <label for="email">Email (optional)</label>
+        <input id="email" name="email" type="email" autocomplete="email">
+        <input class="hp" name="company" tabindex="-1" autocomplete="off">
+        <button type="submit">Continue</button>
+        <div class="msg" id="msg"></div>
+      </form>
+    </div>
+    <div id="done-step" class="done">
+      <h1>You're on the list</h1>
+      <p class="sub">Save our contact to reach us on WhatsApp &amp; Instagram.</p>
+      <a id="vcardLink" download="Aurora Scents.vcf">Save our contact</a>
+    </div>
+  </div>
+<script>
+  const VCARD = "BEGIN:VCARD\nVERSION:3.0\nFN:Aurora Scents\nORG:Aurora Scents\nTEL;TYPE=CELL:+255748488283\nURL:https://wa.me/255748488283\nURL:https://instagram.com/aurorascents_tz\nNOTE:Follow us on Instagram @aurorascents_tz\nEND:VCARD";
+  document.getElementById('vcardLink').href = "data:text/vcard;charset=utf-8," + encodeURIComponent(VCARD);
+
+  document.getElementById('leadForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = e.target.querySelector('button');
+    const msg = document.getElementById('msg');
+    btn.disabled = true;
+    msg.className = 'msg';
+    msg.textContent = '';
+    try {
+      const res = await fetch('/api/add-lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: document.getElementById('name').value,
+          phone: document.getElementById('phone').value,
+          email: document.getElementById('email').value,
+          hp: document.querySelector('input[name="company"]').value,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Something went wrong.');
+      document.getElementById('form-step').style.display = 'none';
+      document.getElementById('done-step').style.display = 'block';
+    } catch (err) {
+      msg.className = 'msg err';
+      msg.textContent = err.message;
+      btn.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>
