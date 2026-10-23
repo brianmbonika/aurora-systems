@@ -27,6 +27,21 @@
   @keyframes shake { 0%, 100% { transform: translateX(0) rotate(0deg); } 20% { transform: translateX(-8px) rotate(-6deg); } 40% { transform: translateX(8px) rotate(4deg); } 60% { transform: translateX(-6px) rotate(-4deg); } 80% { transform: translateX(6px) rotate(2deg); } }
   @keyframes dance { 0%, 100% { transform: rotate(0deg) translateY(0); } 25% { transform: rotate(8deg) translateY(-10px); } 50% { transform: rotate(0deg) translateY(0); } 75% { transform: rotate(-8deg) translateY(-10px); } }
 
+  /* Tap reactions: one move per tap, set by the script below */
+  #fox { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  #fox:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
+  #fox.m-jump { animation: jump .7s ease-out; }
+  #fox.m-spin { animation: spin .8s ease-in-out; }
+  #fox.m-wiggle { animation: wiggle .7s ease-in-out; }
+  #fox.m-sniff { animation: sniff .9s ease-in-out; }
+  @keyframes jump { 0% { transform: translateY(0) scale(1, 1); } 20% { transform: translateY(0) scale(1.08, .9); } 50% { transform: translateY(-38px) scale(.96, 1.06); } 80% { transform: translateY(0) scale(1.06, .94); } 100% { transform: translateY(0) scale(1, 1); } }
+  @keyframes spin { 0% { transform: rotate(0deg) scale(1); } 50% { transform: rotate(180deg) scale(1.12); } 100% { transform: rotate(360deg) scale(1); } }
+  @keyframes wiggle { 0%, 100% { transform: rotate(0deg); } 15% { transform: rotate(-10deg); } 30% { transform: rotate(9deg); } 45% { transform: rotate(-8deg); } 60% { transform: rotate(7deg); } 75% { transform: rotate(-4deg); } }
+  @keyframes sniff { 0%, 100% { transform: translate(0, 0) rotate(0deg); } 30% { transform: translate(-10px, 6px) rotate(-8deg) scale(1.05); } 60% { transform: translate(10px, 6px) rotate(8deg) scale(1.05); } }
+  .bubble { min-height: 22px; max-width: 300px; margin: 0 auto 12px; font: italic 500 15px/1.4 "Cormorant Garamond", serif; color: var(--gold-light); opacity: 0; transition: opacity .3s; }
+  .bubble.show { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) { #fox { animation: none !important; } }
+
   .rule { width: 48px; height: 1px; background: var(--gold); margin: 0 auto 18px; opacity: .7; }
   h1 { font-family: "Cormorant Garamond", serif; font-weight: 500; font-style: italic; font-size: 26px; margin: 0 0 8px; min-height: 34px; }
   p.sub { color: var(--muted); font-size: 14px; line-height: 1.5; margin: 0 0 22px; min-height: 20px; }
@@ -60,7 +75,8 @@
 </head>
 <body>
   <div class="card">
-    <div class="foxstage"><img id="fox" class="idle" src="/images/join-hero.png" alt="Aurora's puppy"></div>
+    <div class="foxstage"><img id="fox" class="idle" src="/images/join-hero.png" alt="Aurora's puppy. Tap to play." role="button" tabindex="0"></div>
+    <div class="bubble" id="bubble" aria-live="polite"></div>
     <div class="rule"></div>
 
     <div class="step active" id="step-name">
@@ -121,6 +137,53 @@
   function say(mood, ms) { setMood(mood); talk(ms); }
 
   say('idle', 900);
+
+  // Tap (or press Enter on) the puppy: a new move each time, plus a product tip in the bubble.
+  // It also nudges on its own a few times, so the page keeps reminding people about the range.
+  const MOVES = ['jump', 'spin', 'wiggle', 'sniff'];
+  const TIPS = [
+    'Black Obsidian is my pick for smart evenings.',
+    'Her Majesty: white florals, made for weddings.',
+    'Cherry in the Woods is a sweet night out.',
+    'Vanilla Espresso smells like a cosy evening.',
+    'Elite works at the office and at dinner after.',
+    'Every scent can be sampled in our shop. Come say hi!',
+  ];
+  const bubble = document.getElementById('bubble');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let moveIdx = 0, tipIdx = Math.floor(Math.random() * TIPS.length);
+  let moving = false, bubbleTimer = null, nudgeTimer = null, nudges = 0;
+
+  function showBubble(text) {
+    bubble.textContent = text;
+    bubble.classList.add('show');
+    clearTimeout(bubbleTimer);
+    bubbleTimer = setTimeout(() => bubble.classList.remove('show'), 4500);
+  }
+  function bark() {
+    const tip = TIPS[tipIdx++ % TIPS.length];
+    showBubble(visitorName ? visitorName + '! ' + tip : tip);
+  }
+  function perform() {
+    if (moving || reduced) return;
+    moving = true;
+    const cls = 'm-' + MOVES[moveIdx++ % MOVES.length];
+    fox.classList.add(cls);
+    setTimeout(() => { fox.classList.remove(cls); moving = false; }, 1000);
+  }
+  function scheduleNudge() { clearTimeout(nudgeTimer); nudgeTimer = setTimeout(nudge, 12000); }
+  function nudge() {
+    const a = document.activeElement;
+    if (nudges < 5 && !(a && a.tagName === 'INPUT')) {
+      perform();
+      if (nudges++ === 0) showBubble('Psst, tap me!'); else bark();
+    }
+    if (nudges < 5) scheduleNudge();
+  }
+  function tap() { perform(); bark(); scheduleNudge(); }
+  fox.addEventListener('click', tap);
+  fox.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tap(); } });
+  scheduleNudge();
 
   document.getElementById('nameNext').addEventListener('click', () => {
     const v = document.getElementById('nameInput').value.trim();
@@ -187,6 +250,7 @@
       if (!res.ok) throw new Error(data.error || 'Something went wrong.');
       goTo('done');
       say('happy', 1200);
+      bark();
     } catch (err) {
       msg.className = 'msg err';
       msg.textContent = err.message;
