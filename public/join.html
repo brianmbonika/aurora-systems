@@ -30,6 +30,24 @@
   /* Tap reactions: one move per tap, set by the script below */
   #fox { cursor: pointer; -webkit-tap-highlight-color: transparent; }
   #fox:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
+  .foxstage { animation: popin .7s cubic-bezier(.34, 1.56, .64, 1) backwards; }
+  @keyframes popin { 0% { transform: scale(.3) translateY(30px); opacity: 0; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
+  #fox.m-tilt { animation: tilt .9s ease-in-out; }
+  @keyframes tilt { 0%, 100% { transform: rotate(0deg) translateY(0); } 30% { transform: rotate(-9deg) translateY(-2px); } 60% { transform: rotate(6deg); } }
+  #fox.m-flip { animation: flip .9s ease-in-out; }
+  #fox.m-nod { animation: nod .8s ease-in-out; }
+  #fox.m-shake { animation: shakeno .8s ease-in-out; }
+  #fox.m-stretch { animation: stretch .9s ease-in-out; }
+  @keyframes flip { 0% { transform: translateY(0) rotate(0deg); } 45% { transform: translateY(-44px) rotate(-180deg); } 90% { transform: translateY(0) rotate(-360deg) scale(1.06, .94); } 100% { transform: translateY(0) rotate(-360deg); } }
+  @keyframes nod { 0%, 100% { transform: translateY(0) scale(1, 1); } 20% { transform: translateY(9px) scale(1.04, .94); } 40% { transform: translateY(0); } 60% { transform: translateY(9px) scale(1.04, .94); } 80% { transform: translateY(0); } }
+  @keyframes shakeno { 0%, 100% { transform: translateX(0) rotate(0deg); } 15% { transform: translateX(-12px) rotate(-6deg); } 35% { transform: translateX(12px) rotate(6deg); } 55% { transform: translateX(-9px) rotate(-4deg); } 75% { transform: translateX(7px) rotate(3deg); } }
+  @keyframes stretch { 0%, 100% { transform: scale(1, 1); } 35% { transform: scale(.9, 1.16) translateY(-8px); } 65% { transform: scale(1.1, .88) translateY(4px); } }
+  .spark { position: absolute; top: 55%; color: var(--gold-light); pointer-events: none; opacity: 0; text-shadow: 0 0 8px rgba(201, 162, 75, .7); animation: spark 1.1s ease-out forwards; }
+  @keyframes spark { 0% { opacity: 0; transform: translate(0, 0) rotate(0deg) scale(.4); } 15% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(1.1); } }
+  body::before, body::after { content: ""; position: fixed; left: 0; top: 0; width: 3px; height: 3px; border-radius: 50%; pointer-events: none; animation: drift 9s ease-in-out infinite; }
+  body::before { box-shadow: 12vw 82vh 0 0 #c9a24b, 28vw 64vh 0 0 #e3c478, 46vw 90vh 0 0 #c9a24b, 63vw 58vh 0 0 #e3c478, 81vw 76vh 0 0 #c9a24b, 92vw 48vh 0 0 #e3c478; }
+  body::after { box-shadow: 6vw 52vh 0 0 #e3c478, 22vw 86vh 0 0 #c9a24b, 38vw 44vh 0 0 #e3c478, 57vw 80vh 0 0 #c9a24b, 74vw 40vh 0 0 #e3c478, 88vw 70vh 0 0 #c9a24b; animation-delay: -4.5s; }
+  @keyframes drift { 0% { transform: translateY(6vh); opacity: 0; } 25% { opacity: .6; } 75% { opacity: .6; } 100% { transform: translateY(-12vh); opacity: 0; } }
   #fox.m-jump { animation: jump .7s ease-out; }
   #fox.m-spin { animation: spin .8s ease-in-out; }
   #fox.m-wiggle { animation: wiggle .7s ease-in-out; }
@@ -38,9 +56,9 @@
   @keyframes spin { 0% { transform: rotate(0deg) scale(1); } 50% { transform: rotate(180deg) scale(1.12); } 100% { transform: rotate(360deg) scale(1); } }
   @keyframes wiggle { 0%, 100% { transform: rotate(0deg); } 15% { transform: rotate(-10deg); } 30% { transform: rotate(9deg); } 45% { transform: rotate(-8deg); } 60% { transform: rotate(7deg); } 75% { transform: rotate(-4deg); } }
   @keyframes sniff { 0%, 100% { transform: translate(0, 0) rotate(0deg); } 30% { transform: translate(-10px, 6px) rotate(-8deg) scale(1.05); } 60% { transform: translate(10px, 6px) rotate(8deg) scale(1.05); } }
-  .bubble { min-height: 22px; max-width: 300px; margin: 0 auto 12px; font: italic 500 15px/1.4 "Cormorant Garamond", serif; color: var(--gold-light); opacity: 0; transition: opacity .3s; }
+  .bubble { position: relative; z-index: 1; min-height: 22px; max-width: 300px; margin: 0 auto 12px; font: italic 500 15px/1.4 "Cormorant Garamond", serif; color: var(--gold-light); opacity: 0; transition: opacity .3s; }
   .bubble.show { opacity: 1; }
-  @media (prefers-reduced-motion: reduce) { #fox { animation: none !important; } }
+  @media (prefers-reduced-motion: reduce) { #fox, .foxstage { animation: none !important; } .spark, body::before, body::after { display: none; } }
 
   .rule { width: 48px; height: 1px; background: var(--gold); margin: 0 auto 18px; opacity: .7; }
   h1 { font-family: "Cormorant Garamond", serif; font-weight: 500; font-style: italic; font-size: 26px; margin: 0 0 8px; min-height: 34px; }
@@ -140,7 +158,8 @@
 
   // Tap (or press Enter on) the puppy: a new move each time, plus a product tip in the bubble.
   // It also nudges on its own a few times, so the page keeps reminding people about the range.
-  const MOVES = ['jump', 'spin', 'wiggle', 'sniff'];
+  // [move, glyph that sparkles out of the puppy during it]
+  const MOVES = [['jump', '✦'], ['spin', '✧'], ['wiggle', '♥'], ['sniff', '❋'], ['flip', '✦'], ['nod', '♥'], ['shake', '✧'], ['stretch', '❋']];
   const TIPS = [
     'Black Obsidian is my pick for smart evenings.',
     'Her Majesty: white florals, made for weddings.',
@@ -167,8 +186,10 @@
   function perform() {
     if (moving || reduced) return;
     moving = true;
-    const cls = 'm-' + MOVES[moveIdx++ % MOVES.length];
+    const [name, glyph] = MOVES[moveIdx++ % MOVES.length];
+    const cls = 'm-' + name;
     fox.classList.add(cls);
+    burst(glyph);
     setTimeout(() => { fox.classList.remove(cls); moving = false; }, 1000);
   }
   function scheduleNudge() { clearTimeout(nudgeTimer); nudgeTimer = setTimeout(nudge, 12000); }
@@ -180,7 +201,40 @@
     }
     if (nudges < 5) scheduleNudge();
   }
-  function tap() { perform(); bark(); scheduleNudge(); }
+  const stage = document.querySelector('.foxstage');
+  let taps = 0;
+  function burst(glyph, n = 7) {
+    if (reduced) return;
+    for (let i = 0; i < n; i++) {
+      const sp = document.createElement('span');
+      sp.className = 'spark';
+      sp.textContent = glyph;
+      sp.style.setProperty('--dx', (Math.random() * 160 - 80) + 'px');
+      sp.style.setProperty('--dy', -(50 + Math.random() * 90) + 'px');
+      sp.style.setProperty('--rot', (Math.random() * 120 - 60) + 'deg');
+      sp.style.left = (35 + Math.random() * 30) + '%';
+      sp.style.animationDelay = (Math.random() * 0.15) + 's';
+      sp.style.fontSize = (12 + Math.random() * 14) + 'px';
+      stage.appendChild(sp);
+      setTimeout(() => sp.remove(), 1400);
+    }
+  }
+  // Every 6th tap: a bigger celebration and a nudge toward the shop.
+  function party() {
+    burst('✦', 12); burst('♥', 8); burst('❋', 8);
+    showBubble('You found my secret move! Ask for a spray of any scent in our shop.');
+  }
+  function tap() {
+    perform();
+    if (++taps % 6 === 0) party(); else bark();
+    scheduleNudge();
+  }
+  // Every few seconds the puppy tilts its head on its own, so it never looks frozen.
+  setInterval(() => {
+    if (reduced || moving || document.hidden) return;
+    fox.classList.add('m-tilt');
+    setTimeout(() => fox.classList.remove('m-tilt'), 900);
+  }, 6000);
   fox.addEventListener('click', tap);
   fox.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tap(); } });
   scheduleNudge();
@@ -219,6 +273,7 @@
     document.getElementById('saveTitle').textContent = 'Yay! Thank you!';
     document.getElementById('saveSub').textContent = "\u{1F389} You just made my day.";
     say('happy', 900);
+    burst('♥', 10);
     const a = document.getElementById('vcardLink');
     const tmp = document.createElement('a');
     tmp.href = a.href; tmp.download = a.download; document.body.appendChild(tmp); tmp.click(); tmp.remove();
@@ -251,6 +306,7 @@
       goTo('done');
       say('happy', 1200);
       bark();
+      burst('✦', 14); burst('♥', 8);
     } catch (err) {
       msg.className = 'msg err';
       msg.textContent = err.message;
